@@ -301,7 +301,14 @@ class _CheckInScreenState extends State<CheckInScreen> {
       };
 
       if (_todayEntryId != null) {
-        await _supabase.from('checkins').update(payload).eq('id', _todayEntryId as Object);
+        final updated = await _supabase
+            .from('checkins')
+            .update(payload)
+            .eq('id', _todayEntryId as Object)
+            .select('id');
+        if ((updated as List).isEmpty) {
+          throw Exception('Update affected 0 rows — check RLS UPDATE policy on checkins.');
+        }
       } else {
         final inserted = await _supabase.from('checkins').insert(payload).select('id, created_at').single();
         _todayEntryId = inserted['id'];
