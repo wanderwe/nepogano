@@ -5,8 +5,11 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'auth_screen.dart';
+import 'circles_screen.dart';
 import 'day_card_screen.dart';
 import 'history_screen.dart';
+import 'l10n/app_localizations.dart';
+import 'locale_provider.dart';
 import 'style.dart';
 
 // TODO: встав сюди свій Project URL і anon key з Supabase (Settings → API)
@@ -20,6 +23,7 @@ final ValueNotifier<bool> googleSignInPending = ValueNotifier<bool>(false);
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle.light);
+  await loadSavedLocale();
 
   await Supabase.initialize(
     url: supabaseUrl,
@@ -39,13 +43,27 @@ class NepoganoApp extends StatelessWidget {
       brightness: Brightness.dark,
       colorSchemeSeed: const Color(0xFFE0A458),
       scaffoldBackgroundColor: AppColors.background,
+      // Прибираємо анімований Android-ripple (той круглий "спалах" на дотик,
+      // що читається як застарілий Material-стиль), але лишаємо тиху статичну
+      // підсвітку замість нього — щоб прості InkWell не ставали "мертвими" на дотик.
+      splashFactory: NoSplash.splashFactory,
+      splashColor: Colors.transparent,
+      highlightColor: Colors.white.withValues(alpha: 0.06),
     );
 
-    return MaterialApp(
-      title: 'Nepogano',
-      debugShowCheckedModeBanner: false,
-      theme: base.copyWith(textTheme: GoogleFonts.interTextTheme(base.textTheme)),
-      home: const AuthGate(),
+    return ValueListenableBuilder<Locale>(
+      valueListenable: appLocale,
+      builder: (context, locale, _) {
+        return MaterialApp(
+          title: 'Nepogano',
+          debugShowCheckedModeBanner: false,
+          theme: base.copyWith(textTheme: GoogleFonts.interTextTheme(base.textTheme)),
+          locale: locale,
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: const AuthGate(),
+        );
+      },
     );
   }
 }
@@ -95,14 +113,15 @@ class _AuthGateState extends State<AuthGate> {
 enum MoodLevel { niyak, nepogano, zbs }
 
 extension MoodLevelData on MoodLevel {
-  String get label {
+  String label(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     switch (this) {
       case MoodLevel.niyak:
-        return 'Ніяк';
+        return l10n.moodNiyak;
       case MoodLevel.nepogano:
-        return 'Непогано';
+        return l10n.moodNepogano;
       case MoodLevel.zbs:
-        return 'Збс';
+        return l10n.moodZbs;
     }
   }
 
@@ -186,7 +205,7 @@ class _MoodTileState extends State<_MoodTile> {
               ),
               const SizedBox(height: 10),
               Text(
-                mood.label,
+                mood.label(context),
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 15,
@@ -216,6 +235,7 @@ class _CheckInScreenState extends State<CheckInScreen> {
   Object? _todayEntryId;
   DateTime? _todayEntrySavedAt;
   List<CheckinEntry> _weekEntries = [];
+  bool _hasCircleActivity = false;
 
   final _supabase = Supabase.instance.client;
 
@@ -224,6 +244,12 @@ class _CheckInScreenState extends State<CheckInScreen> {
     super.initState();
     _loadTodayEntry();
     _loadWeek();
+    _checkCircleActivity();
+  }
+
+  Future<void> _checkCircleActivity() async {
+    final has = await hasUnseenCircleActivity(_supabase);
+    if (mounted) setState(() => _hasCircleActivity = has);
   }
 
   @override
@@ -248,6 +274,7 @@ class _CheckInScreenState extends State<CheckInScreen> {
     final rows = await _supabase
         .from('checkins')
         .select('id, mood, note, created_at')
+        .eq('user_id', _supabase.auth.currentUser!.id)
         .gte('created_at', startOfDay)
         .lt('created_at', startOfNextDay)
         .order('created_at', ascending: false)
@@ -271,6 +298,7 @@ class _CheckInScreenState extends State<CheckInScreen> {
     final rows = await _supabase
         .from('checkins')
         .select('mood, note, created_at')
+        .eq('user_id', _supabase.auth.currentUser!.id)
         .gte('created_at', start)
         .order('created_at');
 
@@ -319,7 +347,7 @@ class _CheckInScreenState extends State<CheckInScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Збережено: ${_selected!.label}'),
+            content: Text(AppLocalizations.of(context).savedSnackbar(_selected!.label(context))),
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -327,7 +355,7 @@ class _CheckInScreenState extends State<CheckInScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Не вдалось зберегти. Спробуй ще раз.')),
+          SnackBar(content: Text(AppLocalizations.of(context).saveFailedSnackbar)),
         );
       }
     } finally {
@@ -339,23 +367,50 @@ class _CheckInScreenState extends State<CheckInScreen> {
     await _supabase.auth.signOut();
   }
 
+  void _openMoreMenu() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppColors.surfaceRaised,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (sheetContext) => _MoreMenuSheet(
+        onLanguage: () {
+          Navigator.of(sheetContext).pop();
+          setAppLocale(
+            appLocale.value.languageCode == 'uk' ? const Locale('en') : const Locale('uk'),
+          );
+        },
+        onSignOut: () {
+          Navigator.of(sheetContext).pop();
+          _signOut();
+        },
+        onDeleteAccount: () {
+          Navigator.of(sheetContext).pop();
+          _confirmDeleteAccount();
+        },
+      ),
+    );
+  }
+
   Future<void> _confirmDeleteAccount() async {
+    final l10n = AppLocalizations.of(context);
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: AppColors.surfaceRaised,
-        title: const Text('Видалити акаунт?'),
-        content: const Text(
-          'Це видалить твій акаунт і всі записи назавжди. Скасувати неможливо.',
-        ),
+        title: Text(l10n.deleteAccountConfirmTitle),
+        content: Text(l10n.deleteAccountConfirmBody),
+        actionsAlignment: MainAxisAlignment.center,
+        actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Скасувати'),
+            child: Text(l10n.cancel),
           ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Видалити', style: TextStyle(color: Colors.redAccent)),
+            child: Text(l10n.delete, style: const TextStyle(color: Colors.redAccent)),
           ),
         ],
       ),
@@ -369,7 +424,7 @@ class _CheckInScreenState extends State<CheckInScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Не вдалось видалити акаунт. Спробуй ще раз.')),
+          SnackBar(content: Text(AppLocalizations.of(context).deleteAccountFailedSnackbar)),
         );
       }
     }
@@ -377,6 +432,7 @@ class _CheckInScreenState extends State<CheckInScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final today = DateTime.now();
     final dateLabel = '${today.day}.${today.month}.${today.year}';
 
@@ -397,49 +453,61 @@ class _CheckInScreenState extends State<CheckInScreen> {
                   ),
                   Row(
                     children: [
+                      Stack(
+                        clipBehavior: Clip.none,
+                        children: [
+                          IconButton(
+                            onPressed: () async {
+                              await Navigator.of(context).push(
+                                MaterialPageRoute(builder: (_) => const CirclesScreen()),
+                              );
+                              _checkCircleActivity();
+                            },
+                            icon: const Icon(Icons.people_outline, size: 20),
+                            tooltip: l10n.circle,
+                          ),
+                          if (_hasCircleActivity)
+                            Positioned(
+                              top: 8,
+                              right: 8,
+                              child: Container(
+                                width: 8,
+                                height: 8,
+                                decoration: BoxDecoration(
+                                  color: MoodLevel.zbs.color,
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
                       IconButton(
                         onPressed: () => Navigator.of(context).push(
                           MaterialPageRoute(builder: (_) => const HistoryScreen()),
                         ),
                         icon: const Icon(Icons.calendar_month_outlined, size: 20),
-                        tooltip: 'Історія',
+                        tooltip: l10n.history,
                       ),
-                      PopupMenuButton<String>(
+                      IconButton(
+                        onPressed: _openMoreMenu,
                         icon: const Icon(Icons.more_vert, size: 20),
-                        tooltip: 'Ще',
-                        color: AppColors.surfaceRaised,
-                        onSelected: (value) {
-                          if (value == 'signOut') _signOut();
-                          if (value == 'delete') _confirmDeleteAccount();
-                        },
-                        itemBuilder: (context) => [
-                          const PopupMenuItem(
-                            value: 'signOut',
-                            child: Text('Вийти'),
-                          ),
-                          const PopupMenuItem(
-                            value: 'delete',
-                            child: Text(
-                              'Видалити акаунт',
-                              style: TextStyle(color: Colors.redAccent),
-                            ),
-                          ),
-                        ],
+                        tooltip: l10n.moreTooltip,
                       ),
                     ],
                   ),
                 ],
               ),
               Text(
-                'Як пройшов день?',
+                l10n.howAreThingsToday,
                 style: appSerif(fontSize: 28),
               ),
               if (_todayEntrySavedAt != null) ...[
                 const SizedBox(height: 6),
                 Text(
-                  'Вже зберіг сьогодні о '
-                  '${_todayEntrySavedAt!.hour.toString().padLeft(2, '0')}:'
-                  '${_todayEntrySavedAt!.minute.toString().padLeft(2, '0')}',
+                  l10n.alreadySavedToday(
+                    '${_todayEntrySavedAt!.hour.toString().padLeft(2, '0')}:'
+                    '${_todayEntrySavedAt!.minute.toString().padLeft(2, '0')}',
+                  ),
                   style: const TextStyle(fontSize: 13, color: AppColors.inkMuted),
                 ),
               ],
@@ -476,7 +544,7 @@ class _CheckInScreenState extends State<CheckInScreen> {
                                       controller: _noteController,
                                       maxLines: 3,
                                       decoration: InputDecoration(
-                                        hintText: 'Пару слів про день (необов\'язково)',
+                                        hintText: l10n.notePlaceholder,
                                         filled: true,
                                         fillColor: AppColors.surface,
                                         border: OutlineInputBorder(
@@ -509,7 +577,7 @@ class _CheckInScreenState extends State<CheckInScreen> {
                                                 ),
                                               )
                                             : Text(
-                                                _todayEntryId != null ? 'Оновити' : 'Зберегти',
+                                                _todayEntryId != null ? l10n.update : l10n.save,
                                                 style: const TextStyle(fontSize: 16),
                                               ),
                                       ),
@@ -533,7 +601,7 @@ class _CheckInScreenState extends State<CheckInScreen> {
                                             ),
                                           ),
                                           icon: const Icon(Icons.ios_share, size: 18),
-                                          label: const Text('Картка дня'),
+                                          label: Text(l10n.dayCard),
                                         ),
                                       ),
                                     ],
@@ -568,9 +636,9 @@ class _CheckInScreenState extends State<CheckInScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        const Text(
-          'Останній тиждень',
-          style: TextStyle(fontSize: 12, color: AppColors.inkMuted),
+        Text(
+          AppLocalizations.of(context).lastWeek,
+          style: const TextStyle(fontSize: 12, color: AppColors.inkMuted),
         ),
         const SizedBox(height: 10),
         Row(
@@ -596,6 +664,82 @@ class _CheckInScreenState extends State<CheckInScreen> {
           }).toList(),
         ),
       ],
+    );
+  }
+}
+
+class _MoreMenuSheet extends StatelessWidget {
+  final VoidCallback onLanguage;
+  final VoidCallback onSignOut;
+  final VoidCallback onDeleteAccount;
+
+  const _MoreMenuSheet({
+    required this.onLanguage,
+    required this.onSignOut,
+    required this.onDeleteAccount,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(8, 12, 8, 8),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _MenuRow(
+              icon: Icons.language,
+              label: '${l10n.language}: ${appLocale.value.languageCode == 'uk' ? 'UK' : 'EN'}',
+              onTap: onLanguage,
+            ),
+            _MenuRow(
+              icon: Icons.logout,
+              label: l10n.signOut,
+              onTap: onSignOut,
+            ),
+            _MenuRow(
+              icon: Icons.delete_outline,
+              label: l10n.deleteAccount,
+              color: Colors.redAccent,
+              onTap: onDeleteAccount,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _MenuRow extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+  final Color? color;
+
+  const _MenuRow({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+    this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final textColor = color ?? AppColors.ink;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(14),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+        child: Row(
+          children: [
+            Icon(icon, size: 20, color: textColor),
+            const SizedBox(width: 16),
+            Text(label, style: TextStyle(fontSize: 16, color: textColor)),
+          ],
+        ),
+      ),
     );
   }
 }

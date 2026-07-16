@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'l10n/app_localizations.dart';
 import 'main.dart';
 import 'style.dart';
 
@@ -40,8 +41,8 @@ class _AuthScreenState extends State<AuthScreen> {
         );
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Перевір пошту — надіслали лист для підтвердження'),
+            SnackBar(
+              content: Text(AppLocalizations.of(context).checkEmailToConfirm),
             ),
           );
         }
@@ -54,7 +55,9 @@ class _AuthScreenState extends State<AuthScreen> {
     } on AuthException catch (e) {
       setState(() => _errorMessage = e.message);
     } catch (e) {
-      setState(() => _errorMessage = 'Щось пішло не так. Спробуй ще раз.');
+      if (mounted) {
+        setState(() => _errorMessage = AppLocalizations.of(context).somethingWentWrong);
+      }
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -79,7 +82,9 @@ class _AuthScreenState extends State<AuthScreen> {
       });
     } catch (e) {
       googleSignInPending.value = false;
-      setState(() => _errorMessage = 'Не вдалось увійти через Google.');
+      if (mounted) {
+        setState(() => _errorMessage = AppLocalizations.of(context).googleSignInFailed);
+      }
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -87,6 +92,7 @@ class _AuthScreenState extends State<AuthScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
       body: SafeArea(
         child: Padding(
@@ -104,7 +110,7 @@ class _AuthScreenState extends State<AuthScreen> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    _isSignUp ? 'Створи акаунт' : 'Увійди в акаунт',
+                    _isSignUp ? l10n.createAccount : l10n.signInToAccount,
                     textAlign: TextAlign.center,
                     style: const TextStyle(fontSize: 15, color: AppColors.inkMuted),
                   ),
@@ -114,7 +120,7 @@ class _AuthScreenState extends State<AuthScreen> {
                     controller: _emailController,
                     keyboardType: TextInputType.emailAddress,
                     decoration: InputDecoration(
-                      hintText: 'Email',
+                      hintText: l10n.emailHint,
                       filled: true,
                       fillColor: AppColors.surface,
                       border: OutlineInputBorder(
@@ -129,7 +135,7 @@ class _AuthScreenState extends State<AuthScreen> {
                     controller: _passwordController,
                     obscureText: true,
                     decoration: InputDecoration(
-                      hintText: 'Пароль',
+                      hintText: l10n.passwordHint,
                       filled: true,
                       fillColor: AppColors.surface,
                       border: OutlineInputBorder(
@@ -168,7 +174,7 @@ class _AuthScreenState extends State<AuthScreen> {
                               color: AppColors.background,
                             ),
                           )
-                        : Text(_isSignUp ? 'Зареєструватись' : 'Увійти'),
+                        : Text(_isSignUp ? l10n.signUp : l10n.signIn),
                   ),
 
                   const SizedBox(height: 12),
@@ -177,9 +183,7 @@ class _AuthScreenState extends State<AuthScreen> {
                         ? null
                         : () => setState(() => _isSignUp = !_isSignUp),
                     child: Text(
-                      _isSignUp
-                          ? 'Вже є акаунт? Увійти'
-                          : 'Немає акаунту? Зареєструватись',
+                      _isSignUp ? l10n.alreadyHaveAccount : l10n.noAccountYet,
                     ),
                   ),
 
@@ -189,7 +193,7 @@ class _AuthScreenState extends State<AuthScreen> {
                       const Expanded(child: Divider(color: AppColors.divider)),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 12),
-                        child: Text('або', style: TextStyle(color: Colors.grey.shade500)),
+                        child: Text(l10n.or, style: TextStyle(color: Colors.grey.shade500)),
                       ),
                       const Expanded(child: Divider(color: AppColors.divider)),
                     ],
@@ -207,7 +211,7 @@ class _AuthScreenState extends State<AuthScreen> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    child: const Text('Продовжити з Google'),
+                    child: Text(l10n.continueWithGoogle),
                   ),
                 ],
               ),

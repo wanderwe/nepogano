@@ -6,19 +6,12 @@ import 'package:flutter/rendering.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
+import 'date_labels.dart';
 import 'history_screen.dart';
+import 'l10n/app_localizations.dart';
 import 'main.dart';
 import 'social_share.dart';
 import 'style.dart';
-
-const _weekdayNamesFull = [
-  'понеділок', 'вівторок', 'середа', 'четвер', "п'ятниця", 'субота', 'неділя',
-];
-
-const _monthNamesGenitive = [
-  'січня', 'лютого', 'березня', 'квітня', 'травня', 'червня',
-  'липня', 'серпня', 'вересня', 'жовтня', 'листопада', 'грудня',
-];
 
 class DayCardScreen extends StatefulWidget {
   final CheckinEntry entry;
@@ -48,15 +41,16 @@ class _DayCardScreenState extends State<DayCardScreen> {
 
   Future<void> _share() async {
     setState(() => _sharing = true);
+    final shareText = AppLocalizations.of(context).myDayInNepogano;
     try {
       final path = await _renderCardToFile();
       await SharePlus.instance.share(
-        ShareParams(files: [XFile(path)], text: 'Мій день у Nepogano'),
+        ShareParams(files: [XFile(path)], text: shareText),
       );
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Не вдалось поділитись. Спробуй ще раз.')),
+          SnackBar(content: Text(AppLocalizations.of(context).shareFailed)),
         );
       }
     } finally {
@@ -72,7 +66,7 @@ class _DayCardScreenState extends State<DayCardScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Не вдалось підготувати картку. Спробуй ще раз.')),
+          SnackBar(content: Text(AppLocalizations.of(context).prepareCardFailed)),
         );
       }
       setState(() => _sharing = false);
@@ -93,6 +87,7 @@ class _DayCardScreenState extends State<DayCardScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
       body: SafeArea(
         child: Padding(
@@ -106,10 +101,10 @@ class _DayCardScreenState extends State<DayCardScreen> {
                   IconButton(
                     onPressed: () => Navigator.of(context).pop(),
                     icon: const Icon(Icons.arrow_back, size: 20),
-                    tooltip: 'Назад',
+                    tooltip: l10n.back,
                   ),
                   const SizedBox(width: 4),
-                  Text('Картка дня', style: appSerif(fontSize: 22)),
+                  Text(l10n.dayCard, style: appSerif(fontSize: 22)),
                 ],
               ),
               const SizedBox(height: 32),
@@ -148,7 +143,7 @@ class _DayCardScreenState extends State<DayCardScreen> {
                           ),
                         )
                       : const Icon(Icons.ios_share, size: 18),
-                  label: const Text('Поділитись', style: TextStyle(fontSize: 16)),
+                  label: Text(l10n.share, style: const TextStyle(fontSize: 16)),
                 ),
               ),
               const SizedBox(height: 12),
@@ -156,7 +151,7 @@ class _DayCardScreenState extends State<DayCardScreen> {
                 width: double.infinity,
                 child: TextButton(
                   onPressed: _sharing ? null : _openMultiShareSheet,
-                  child: const Text('Поділитись у соцмережах'),
+                  child: Text(l10n.shareOnSocial),
                 ),
               ),
             ],
@@ -211,19 +206,20 @@ class _MultiShareSheetState extends State<_MultiShareSheet> {
 
   Future<void> _shareOther() async {
     await SharePlus.instance.share(
-      ShareParams(files: [XFile(widget.imagePath)], text: 'Мій день у Nepogano'),
+      ShareParams(files: [XFile(widget.imagePath)], text: AppLocalizations.of(context).myDayInNepogano),
     );
     if (mounted) setState(() => _done.add('other'));
   }
 
   void _showNotInstalled(String app) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('$app не встановлено на пристрої.')),
+      SnackBar(content: Text(AppLocalizations.of(context).notInstalled(app))),
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
@@ -231,23 +227,23 @@ class _MultiShareSheetState extends State<_MultiShareSheet> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text('Поділитись у соцмережах', style: appSerif(fontSize: 18)),
+            Text(l10n.shareOnSocial, style: appSerif(fontSize: 18)),
             const SizedBox(height: 4),
-            const Text(
-              'Тапни застосунок — після повернення тапни наступний.',
-              style: TextStyle(fontSize: 13, color: AppColors.inkMuted),
+            Text(
+              l10n.shareEverywhereHint,
+              style: const TextStyle(fontSize: 13, color: AppColors.inkMuted),
             ),
             const SizedBox(height: 20),
             _ShareRow(label: 'Instagram Stories', done: _done.contains('instagram'), onTap: _shareInstagram),
             _ShareRow(label: 'Facebook', done: _done.contains('facebook'), onTap: _shareFacebook),
             _ShareRow(label: 'TikTok', done: _done.contains('tiktok'), onTap: _shareTikTok),
-            _ShareRow(label: 'Інше', done: _done.contains('other'), onTap: _shareOther),
+            _ShareRow(label: l10n.other, done: _done.contains('other'), onTap: _shareOther),
             const SizedBox(height: 12),
             SizedBox(
               width: double.infinity,
               child: TextButton(
                 onPressed: () => Navigator.of(context).pop(),
-                child: const Text('Готово'),
+                child: Text(l10n.done),
               ),
             ),
           ],
@@ -295,9 +291,10 @@ class _DayCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final locale = Localizations.localeOf(context);
     final d = entry.createdAt;
-    final dateLabel = '${d.day} ${_monthNamesGenitive[d.month - 1]}';
-    final weekdayLabel = _weekdayNamesFull[d.weekday - 1];
+    final dateLabel = '${d.day} ${monthNameGenitive(d.month, locale)}';
+    final weekdayName = weekdayNameFull(d.weekday, locale);
     final moodIndex = MoodLevel.values.indexOf(entry.mood);
 
     return Container(
@@ -319,14 +316,14 @@ class _DayCard extends StatelessWidget {
                 style: TextStyle(fontSize: 13, color: Colors.grey.shade500),
               ),
               Text(
-                weekdayLabel,
+                weekdayName,
                 style: TextStyle(fontSize: 13, color: Colors.grey.shade500),
               ),
             ],
           ),
           const SizedBox(height: 20),
           Text(
-            '${entry.mood.label}.',
+            '${entry.mood.label(context)}.',
             style: appSerif(fontSize: 32, fontWeight: FontWeight.w700, color: Colors.white),
           ),
           if (entry.note != null && entry.note!.isNotEmpty) ...[

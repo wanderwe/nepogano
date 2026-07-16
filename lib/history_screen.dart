@@ -1,15 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'date_labels.dart';
 import 'day_card_screen.dart';
+import 'l10n/app_localizations.dart';
 import 'main.dart';
 import 'style.dart';
-
-const _monthNames = [
-  'Січень', 'Лютий', 'Березень', 'Квітень', 'Травень', 'Червень',
-  'Липень', 'Серпень', 'Вересень', 'Жовтень', 'Листопад', 'Грудень',
-];
-
-const _weekdayLabels = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Нд'];
 
 class CheckinEntry {
   final DateTime createdAt;
@@ -52,6 +47,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
       final rows = await _supabase
           .from('checkins')
           .select('mood, note, created_at')
+          .eq('user_id', _supabase.auth.currentUser!.id)
           .order('created_at');
 
       final entries = (rows as List).map((row) {
@@ -71,7 +67,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
     } catch (e) {
       if (mounted) {
         setState(() {
-          _error = 'Не вдалось завантажити історію.';
+          _error = AppLocalizations.of(context).couldNotLoadHistory;
           _loading = false;
         });
       }
@@ -111,6 +107,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
       body: SafeArea(
         child: Padding(
@@ -124,10 +121,10 @@ class _HistoryScreenState extends State<HistoryScreen> {
                   IconButton(
                     onPressed: () => Navigator.of(context).pop(),
                     icon: const Icon(Icons.arrow_back, size: 20),
-                    tooltip: 'Назад',
+                    tooltip: l10n.back,
                   ),
                   const SizedBox(width: 4),
-                  Text('Історія', style: appSerif(fontSize: 22)),
+                  Text(l10n.history, style: appSerif(fontSize: 22)),
                 ],
               ),
               const SizedBox(height: 8),
@@ -141,7 +138,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                       children: [
                         Text(_error!, style: const TextStyle(color: AppColors.inkMuted)),
                         const SizedBox(height: 12),
-                        TextButton(onPressed: _load, child: const Text('Спробувати ще раз')),
+                        TextButton(onPressed: _load, child: Text(l10n.retry)),
                       ],
                     ),
                   ),
@@ -156,6 +153,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
   }
 
   Widget _buildContent() {
+    final locale = Localizations.localeOf(context);
     final entriesByDay = _entriesByDay;
     final daysInMonth = DateTime(_visibleMonth.year, _visibleMonth.month + 1, 0).day;
     final leadingBlanks = DateTime(_visibleMonth.year, _visibleMonth.month, 1).weekday - 1;
@@ -171,7 +169,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
               icon: const Icon(Icons.chevron_left),
             ),
             Text(
-              '${_monthNames[_visibleMonth.month - 1]} ${_visibleMonth.year}',
+              '${monthName(_visibleMonth.month, locale)} ${_visibleMonth.year}',
               style: appSerif(fontSize: 17),
             ),
             IconButton(
@@ -182,11 +180,11 @@ class _HistoryScreenState extends State<HistoryScreen> {
         ),
         const SizedBox(height: 8),
         Row(
-          children: _weekdayLabels
-              .map((label) => Expanded(
+          children: List.generate(7, (i) => i + 1)
+              .map((weekday) => Expanded(
                     child: Center(
                       child: Text(
-                        label,
+                        weekdayLabel(weekday, locale),
                         style: const TextStyle(fontSize: 12, color: AppColors.inkMuted),
                       ),
                     ),
@@ -249,11 +247,11 @@ class _HistoryScreenState extends State<HistoryScreen> {
     final entries = _monthEntriesDesc;
 
     if (entries.isEmpty) {
-      return const Padding(
-        padding: EdgeInsets.symmetric(vertical: 24),
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 24),
         child: Text(
-          'У цьому місяці ще немає записів.',
-          style: TextStyle(color: AppColors.inkMuted),
+          AppLocalizations.of(context).noEntriesThisMonth,
+          style: const TextStyle(color: AppColors.inkMuted),
         ),
       );
     }
@@ -288,7 +286,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                     Row(
                       children: [
                         Text(
-                          entry.mood.label,
+                          entry.mood.label(context),
                           style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
                         ),
                         const SizedBox(width: 8),
@@ -313,7 +311,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                   MaterialPageRoute(builder: (_) => DayCardScreen(entry: entry)),
                 ),
                 icon: const Icon(Icons.ios_share, size: 18),
-                tooltip: 'Картка дня',
+                tooltip: AppLocalizations.of(context).dayCard,
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints(),
                 visualDensity: VisualDensity.compact,
