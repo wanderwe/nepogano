@@ -1,8 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'l10n/app_localizations.dart';
-import 'main.dart';
 import 'style.dart';
+
+// Web Client ID з Google Cloud Console (той самий, що використовує Supabase
+// для Google-провайдера) — потрібен нативному Google Sign-In, щоб отримати
+// idToken, який Supabase зможе перевірити через signInWithIdToken.
+const _googleWebClientId =
+    '850571671108-6fpmkc0lnspkela5avrb3qqndnjrpm22.apps.googleusercontent.com';
 
 class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key});
@@ -68,20 +74,31 @@ class _AuthScreenState extends State<AuthScreen> {
       _loading = true;
       _errorMessage = null;
     });
-    googleSignInPending.value = true;
 
     try {
-      await _supabase.auth.signInWithOAuth(
-        OAuthProvider.google,
-        redirectTo: 'io.supabase.nepogano://login-callback',
+      // Нативний вхід через Google Play Services — без відкриття браузера,
+      // тому немає розриву застосунок→браузер→застосунок, який на деяких
+      // пристроях провокував тривалі мережеві збої одразу після повернення.
+      final googleUser = await GoogleSignIn(
+        serverClientId: _googleWebClientId,
+      ).signIn();
+      if (googleUser == null) {
+        // Юзер закрив вибір акаунта.
+        return;
+      }
+
+      final googleAuth = await googleUser.authentication;
+      final idToken = googleAuth.idToken;
+      if (idToken == null) {
+        throw const AuthException('No ID Token found.');
+      }
+
+      await _supabase.auth.signInWithIdToken(
+        provider: OAuthProvider.google,
+        idToken: idToken,
+        accessToken: googleAuth.accessToken,
       );
-      // Запобіжник: якщо юзер скасував вхід у браузері й повернувся без
-      // редіректу, зняти лоадер через деякий час замість вічного очікування.
-      Future.delayed(const Duration(seconds: 8), () {
-        googleSignInPending.value = false;
-      });
     } catch (e) {
-      googleSignInPending.value = false;
       if (mounted) {
         setState(() => _errorMessage = AppLocalizations.of(context).googleSignInFailed);
       }

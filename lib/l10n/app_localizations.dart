@@ -571,6 +571,12 @@ abstract class AppLocalizations {
   /// In uk, this message translates to:
   /// **'вчора'**
   String get yesterday;
+
+  /// No description provided for @thisMonth.
+  ///
+  /// In uk, this message translates to:
+  /// **'Цей місяць'**
+  String get thisMonth;
 }
 
 class _AppLocalizationsDelegate

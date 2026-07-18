@@ -257,4 +257,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get yesterday => 'yesterday';
+
+  @override
+  String get thisMonth => 'This month';
 }

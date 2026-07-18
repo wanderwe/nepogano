@@ -11,6 +11,10 @@ class AppColors {
   static const ink = Colors.white;
   static const inkMuted = Color(0xFF9B9B9B);
   static const divider = Color(0x1FFFFFFF);
+
+  /// Позначка "є щось нове" (непрочитана активність у колі) — навмисно
+  /// не збігається з жодним кольором шкали настрою (сірий/бурштиновий/бірюзовий).
+  static const notification = Color(0xFFFF6B8A);
 }
 
 class AppShadows {

@@ -1,8 +1,11 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:http/http.dart' as http;
+import 'package:http/retry.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'auth_screen.dart';
 import 'circles_screen.dart';
@@ -16,10 +19,6 @@ import 'style.dart';
 const supabaseUrl = 'https://wxxvqscmalcuurhvzufl.supabase.co';
 const supabaseAnonKey = 'sb_publishable_H5DIUfH_i4_Mm5VKSoAoNA__tT60BUI';
 
-/// Показує лоадер замість логін-екрана, поки триває обмін Google-коду на сесію
-/// (браузер повертається в застосунок раніше, ніж Supabase встигає завершити обмін).
-final ValueNotifier<bool> googleSignInPending = ValueNotifier<bool>(false);
-
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle.light);
@@ -28,6 +27,16 @@ Future<void> main() async {
   await Supabase.initialize(
     url: supabaseUrl,
     anonKey: supabaseAnonKey,
+    // На деяких пристроях перший мережевий запит після старту застосунку іноді
+    // ловить короткочасну DNS-помилку (SocketException: Failed host lookup),
+    // навіть коли мережа в порядку — і Dart-рівень не ретраїть це сам. Обгортаємо
+    // HTTP-клієнт автоматичним retry на такі помилки для всіх запитів Supabase.
+    httpClient: RetryClient(
+      http.Client(),
+      retries: 5,
+      delay: (retryCount) => Duration(milliseconds: 500 * (retryCount + 1)),
+      whenError: (error, stackTrace) => error is SocketException,
+    ),
   );
 
   runApp(const NepoganoApp());
@@ -94,17 +103,7 @@ class _AuthGateState extends State<AuthGate> {
         if (session != null) {
           return const CheckInScreen();
         }
-        return ValueListenableBuilder<bool>(
-          valueListenable: googleSignInPending,
-          builder: (context, pending, _) {
-            if (pending) {
-              return const Scaffold(
-                body: Center(child: CircularProgressIndicator()),
-              );
-            }
-            return const AuthScreen();
-          },
-        );
+        return const AuthScreen();
       },
     );
   }
@@ -467,16 +466,15 @@ class _CheckInScreenState extends State<CheckInScreen> {
                             tooltip: l10n.circle,
                           ),
                           if (_hasCircleActivity)
-                            Positioned(
+                            const Positioned(
                               top: 8,
                               right: 8,
-                              child: Container(
-                                width: 8,
-                                height: 8,
+                              child: DecoratedBox(
                                 decoration: BoxDecoration(
-                                  color: MoodLevel.zbs.color,
+                                  color: AppColors.notification,
                                   shape: BoxShape.circle,
                                 ),
+                                child: SizedBox(width: 8, height: 8),
                               ),
                             ),
                         ],
@@ -497,20 +495,6 @@ class _CheckInScreenState extends State<CheckInScreen> {
                   ),
                 ],
               ),
-              Text(
-                l10n.howAreThingsToday,
-                style: appSerif(fontSize: 28),
-              ),
-              if (_todayEntrySavedAt != null) ...[
-                const SizedBox(height: 6),
-                Text(
-                  l10n.alreadySavedToday(
-                    '${_todayEntrySavedAt!.hour.toString().padLeft(2, '0')}:'
-                    '${_todayEntrySavedAt!.minute.toString().padLeft(2, '0')}',
-                  ),
-                  style: const TextStyle(fontSize: 13, color: AppColors.inkMuted),
-                ),
-              ],
               Expanded(
                 child: Center(
                   child: SingleChildScrollView(
@@ -518,6 +502,21 @@ class _CheckInScreenState extends State<CheckInScreen> {
                       mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
+                        Text(
+                          l10n.howAreThingsToday,
+                          style: appSerif(fontSize: 28),
+                        ),
+                        if (_todayEntrySavedAt != null) ...[
+                          const SizedBox(height: 6),
+                          Text(
+                            l10n.alreadySavedToday(
+                              '${_todayEntrySavedAt!.hour.toString().padLeft(2, '0')}:'
+                              '${_todayEntrySavedAt!.minute.toString().padLeft(2, '0')}',
+                            ),
+                            style: const TextStyle(fontSize: 13, color: AppColors.inkMuted),
+                          ),
+                        ],
+                        const SizedBox(height: 32),
                         Row(
                           children: MoodLevel.values.map((mood) {
                             return Expanded(
@@ -697,6 +696,10 @@ class _MoreMenuSheet extends StatelessWidget {
               icon: Icons.logout,
               label: l10n.signOut,
               onTap: onSignOut,
+            ),
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 8),
+              child: Divider(color: AppColors.divider, height: 1),
             ),
             _MenuRow(
               icon: Icons.delete_outline,

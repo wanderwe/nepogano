@@ -29,6 +29,10 @@ class _HistoryScreenState extends State<HistoryScreen> {
   List<CheckinEntry> _entries = [];
   late DateTime _visibleMonth;
 
+  /// Ключі записів у списку внизу (по дню місяця), щоб можна було
+  /// проскролити до потрібного запису кліком по дню в календарі.
+  final Map<int, GlobalKey> _entryKeys = {};
+
   @override
   void initState() {
     super.initState();
@@ -85,6 +89,17 @@ class _HistoryScreenState extends State<HistoryScreen> {
     return _visibleMonth.year == now.year && _visibleMonth.month == now.month;
   }
 
+  void _scrollToDay(int day) {
+    final ctx = _entryKeys[day]?.currentContext;
+    if (ctx == null) return;
+    Scrollable.ensureVisible(
+      ctx,
+      duration: const Duration(milliseconds: 400),
+      curve: Curves.easeInOut,
+      alignment: 0.1,
+    );
+  }
+
   /// Останній запис на кожен день місяця (якщо їх декілька — переможе новіший)
   Map<int, CheckinEntry> get _entriesByDay {
     final map = <int, CheckinEntry>{};
@@ -103,6 +118,15 @@ class _HistoryScreenState extends State<HistoryScreen> {
         e.createdAt.month == _visibleMonth.month).toList();
     list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
     return list;
+  }
+
+  /// Скільки днів місяця припало на кожну оцінку (по одному дню — один запис).
+  Map<MoodLevel, int> get _monthMoodCounts {
+    final counts = <MoodLevel, int>{};
+    for (final entry in _entriesByDay.values) {
+      counts[entry.mood] = (counts[entry.mood] ?? 0) + 1;
+    }
+    return counts;
   }
 
   @override
@@ -214,23 +238,30 @@ class _HistoryScreenState extends State<HistoryScreen> {
 
             return AspectRatio(
               aspectRatio: 1,
-              child: Container(
-                decoration: BoxDecoration(
-                  color: entry != null
-                      ? entry.mood.color.withValues(alpha: 0.85)
-                      : AppColors.surface,
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: entry != null ? () => _scrollToDay(day) : null,
                   borderRadius: BorderRadius.circular(9),
-                  border: isToday ? Border.all(color: AppColors.ink, width: 1.5) : null,
-                ),
-                alignment: Alignment.center,
-                child: Text(
-                  '$day',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: entry != null ? FontWeight.w600 : FontWeight.w400,
-                    color: entry != null
-                        ? Colors.white
-                        : (isFuture ? Colors.white24 : AppColors.inkMuted),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: entry != null
+                          ? entry.mood.color.withValues(alpha: 0.85)
+                          : AppColors.surface,
+                      borderRadius: BorderRadius.circular(9),
+                      border: isToday ? Border.all(color: AppColors.ink, width: 1.5) : null,
+                    ),
+                    alignment: Alignment.center,
+                    child: Text(
+                      '$day',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: entry != null ? FontWeight.w600 : FontWeight.w400,
+                        color: entry != null
+                            ? Colors.white
+                            : (isFuture ? Colors.white24 : AppColors.inkMuted),
+                      ),
+                    ),
                   ),
                 ),
               ),
@@ -238,8 +269,70 @@ class _HistoryScreenState extends State<HistoryScreen> {
           },
         ),
         const SizedBox(height: 28),
+        _buildRetrospective(),
         _buildEntryList(),
       ],
+    );
+  }
+
+  Widget _buildRetrospective() {
+    final counts = _monthMoodCounts;
+    final moodsWithData = MoodLevel.values.where((m) => (counts[m] ?? 0) > 0).toList();
+    if (moodsWithData.isEmpty) return const SizedBox.shrink();
+
+    final l10n = AppLocalizations.of(context);
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 24),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(l10n.thisMonth, style: const TextStyle(fontSize: 13, color: AppColors.inkMuted)),
+          const SizedBox(height: 12),
+          Row(
+            children: moodsWithData.map((mood) {
+              return Expanded(
+                flex: counts[mood]!,
+                child: Container(
+                  height: 8,
+                  margin: EdgeInsets.only(right: mood == moodsWithData.last ? 0 : 3),
+                  decoration: BoxDecoration(
+                    color: mood.color,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 16,
+            runSpacing: 6,
+            children: moodsWithData.map((mood) {
+              return Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 8,
+                    height: 8,
+                    decoration: BoxDecoration(color: mood.color, shape: BoxShape.circle),
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    '${mood.label(context)} · ${counts[mood]}',
+                    style: const TextStyle(fontSize: 13, color: AppColors.inkMuted),
+                  ),
+                ],
+              );
+            }).toList(),
+          ),
+        ],
+      ),
     );
   }
 
@@ -256,13 +349,17 @@ class _HistoryScreenState extends State<HistoryScreen> {
       );
     }
 
+    _entryKeys.clear();
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: entries.map((entry) {
         final d = entry.createdAt;
         final dateLabel = '${d.day}.${d.month}.${d.year}';
+        final key = _entryKeys.putIfAbsent(d.day, () => GlobalKey());
 
         return Container(
+          key: key,
           margin: const EdgeInsets.only(bottom: 10),
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(

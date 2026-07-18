@@ -48,6 +48,7 @@ class RecentActivityItem {
   final String userId;
   final String displayEmail;
   final DateTime createdAt;
+  final bool isGuessed;
 
   RecentActivityItem({
     required this.circleId,
@@ -55,6 +56,7 @@ class RecentActivityItem {
     required this.userId,
     required this.displayEmail,
     required this.createdAt,
+    required this.isGuessed,
   });
 }
 
@@ -214,13 +216,29 @@ class _CirclesScreenState extends State<CirclesScreen> {
       return;
     }
 
-    final since = DateTime.now().subtract(const Duration(days: 3)).toUtc().toIso8601String();
+    final since = DateTime.now().subtract(const Duration(days: 3));
+    final sinceUtc = since.toUtc().toIso8601String();
     final checkinRows = await _supabase
         .from('checkins')
         .select('user_id, created_at')
         .inFilter('user_id', membersByUserId.keys.toList())
-        .gte('created_at', since)
+        .gte('created_at', sinceUtc)
         .order('created_at', ascending: false);
+
+    final sinceDate = DateTime(since.year, since.month, since.day).toIso8601String().split('T').first;
+    final guessRows = await _supabase
+        .from('circle_guesses')
+        .select('target_user_id, target_date')
+        .eq('guesser_id', myId)
+        .gte('target_date', sinceDate)
+        .inFilter('target_user_id', membersByUserId.keys.toList());
+
+    final guessedDatesByUser = <String, Set<String>>{};
+    for (final row in guessRows as List) {
+      final uid = row['target_user_id'] as String;
+      final date = row['target_date'] as String;
+      guessedDatesByUser.putIfAbsent(uid, () => {}).add(date);
+    }
 
     final circleNameById = {for (final c in _myCircles) c.id: c.name};
 
@@ -230,12 +248,15 @@ class _CirclesScreenState extends State<CirclesScreen> {
       final member = membersByUserId[uid];
       if (member == null) continue;
       final circleId = member['circle_id'] as String;
+      final createdAt = DateTime.parse(row['created_at'] as String).toLocal();
+      final entryDate = DateTime(createdAt.year, createdAt.month, createdAt.day).toIso8601String().split('T').first;
       activity.add(RecentActivityItem(
         circleId: circleId,
         circleName: circleNameById[circleId] ?? '',
         userId: uid,
         displayEmail: member['invited_email'] as String,
-        createdAt: DateTime.parse(row['created_at'] as String).toLocal(),
+        createdAt: createdAt,
+        isGuessed: guessedDatesByUser[uid]?.contains(entryDate) ?? false,
       ));
     }
 
@@ -439,7 +460,21 @@ class _CirclesScreenState extends State<CirclesScreen> {
                                     child: Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
-                                        Text(displayName, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                                        Row(
+                                          children: [
+                                            Text(displayName, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                                            if (!item.isGuessed) ...[
+                                              const SizedBox(width: 6),
+                                              const DecoratedBox(
+                                                decoration: BoxDecoration(
+                                                  color: AppColors.notification,
+                                                  shape: BoxShape.circle,
+                                                ),
+                                                child: SizedBox(width: 6, height: 6),
+                                              ),
+                                            ],
+                                          ],
+                                        ),
                                         const SizedBox(height: 2),
                                         Text(
                                           '${item.circleName} · ${_relativeDay(item.createdAt, l10n)}',

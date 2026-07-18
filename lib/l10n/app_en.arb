@@ -87,5 +87,7 @@
 
   "recentActivity": "Recent activity",
   "today": "today",
-  "yesterday": "yesterday"
+  "yesterday": "yesterday",
+
+  "thisMonth": "This month"
 }

@@ -258,4 +258,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get yesterday => 'вчора';
+
+  @override
+  String get thisMonth => 'Цей місяць';
 }

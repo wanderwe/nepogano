@@ -96,5 +96,7 @@
 
   "recentActivity": "Нещодавно",
   "today": "сьогодні",
-  "yesterday": "вчора"
+  "yesterday": "вчора",
+
+  "thisMonth": "Цей місяць"
 }

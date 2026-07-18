@@ -1,8 +1,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <application
-        android:label="nepogano"
+        android:label="Nepogano"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@mipmap/ic_launcher"
+        android:allowBackup="false"
+        android:fullBackupContent="false">
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -30,6 +32,15 @@
                 <category android:name="android.intent.category.BROWSABLE"/>
                 <data android:scheme="io.supabase.nepogano" android:host="login-callback"/>
             </intent-filter>
+            <!-- Вимикає вбудований авто-роутинг Flutter для диплінків: застосунок не
+                 використовує named routes, а OAuth-редірект (io.supabase.nepogano://...)
+                 обробляє окремо supabase_flutter. Без цього Flutter намагається сам
+                 трактувати той URI як named route, не знаходить його і падає на
+                 onUnknownRoute (null) — це ламає обробку Google-логіну після
+                 повернення з браузера. -->
+            <meta-data
+                android:name="flutter_deeplinking_enabled"
+                android:value="false" />
         </activity>
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
