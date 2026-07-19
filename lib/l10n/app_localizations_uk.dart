@@ -42,6 +42,50 @@ class AppLocalizationsUk extends AppLocalizations {
   String get moodZbs => 'Збс';
 
   @override
+  String get skip => 'Пропустити';
+
+  @override
+  String get next => 'Далі';
+
+  @override
+  String get getStarted => 'Почати';
+
+  @override
+  String get onboarding1Headline => 'Не кожен день неймовірний';
+
+  @override
+  String get onboarding1Body =>
+      'І це нормально. Тут не треба прикрашати — просто чесно зафіксуй, як минув день.';
+
+  @override
+  String get onboarding2Headline => 'Ніяк. Непогано. Збс.';
+
+  @override
+  String get onboarding2Body =>
+      'Три прості оцінки без пафосу. Жодного тиску відповідати \"чудово\", коли насправді \"так собі\".';
+
+  @override
+  String get onboarding3Headline => 'Без стріків і тиску';
+
+  @override
+  String get onboarding3Body =>
+      'Заходь, коли хочеш. Це не про дисципліну — це про чесність із собою.';
+
+  @override
+  String get onboarding4Headline => 'Кола близьких';
+
+  @override
+  String get onboarding4Body =>
+      'Створи коло з друзями чи родиною, побач їхній настрій і спробуй вгадати, як минув їхній день.';
+
+  @override
+  String get onboarding5Headline => 'Погляд на місяць';
+
+  @override
+  String get onboarding5Body =>
+      'Записи складаються в спокійну ретроспективу — без оцінок, просто дзеркало твого місяця.';
+
+  @override
   String get circle => 'Коло';
 
   @override

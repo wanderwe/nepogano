@@ -42,6 +42,50 @@ class AppLocalizationsEn extends AppLocalizations {
   String get moodZbs => 'Awesome';
 
   @override
+  String get skip => 'Skip';
+
+  @override
+  String get next => 'Next';
+
+  @override
+  String get getStarted => 'Get started';
+
+  @override
+  String get onboarding1Headline => 'Not every day is amazing';
+
+  @override
+  String get onboarding1Body =>
+      'And that\'s fine. No need to dress it up here — just honestly note how the day went.';
+
+  @override
+  String get onboarding2Headline => 'Meh. Not bad. Awesome.';
+
+  @override
+  String get onboarding2Body =>
+      'Three plain ratings, no hype. No pressure to say \"amazing\" when it was really just okay.';
+
+  @override
+  String get onboarding3Headline => 'No streaks, no pressure';
+
+  @override
+  String get onboarding3Body =>
+      'Check in whenever you want. This isn\'t about discipline — it\'s about being honest with yourself.';
+
+  @override
+  String get onboarding4Headline => 'Circles of close friends';
+
+  @override
+  String get onboarding4Body =>
+      'Start a circle with friends or family, see how they\'re doing, and try to guess how their day went.';
+
+  @override
+  String get onboarding5Headline => 'A look back at your month';
+
+  @override
+  String get onboarding5Body =>
+      'Your entries add up into a quiet retrospective — no scoring, just a mirror of your month.';
+
+  @override
   String get circle => 'Circle';
 
   @override

@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/retry.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'auth_screen.dart';
 import 'circles_screen.dart';
@@ -14,6 +15,7 @@ import 'day_card_screen.dart';
 import 'history_screen.dart';
 import 'l10n/app_localizations.dart';
 import 'locale_provider.dart';
+import 'onboarding_screen.dart';
 import 'style.dart';
 
 // TODO: встав сюди свій Project URL і anon key з Supabase (Settings → API)
@@ -105,9 +107,13 @@ class AuthGate extends StatefulWidget {
   State<AuthGate> createState() => _AuthGateState();
 }
 
+const _onboardingSeenKey = 'onboarding_seen';
+
 class _AuthGateState extends State<AuthGate> {
   late final Stream<AuthState> _authStateStream;
   StreamSubscription<AuthState>? _authSub;
+  bool _onboardingChecked = false;
+  bool _onboardingSeen = false;
 
   @override
   void initState() {
@@ -118,6 +124,22 @@ class _AuthGateState extends State<AuthGate> {
     // AppLocalizations.of(context) не можна викликати всередині initState —
     // відкладаємо першу перевірку на момент після першого кадру.
     WidgetsBinding.instance.addPostFrameCallback((_) => _tryPendingJoin());
+    _loadOnboardingSeen();
+  }
+
+  Future<void> _loadOnboardingSeen() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (!mounted) return;
+    setState(() {
+      _onboardingSeen = prefs.getBool(_onboardingSeenKey) ?? false;
+      _onboardingChecked = true;
+    });
+  }
+
+  Future<void> _markOnboardingSeen() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_onboardingSeenKey, true);
+    if (mounted) setState(() => _onboardingSeen = true);
   }
 
   @override
@@ -154,6 +176,12 @@ class _AuthGateState extends State<AuthGate> {
         final session = Supabase.instance.client.auth.currentSession;
         if (session != null) {
           return const CheckInScreen();
+        }
+        if (!_onboardingChecked) {
+          return const Scaffold(backgroundColor: AppColors.background);
+        }
+        if (!_onboardingSeen) {
+          return OnboardingScreen(onDone: _markOnboardingSeen);
         }
         return const AuthScreen();
       },

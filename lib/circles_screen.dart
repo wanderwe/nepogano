@@ -8,6 +8,30 @@ import 'l10n/app_localizations.dart';
 import 'main.dart';
 import 'style.dart';
 
+/// Унікальний ключ для (учасник, день) — щоб кожен день зберігав власний
+/// статус вгадування незалежно від інших днів того самого учасника.
+String _entryKey(String userId, DateTime date) =>
+    '$userId|${date.year}-${date.month}-${date.day}';
+
+/// Один чек-ін конкретного учасника за конкретний день у вікні "нещодавно"
+/// (останні 3 дні) — на відміну від "тільки останній запис", дозволяє
+/// бачити й вгадувати кожен день окремо.
+class _MemberDayEntry {
+  final String userId;
+  final String displayEmail;
+  final MoodLevel mood;
+  final String? note;
+  final DateTime date;
+
+  _MemberDayEntry({
+    required this.userId,
+    required this.displayEmail,
+    required this.mood,
+    required this.note,
+    required this.date,
+  });
+}
+
 String _relativeDay(DateTime dateTime, AppLocalizations l10n) {
   final now = DateTime.now();
   final today = DateTime(now.year, now.month, now.day);
@@ -610,9 +634,7 @@ class _CircleDetailScreenState extends State<CircleDetailScreen> {
   bool _loading = true;
   List<CircleMember> _members = [];
   List<CircleMember> _pendingMembers = [];
-  final Map<String, MoodLevel?> _latestMoods = {};
-  final Map<String, String?> _latestNotes = {};
-  final Map<String, DateTime> _latestDates = {};
+  List<_MemberDayEntry> _recentEntries = [];
   final Map<String, String?> _myGuesses = {};
   final Set<String> _expandedDetails = {};
 
@@ -647,16 +669,18 @@ class _CircleDetailScreenState extends State<CircleDetailScreen> {
 
     final myId = _supabase.auth.currentUser!.id;
     final otherIds = members.map((m) => m.userId).whereType<String>().where((id) => id != myId).toList();
+    final emailByUserId = {
+      for (final m in members)
+        if (m.userId != null) m.userId!: m.invitedEmail,
+    };
 
-    final moods = <String, MoodLevel?>{};
-    final notes = <String, String?>{};
-    final dates = <String, DateTime>{};
+    final entries = <_MemberDayEntry>[];
     final guesses = <String, String?>{};
 
     if (otherIds.isNotEmpty) {
-      // Останній запис кожного за останні 3 дні — не тільки сьогоднішній,
-      // щоб стрічка "Нещодавно" (яка сягає на кілька днів назад) завжди
-      // вела до чогось, що реально можна побачити й здогадати.
+      // Кожен день кожного за останні 3 дні окремо (не тільки останній) —
+      // щоб стрічка "Нещодавно" (яка сягає на кілька днів назад) вела до
+      // конкретного дня, а не завжди до того, що зараз найновіше.
       final since = DateTime.now().subtract(const Duration(days: 3));
       final sinceUtc = DateTime(since.year, since.month, since.day).toUtc().toIso8601String();
 
@@ -667,50 +691,47 @@ class _CircleDetailScreenState extends State<CircleDetailScreen> {
           .gte('created_at', sinceUtc)
           .order('created_at', ascending: false);
 
+      final seenDayKeys = <String>{};
       for (final row in checkinRows as List) {
         final uid = row['user_id'] as String;
-        if (moods.containsKey(uid)) continue; // перший у desc-порядку = найновіший
-        moods[uid] = moodFromDbValue(row['mood'] as String);
-        notes[uid] = row['note'] as String?;
-        dates[uid] = DateTime.parse(row['created_at'] as String).toLocal();
+        final createdAt = DateTime.parse(row['created_at'] as String).toLocal();
+        final date = DateTime(createdAt.year, createdAt.month, createdAt.day);
+        // На день гарантовано один чек-ін, але про всяк випадок лишаємо
+        // найновіший запис цього дня (перший у desc-порядку).
+        if (!seenDayKeys.add(_entryKey(uid, date))) continue;
+        entries.add(_MemberDayEntry(
+          userId: uid,
+          displayEmail: emailByUserId[uid] ?? '',
+          mood: moodFromDbValue(row['mood'] as String),
+          note: row['note'] as String?,
+          date: date,
+        ));
       }
 
-      if (moods.isNotEmpty) {
+      if (entries.isNotEmpty) {
         final sinceDate = DateTime(since.year, since.month, since.day).toIso8601String().split('T').first;
         final guessRows = await _supabase
             .from('circle_guesses')
             .select('target_user_id, guessed_mood, target_date')
             .eq('guesser_id', myId)
             .gte('target_date', sinceDate)
-            .inFilter('target_user_id', moods.keys.toList());
+            .inFilter('target_user_id', otherIds);
 
         for (final row in guessRows as List) {
           final uid = row['target_user_id'] as String;
-          final entryDate = dates[uid];
           final targetDate = DateTime.parse(row['target_date'] as String);
-          if (entryDate != null &&
-              targetDate.year == entryDate.year &&
-              targetDate.month == entryDate.month &&
-              targetDate.day == entryDate.day) {
-            guesses[uid] = row['guessed_mood'] as String;
-          }
+          guesses[_entryKey(uid, targetDate)] = row['guessed_mood'] as String;
         }
       }
     }
+
+    entries.sort((a, b) => b.date.compareTo(a.date));
 
     if (!mounted) return;
     setState(() {
       _members = members;
       _pendingMembers = pending;
-      _latestMoods
-        ..clear()
-        ..addAll(moods);
-      _latestNotes
-        ..clear()
-        ..addAll(notes);
-      _latestDates
-        ..clear()
-        ..addAll(dates);
+      _recentEntries = entries;
       _myGuesses
         ..clear()
         ..addAll(guesses);
@@ -718,22 +739,18 @@ class _CircleDetailScreenState extends State<CircleDetailScreen> {
     });
   }
 
-  Future<void> _guess(String targetUserId, MoodLevel guessedMood) async {
-    final actualMood = _latestMoods[targetUserId];
-    final entryDate = _latestDates[targetUserId];
-    if (actualMood == null || entryDate == null) return;
-
-    final targetDate = DateTime(entryDate.year, entryDate.month, entryDate.day).toIso8601String().split('T').first;
+  Future<void> _guess(_MemberDayEntry entry, MoodLevel guessedMood) async {
+    final targetDate = entry.date.toIso8601String().split('T').first;
 
     try {
       await _supabase.from('circle_guesses').insert({
         'guesser_id': _supabase.auth.currentUser!.id,
-        'target_user_id': targetUserId,
+        'target_user_id': entry.userId,
         'target_date': targetDate,
         'guessed_mood': guessedMood.dbValue,
-        'correct': guessedMood == actualMood,
+        'correct': guessedMood == entry.mood,
       });
-      setState(() => _myGuesses[targetUserId] = guessedMood.dbValue);
+      setState(() => _myGuesses[_entryKey(entry.userId, entry.date)] = guessedMood.dbValue);
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -937,7 +954,10 @@ class _CircleDetailScreenState extends State<CircleDetailScreen> {
                       else if (others.isNotEmpty) ...[
                         Text(l10n.circle, style: const TextStyle(fontSize: 13, color: AppColors.inkMuted)),
                         const SizedBox(height: 8),
-                        ...others.map(_buildMemberCard),
+                        ..._recentEntries.map(_buildEntryCard),
+                        ...others
+                            .where((m) => !_recentEntries.any((e) => e.userId == m.userId))
+                            .map(_buildNoEntryCard),
                       ],
                     ],
                   ),
@@ -949,16 +969,39 @@ class _CircleDetailScreenState extends State<CircleDetailScreen> {
     );
   }
 
-  Widget _buildMemberCard(CircleMember member) {
+  Widget _buildNoEntryCard(CircleMember member) {
     final l10n = AppLocalizations.of(context);
     final displayName = member.invitedEmail.split('@').first;
-    final actualMood = _latestMoods[member.userId];
-    final entryDate = _latestDates[member.userId];
-    final myGuess = member.userId != null ? _myGuesses[member.userId] : null;
-    final isToday = entryDate != null &&
-        entryDate.year == DateTime.now().year &&
-        entryDate.month == DateTime.now().month &&
-        entryDate.day == DateTime.now().day;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(displayName, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+          const SizedBox(height: 12),
+          Text(
+            l10n.notCheckedInToday,
+            style: const TextStyle(fontSize: 13, color: AppColors.inkMuted),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEntryCard(_MemberDayEntry entry) {
+    final l10n = AppLocalizations.of(context);
+    final displayName = entry.displayEmail.split('@').first;
+    final key = _entryKey(entry.userId, entry.date);
+    final myGuess = _myGuesses[key];
+    final isToday = entry.date.year == DateTime.now().year &&
+        entry.date.month == DateTime.now().month &&
+        entry.date.day == DateTime.now().day;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -973,57 +1016,52 @@ class _CircleDetailScreenState extends State<CircleDetailScreen> {
           Row(
             children: [
               Text(displayName, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
-              if (entryDate != null && !isToday) ...[
+              if (!isToday) ...[
                 const SizedBox(width: 8),
                 Text(
-                  _relativeDay(entryDate, l10n),
+                  _relativeDay(entry.date, l10n),
                   style: const TextStyle(fontSize: 12, color: AppColors.inkMuted),
                 ),
               ],
             ],
           ),
           const SizedBox(height: 12),
-          if (actualMood == null)
-            Text(
-              l10n.notCheckedInToday,
-              style: const TextStyle(fontSize: 13, color: AppColors.inkMuted),
-            )
-          else if (myGuess != null) ...[
+          if (myGuess != null) ...[
             Row(
               children: [
                 Container(
                   width: 10,
                   height: 10,
-                  decoration: BoxDecoration(color: actualMood.color, shape: BoxShape.circle),
+                  decoration: BoxDecoration(color: entry.mood.color, shape: BoxShape.circle),
                 ),
                 const SizedBox(width: 8),
-                Text(actualMood.label(context), style: const TextStyle(fontSize: 14)),
+                Text(entry.mood.label(context), style: const TextStyle(fontSize: 14)),
                 const SizedBox(width: 10),
                 Text(
-                  myGuess == actualMood.dbValue ? l10n.guessedRight : l10n.guessedWrong,
+                  myGuess == entry.mood.dbValue ? l10n.guessedRight : l10n.guessedWrong,
                   style: const TextStyle(fontSize: 12, color: AppColors.inkMuted),
                 ),
               ],
             ),
-            if ((_latestNotes[member.userId] ?? '').isNotEmpty) ...[
+            if ((entry.note ?? '').isNotEmpty) ...[
               const SizedBox(height: 8),
               InkWell(
                 onTap: () => setState(() {
-                  if (_expandedDetails.contains(member.userId)) {
-                    _expandedDetails.remove(member.userId);
+                  if (_expandedDetails.contains(key)) {
+                    _expandedDetails.remove(key);
                   } else {
-                    _expandedDetails.add(member.userId!);
+                    _expandedDetails.add(key);
                   }
                 }),
                 child: Text(
-                  _expandedDetails.contains(member.userId) ? l10n.hideDetails : l10n.showDetails,
+                  _expandedDetails.contains(key) ? l10n.hideDetails : l10n.showDetails,
                   style: TextStyle(fontSize: 12, color: MoodLevel.zbs.color),
                 ),
               ),
-              if (_expandedDetails.contains(member.userId)) ...[
+              if (_expandedDetails.contains(key)) ...[
                 const SizedBox(height: 6),
                 Text(
-                  _latestNotes[member.userId]!,
+                  entry.note!,
                   style: const TextStyle(fontSize: 13, color: AppColors.inkMuted, height: 1.4),
                 ),
               ],
@@ -1039,7 +1077,7 @@ class _CircleDetailScreenState extends State<CircleDetailScreen> {
                 return Padding(
                   padding: const EdgeInsets.only(right: 8),
                   child: OutlinedButton(
-                    onPressed: member.userId == null ? null : () => _guess(member.userId!, mood),
+                    onPressed: () => _guess(entry, mood),
                     style: OutlinedButton.styleFrom(
                       side: BorderSide(color: mood.color),
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),

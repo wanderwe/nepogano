@@ -164,6 +164,84 @@ abstract class AppLocalizations {
   /// **'Збс'**
   String get moodZbs;
 
+  /// No description provided for @skip.
+  ///
+  /// In uk, this message translates to:
+  /// **'Пропустити'**
+  String get skip;
+
+  /// No description provided for @next.
+  ///
+  /// In uk, this message translates to:
+  /// **'Далі'**
+  String get next;
+
+  /// No description provided for @getStarted.
+  ///
+  /// In uk, this message translates to:
+  /// **'Почати'**
+  String get getStarted;
+
+  /// No description provided for @onboarding1Headline.
+  ///
+  /// In uk, this message translates to:
+  /// **'Не кожен день неймовірний'**
+  String get onboarding1Headline;
+
+  /// No description provided for @onboarding1Body.
+  ///
+  /// In uk, this message translates to:
+  /// **'І це нормально. Тут не треба прикрашати — просто чесно зафіксуй, як минув день.'**
+  String get onboarding1Body;
+
+  /// No description provided for @onboarding2Headline.
+  ///
+  /// In uk, this message translates to:
+  /// **'Ніяк. Непогано. Збс.'**
+  String get onboarding2Headline;
+
+  /// No description provided for @onboarding2Body.
+  ///
+  /// In uk, this message translates to:
+  /// **'Три прості оцінки без пафосу. Жодного тиску відповідати \"чудово\", коли насправді \"так собі\".'**
+  String get onboarding2Body;
+
+  /// No description provided for @onboarding3Headline.
+  ///
+  /// In uk, this message translates to:
+  /// **'Без стріків і тиску'**
+  String get onboarding3Headline;
+
+  /// No description provided for @onboarding3Body.
+  ///
+  /// In uk, this message translates to:
+  /// **'Заходь, коли хочеш. Це не про дисципліну — це про чесність із собою.'**
+  String get onboarding3Body;
+
+  /// No description provided for @onboarding4Headline.
+  ///
+  /// In uk, this message translates to:
+  /// **'Кола близьких'**
+  String get onboarding4Headline;
+
+  /// No description provided for @onboarding4Body.
+  ///
+  /// In uk, this message translates to:
+  /// **'Створи коло з друзями чи родиною, побач їхній настрій і спробуй вгадати, як минув їхній день.'**
+  String get onboarding4Body;
+
+  /// No description provided for @onboarding5Headline.
+  ///
+  /// In uk, this message translates to:
+  /// **'Погляд на місяць'**
+  String get onboarding5Headline;
+
+  /// No description provided for @onboarding5Body.
+  ///
+  /// In uk, this message translates to:
+  /// **'Записи складаються в спокійну ретроспективу — без оцінок, просто дзеркало твого місяця.'**
+  String get onboarding5Body;
+
   /// No description provided for @circle.
   ///
   /// In uk, this message translates to:
