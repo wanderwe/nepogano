@@ -226,6 +226,35 @@ class AppLocalizationsEn extends AppLocalizations {
   String get couldNotCancelInvite => 'Couldn\'t cancel the invite.';
 
   @override
+  String get shareInviteLink => 'Share invite';
+
+  @override
+  String inviteShareText(String circleName, String code) {
+    return 'Join my circle \"$circleName\" on Nepogano!\n\nInstall the app and enter this invite code: $code';
+  }
+
+  @override
+  String get joinCircle => 'Join a circle';
+
+  @override
+  String get joinCircleHint => 'Invite code';
+
+  @override
+  String get join => 'Join';
+
+  @override
+  String get invalidInviteCode => 'Invalid invite code.';
+
+  @override
+  String get joinedCircleSuccess => 'Done! You\'ve joined the circle.';
+
+  @override
+  String get haveInviteCode => 'I have an invite code';
+
+  @override
+  String get inviteByEmail => 'Invite by email';
+
+  @override
   String get notCheckedInToday => 'No news in a while';
 
   @override

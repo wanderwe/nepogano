@@ -84,6 +84,21 @@
   "inviteAdded": "Додано. Людина побачить запрошення, коли відкриє \"Коло\" в застосунку.",
   "couldNotInvite": "Не вдалось запросити. Можливо, вже запрошений.",
   "couldNotCancelInvite": "Не вдалось скасувати запрошення.",
+  "shareInviteLink": "Поділитися запрошенням",
+  "inviteShareText": "Приєднайся до мого кола \"{circleName}\" у Nepogano!\n\nВстанови застосунок і введи код запрошення: {code}",
+  "@inviteShareText": {
+    "placeholders": {
+      "circleName": { "type": "String" },
+      "code": { "type": "String" }
+    }
+  },
+  "joinCircle": "Приєднатися до кола",
+  "joinCircleHint": "Код запрошення",
+  "join": "Приєднатися",
+  "invalidInviteCode": "Невірний код запрошення.",
+  "joinedCircleSuccess": "Готово! Ти приєднався(лась) до кола.",
+  "haveInviteCode": "Маю код запрошення",
+  "inviteByEmail": "Запросити по email",
   "notCheckedInToday": "Давно не було новин",
   "guessedRight": "вгадав(ла)",
   "guessedWrong": "не вгадав(ла)",

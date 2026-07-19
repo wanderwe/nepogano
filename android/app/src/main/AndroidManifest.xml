@@ -32,6 +32,15 @@
                 <category android:name="android.intent.category.BROWSABLE"/>
                 <data android:scheme="io.supabase.nepogano" android:host="login-callback"/>
             </intent-filter>
+            <!-- Запрошення в коло: io.supabase.nepogano://join/<code> — одразу
+                 приєднує до кола без ручного введення коду, якщо застосунок уже
+                 встановлений. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="io.supabase.nepogano" android:host="join"/>
+            </intent-filter>
             <!-- Вимикає вбудований авто-роутинг Flutter для диплінків: застосунок не
                  використовує named routes, а OAuth-редірект (io.supabase.nepogano://...)
                  обробляє окремо supabase_flutter. Без цього Flutter намагається сам

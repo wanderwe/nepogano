@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'l10n/app_localizations.dart';
@@ -22,8 +23,14 @@ class Circle {
   final String id;
   final String name;
   final String ownerId;
+  final String inviteCode;
 
-  Circle({required this.id, required this.name, required this.ownerId});
+  Circle({
+    required this.id,
+    required this.name,
+    required this.ownerId,
+    required this.inviteCode,
+  });
 }
 
 class CircleMember {
@@ -161,7 +168,7 @@ class _CirclesScreenState extends State<CirclesScreen> {
 
       final memberRows = await _supabase
           .from('circle_members')
-          .select('circle_id, circles(id, name, owner_id)')
+          .select('circle_id, circles(id, name, owner_id, invite_code)')
           .eq('user_id', _supabase.auth.currentUser!.id)
           .eq('status', 'accepted');
 
@@ -175,7 +182,12 @@ class _CirclesScreenState extends State<CirclesScreen> {
       setState(() {
         _myCircles = (memberRows as List).map((row) {
           final c = row['circles'];
-          return Circle(id: c['id'], name: c['name'], ownerId: c['owner_id']);
+          return Circle(
+            id: c['id'],
+            name: c['name'],
+            ownerId: c['owner_id'],
+            inviteCode: c['invite_code'],
+          );
         }).toList();
         _pendingInvites = (inviteRows as List).cast<Map<String, dynamic>>();
         _loading = false;
@@ -279,6 +291,54 @@ class _CirclesScreenState extends State<CirclesScreen> {
     }
   }
 
+  Future<void> _joinByCode() async {
+    final l10n = AppLocalizations.of(context);
+    final controller = TextEditingController();
+    final code = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppColors.surfaceRaised,
+        title: Text(l10n.joinCircle),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          textCapitalization: TextCapitalization.none,
+          decoration: InputDecoration(hintText: l10n.joinCircleHint),
+        ),
+        actionsAlignment: MainAxisAlignment.center,
+        actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text(l10n.cancel),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(controller.text.trim()),
+            child: Text(l10n.join),
+          ),
+        ],
+      ),
+    );
+
+    if (code == null || code.isEmpty) return;
+
+    try {
+      await _supabase.rpc('join_circle_by_code', params: {'code': code});
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.joinedCircleSuccess)),
+        );
+      }
+      _load();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.invalidInviteCode)),
+        );
+      }
+    }
+  }
+
   Future<void> _createCircle() async {
     final l10n = AppLocalizations.of(context);
     final controller = TextEditingController();
@@ -354,6 +414,11 @@ class _CirclesScreenState extends State<CirclesScreen> {
                   ),
                   const SizedBox(width: 4),
                   Expanded(child: Text(l10n.circle, style: appSerif(fontSize: 22))),
+                  IconButton(
+                    onPressed: _joinByCode,
+                    icon: const Icon(Icons.vpn_key_outlined, size: 20),
+                    tooltip: l10n.haveInviteCode,
+                  ),
                   IconButton(
                     onPressed: _createCircle,
                     icon: const Icon(Icons.add, size: 22),
@@ -495,6 +560,36 @@ class _CirclesScreenState extends State<CirclesScreen> {
                 ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _CircleMenuRow extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  const _CircleMenuRow({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(14),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+        child: Row(
+          children: [
+            Icon(icon, size: 20, color: AppColors.ink),
+            const SizedBox(width: 16),
+            Text(label, style: const TextStyle(fontSize: 16, color: AppColors.ink)),
+          ],
         ),
       ),
     );
@@ -650,6 +745,46 @@ class _CircleDetailScreenState extends State<CircleDetailScreen> {
 
   Future<void> _invite() async {
     final l10n = AppLocalizations.of(context);
+    final choice = await showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: AppColors.surfaceRaised,
+      builder: (context) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(8, 12, 8, 8),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _CircleMenuRow(
+                icon: Icons.ios_share,
+                label: l10n.shareInviteLink,
+                onTap: () => Navigator.of(context).pop('link'),
+              ),
+              _CircleMenuRow(
+                icon: Icons.email_outlined,
+                label: l10n.inviteByEmail,
+                onTap: () => Navigator.of(context).pop('email'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    if (choice == 'link') {
+      await _shareInviteLink();
+    } else if (choice == 'email') {
+      await _inviteByEmail();
+    }
+  }
+
+  Future<void> _shareInviteLink() async {
+    final l10n = AppLocalizations.of(context);
+    final text = l10n.inviteShareText(widget.circle.name, widget.circle.inviteCode);
+    await SharePlus.instance.share(ShareParams(text: text));
+  }
+
+  Future<void> _inviteByEmail() async {
+    final l10n = AppLocalizations.of(context);
     final controller = TextEditingController();
     final email = await showDialog<String>(
       context: context,
@@ -684,14 +819,14 @@ class _CircleDetailScreenState extends State<CircleDetailScreen> {
       });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(AppLocalizations.of(context).inviteAdded)),
+          SnackBar(content: Text(l10n.inviteAdded)),
         );
       }
       _load();
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(AppLocalizations.of(context).couldNotInvite)),
+          SnackBar(content: Text(l10n.couldNotInvite)),
         );
       }
     }

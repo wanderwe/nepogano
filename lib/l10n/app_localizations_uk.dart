@@ -227,6 +227,35 @@ class AppLocalizationsUk extends AppLocalizations {
   String get couldNotCancelInvite => 'Не вдалось скасувати запрошення.';
 
   @override
+  String get shareInviteLink => 'Поділитися запрошенням';
+
+  @override
+  String inviteShareText(String circleName, String code) {
+    return 'Приєднайся до мого кола \"$circleName\" у Nepogano!\n\nВстанови застосунок і введи код запрошення: $code';
+  }
+
+  @override
+  String get joinCircle => 'Приєднатися до кола';
+
+  @override
+  String get joinCircleHint => 'Код запрошення';
+
+  @override
+  String get join => 'Приєднатися';
+
+  @override
+  String get invalidInviteCode => 'Невірний код запрошення.';
+
+  @override
+  String get joinedCircleSuccess => 'Готово! Ти приєднався(лась) до кола.';
+
+  @override
+  String get haveInviteCode => 'Маю код запрошення';
+
+  @override
+  String get inviteByEmail => 'Запросити по email';
+
+  @override
   String get notCheckedInToday => 'Давно не було новин';
 
   @override

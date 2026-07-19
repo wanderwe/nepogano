@@ -506,6 +506,60 @@ abstract class AppLocalizations {
   /// **'Не вдалось скасувати запрошення.'**
   String get couldNotCancelInvite;
 
+  /// No description provided for @shareInviteLink.
+  ///
+  /// In uk, this message translates to:
+  /// **'Поділитися запрошенням'**
+  String get shareInviteLink;
+
+  /// No description provided for @inviteShareText.
+  ///
+  /// In uk, this message translates to:
+  /// **'Приєднайся до мого кола \"{circleName}\" у Nepogano!\n\nВстанови застосунок і введи код запрошення: {code}'**
+  String inviteShareText(String circleName, String code);
+
+  /// No description provided for @joinCircle.
+  ///
+  /// In uk, this message translates to:
+  /// **'Приєднатися до кола'**
+  String get joinCircle;
+
+  /// No description provided for @joinCircleHint.
+  ///
+  /// In uk, this message translates to:
+  /// **'Код запрошення'**
+  String get joinCircleHint;
+
+  /// No description provided for @join.
+  ///
+  /// In uk, this message translates to:
+  /// **'Приєднатися'**
+  String get join;
+
+  /// No description provided for @invalidInviteCode.
+  ///
+  /// In uk, this message translates to:
+  /// **'Невірний код запрошення.'**
+  String get invalidInviteCode;
+
+  /// No description provided for @joinedCircleSuccess.
+  ///
+  /// In uk, this message translates to:
+  /// **'Готово! Ти приєднався(лась) до кола.'**
+  String get joinedCircleSuccess;
+
+  /// No description provided for @haveInviteCode.
+  ///
+  /// In uk, this message translates to:
+  /// **'Маю код запрошення'**
+  String get haveInviteCode;
+
+  /// No description provided for @inviteByEmail.
+  ///
+  /// In uk, this message translates to:
+  /// **'Запросити по email'**
+  String get inviteByEmail;
+
   /// No description provided for @notCheckedInToday.
   ///
   /// In uk, this message translates to:

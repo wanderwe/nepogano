@@ -75,6 +75,21 @@
   "inviteAdded": "Added. They'll see the invite when they open \"Circle\" in the app.",
   "couldNotInvite": "Couldn't invite. They may already be invited.",
   "couldNotCancelInvite": "Couldn't cancel the invite.",
+  "shareInviteLink": "Share invite",
+  "inviteShareText": "Join my circle \"{circleName}\" on Nepogano!\n\nInstall the app and enter this invite code: {code}",
+  "@inviteShareText": {
+    "placeholders": {
+      "circleName": { "type": "String" },
+      "code": { "type": "String" }
+    }
+  },
+  "joinCircle": "Join a circle",
+  "joinCircleHint": "Invite code",
+  "join": "Join",
+  "invalidInviteCode": "Invalid invite code.",
+  "joinedCircleSuccess": "Done! You've joined the circle.",
+  "haveInviteCode": "I have an invite code",
+  "inviteByEmail": "Invite by email",
   "notCheckedInToday": "No news in a while",
   "guessedRight": "you got it",
   "guessedWrong": "not quite",

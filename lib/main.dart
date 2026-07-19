@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:app_links/app_links.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -18,6 +19,20 @@ import 'style.dart';
 // TODO: встав сюди свій Project URL і anon key з Supabase (Settings → API)
 const supabaseUrl = 'https://wxxvqscmalcuurhvzufl.supabase.co';
 const supabaseAnonKey = 'sb_publishable_H5DIUfH_i4_Mm5VKSoAoNA__tT60BUI';
+
+/// Показує SnackBar незалежно від того, який екран зараз активний —
+/// потрібно, щоб підтвердити автоприєднання до кола за диплінком.
+final scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
+
+/// Код запрошення в коло з диплінку (io.supabase.nepogano://join/<code>),
+/// що чекає на автора, поки той не залогіниться (диплінк може прийти ще до
+/// входу в застосунок).
+final ValueNotifier<String?> pendingJoinCode = ValueNotifier<String?>(null);
+
+void _handleJoinLink(Uri? uri) {
+  if (uri == null || uri.host != 'join' || uri.pathSegments.isEmpty) return;
+  pendingJoinCode.value = uri.pathSegments.first;
+}
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -38,6 +53,10 @@ Future<void> main() async {
       whenError: (error, stackTrace) => error is SocketException,
     ),
   );
+
+  final appLinks = AppLinks();
+  unawaited(appLinks.getInitialLink().then(_handleJoinLink));
+  appLinks.uriLinkStream.listen(_handleJoinLink);
 
   runApp(const NepoganoApp());
 }
@@ -66,6 +85,7 @@ class NepoganoApp extends StatelessWidget {
         return MaterialApp(
           title: 'Nepogano',
           debugShowCheckedModeBanner: false,
+          scaffoldMessengerKey: scaffoldMessengerKey,
           theme: base.copyWith(textTheme: GoogleFonts.interTextTheme(base.textTheme)),
           locale: locale,
           localizationsDelegates: AppLocalizations.localizationsDelegates,
@@ -87,11 +107,43 @@ class AuthGate extends StatefulWidget {
 
 class _AuthGateState extends State<AuthGate> {
   late final Stream<AuthState> _authStateStream;
+  StreamSubscription<AuthState>? _authSub;
 
   @override
   void initState() {
     super.initState();
     _authStateStream = Supabase.instance.client.auth.onAuthStateChange;
+    _authSub = _authStateStream.listen((_) => _tryPendingJoin());
+    pendingJoinCode.addListener(_tryPendingJoin);
+    // AppLocalizations.of(context) не можна викликати всередині initState —
+    // відкладаємо першу перевірку на момент після першого кадру.
+    WidgetsBinding.instance.addPostFrameCallback((_) => _tryPendingJoin());
+  }
+
+  @override
+  void dispose() {
+    _authSub?.cancel();
+    pendingJoinCode.removeListener(_tryPendingJoin);
+    super.dispose();
+  }
+
+  Future<void> _tryPendingJoin() async {
+    final code = pendingJoinCode.value;
+    final session = Supabase.instance.client.auth.currentSession;
+    if (code == null || session == null || !mounted) return;
+
+    pendingJoinCode.value = null;
+    final l10n = AppLocalizations.of(context);
+    try {
+      await Supabase.instance.client.rpc('join_circle_by_code', params: {'code': code});
+      scaffoldMessengerKey.currentState?.showSnackBar(
+        SnackBar(content: Text(l10n.joinedCircleSuccess)),
+      );
+    } catch (e) {
+      scaffoldMessengerKey.currentState?.showSnackBar(
+        SnackBar(content: Text(l10n.invalidInviteCode)),
+      );
+    }
   }
 
   @override
