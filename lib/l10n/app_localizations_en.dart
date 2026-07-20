@@ -135,6 +135,15 @@ class AppLocalizationsEn extends AppLocalizations {
       'This will permanently delete your account and all entries. This cannot be undone.';
 
   @override
+  String get deleteAccountFinalConfirmTitle => 'Are you absolutely sure?';
+
+  @override
+  String get no => 'No';
+
+  @override
+  String get yesDelete => 'Yes, delete';
+
+  @override
   String get howAreThingsToday => 'How\'s it going today?';
 
   @override

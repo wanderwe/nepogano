@@ -1000,6 +1000,32 @@ class _CheckInScreenState extends State<CheckInScreen> {
     );
 
     if (confirmed != true) return;
+    if (!mounted) return;
+
+    final finalConfirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppColors.surfaceRaised,
+        title: Text(l10n.deleteAccountFinalConfirmTitle),
+        actionsAlignment: MainAxisAlignment.center,
+        actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(l10n.no),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: Text(
+              l10n.yesDelete,
+              style: const TextStyle(color: Colors.redAccent),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (finalConfirmed != true) return;
 
     try {
       await _supabase.rpc('delete_own_account');

@@ -44,7 +44,10 @@
   "signOut": "Вийти",
   "deleteAccount": "Видалити акаунт",
   "deleteAccountConfirmTitle": "Видалити акаунт?",
-  "deleteAccountConfirmBody": "Це видалить твій акаунт і всі записи назавжди. Скасувати неможливо.",
+  "deleteAccountConfirmBody": "Це видалить твій акаунт і всі записи назавжди. Відновити буде неможливо.",
+  "deleteAccountFinalConfirmTitle": "Ти точно впевнений?",
+  "no": "Ні",
+  "yesDelete": "Так, видалити",
   "howAreThingsToday": "Як справи сьогодні?",
   "alreadySavedToday": "Вже зберіг о {time}",
   "@alreadySavedToday": {

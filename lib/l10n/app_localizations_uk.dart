@@ -132,7 +132,16 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get deleteAccountConfirmBody =>
-      'Це видалить твій акаунт і всі записи назавжди. Скасувати неможливо.';
+      'Це видалить твій акаунт і всі записи назавжди. Відновити буде неможливо.';
+
+  @override
+  String get deleteAccountFinalConfirmTitle => 'Ти точно впевнений?';
+
+  @override
+  String get no => 'Ні';
+
+  @override
+  String get yesDelete => 'Так, видалити';
 
   @override
   String get howAreThingsToday => 'Як справи сьогодні?';

@@ -335,8 +335,26 @@ abstract class AppLocalizations {
   /// No description provided for @deleteAccountConfirmBody.
   ///
   /// In uk, this message translates to:
-  /// **'Це видалить твій акаунт і всі записи назавжди. Скасувати неможливо.'**
+  /// **'Це видалить твій акаунт і всі записи назавжди. Відновити буде неможливо.'**
   String get deleteAccountConfirmBody;
+
+  /// No description provided for @deleteAccountFinalConfirmTitle.
+  ///
+  /// In uk, this message translates to:
+  /// **'Ти точно впевнений?'**
+  String get deleteAccountFinalConfirmTitle;
+
+  /// No description provided for @no.
+  ///
+  /// In uk, this message translates to:
+  /// **'Ні'**
+  String get no;
+
+  /// No description provided for @yesDelete.
+  ///
+  /// In uk, this message translates to:
+  /// **'Так, видалити'**
+  String get yesDelete;
 
   /// No description provided for @howAreThingsToday.
   ///
