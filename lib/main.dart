@@ -541,15 +541,18 @@ class _CheckInScreenState extends State<CheckInScreen> {
       );
     }
 
-    return OutlinedButton.icon(
-      onPressed: _choosePhotoSource,
-      icon: const Icon(Icons.photo_camera_outlined, size: 18),
-      label: Text(l10n.addPhoto),
-      style: OutlinedButton.styleFrom(
-        foregroundColor: AppColors.inkMuted,
-        side: const BorderSide(color: AppColors.divider),
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+    return SizedBox(
+      width: double.infinity,
+      child: OutlinedButton.icon(
+        onPressed: _choosePhotoSource,
+        icon: const Icon(Icons.photo_camera_outlined, size: 18),
+        label: Text(l10n.addPhoto),
+        style: OutlinedButton.styleFrom(
+          foregroundColor: AppColors.inkMuted,
+          side: const BorderSide(color: AppColors.divider),
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
       ),
     );
   }
