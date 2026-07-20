@@ -275,46 +275,48 @@ class _MultiShareSheetState extends State<_MultiShareSheet> {
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(l10n.shareOnSocial, style: appSerif(fontSize: 18)),
-            const SizedBox(height: 4),
-            Text(
-              l10n.shareEverywhereHint,
-              style: const TextStyle(fontSize: 13, color: AppColors.inkMuted),
-            ),
-            const SizedBox(height: 20),
-            _ShareRow(
-              label: 'Instagram Stories',
-              done: _done.contains('instagram'),
-              onTap: _shareInstagram,
-            ),
-            _ShareRow(
-              label: 'Facebook',
-              done: _done.contains('facebook'),
-              onTap: _shareFacebook,
-            ),
-            _ShareRow(
-              label: 'TikTok',
-              done: _done.contains('tiktok'),
-              onTap: _shareTikTok,
-            ),
-            _ShareRow(
-              label: l10n.other,
-              done: _done.contains('other'),
-              onTap: _shareOther,
-            ),
-            const SizedBox(height: 12),
-            SizedBox(
-              width: double.infinity,
-              child: TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: Text(l10n.done),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(l10n.shareOnSocial, style: appSerif(fontSize: 18)),
+              const SizedBox(height: 4),
+              Text(
+                l10n.shareEverywhereHint,
+                style: const TextStyle(fontSize: 13, color: AppColors.inkMuted),
               ),
-            ),
-          ],
+              const SizedBox(height: 20),
+              _ShareRow(
+                label: 'Instagram Stories',
+                done: _done.contains('instagram'),
+                onTap: _shareInstagram,
+              ),
+              _ShareRow(
+                label: 'Facebook',
+                done: _done.contains('facebook'),
+                onTap: _shareFacebook,
+              ),
+              _ShareRow(
+                label: 'TikTok',
+                done: _done.contains('tiktok'),
+                onTap: _shareTikTok,
+              ),
+              _ShareRow(
+                label: l10n.other,
+                done: _done.contains('other'),
+                onTap: _shareOther,
+              ),
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: Text(l10n.done),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
