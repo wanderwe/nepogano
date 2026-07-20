@@ -385,27 +385,32 @@ class _CirclesScreenState extends State<CirclesScreen> {
     final controller = TextEditingController();
     final code = await showDialog<String>(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: AppColors.surfaceRaised,
-        title: Text(l10n.joinCircle),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          textCapitalization: TextCapitalization.none,
-          decoration: InputDecoration(hintText: l10n.joinCircleHint),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          backgroundColor: AppColors.surfaceRaised,
+          title: Text(l10n.joinCircle),
+          content: TextField(
+            controller: controller,
+            autofocus: true,
+            textCapitalization: TextCapitalization.none,
+            decoration: InputDecoration(hintText: l10n.joinCircleHint),
+            onChanged: (_) => setState(() {}),
+          ),
+          actionsAlignment: MainAxisAlignment.center,
+          actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text(l10n.cancel),
+            ),
+            TextButton(
+              onPressed: controller.text.trim().isEmpty
+                  ? null
+                  : () => Navigator.of(context).pop(controller.text.trim()),
+              child: Text(l10n.join),
+            ),
+          ],
         ),
-        actionsAlignment: MainAxisAlignment.center,
-        actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text(l10n.cancel),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(controller.text.trim()),
-            child: Text(l10n.join),
-          ),
-        ],
       ),
     );
 
@@ -433,26 +438,31 @@ class _CirclesScreenState extends State<CirclesScreen> {
     final controller = TextEditingController();
     final name = await showDialog<String>(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: AppColors.surfaceRaised,
-        title: Text(l10n.newCircle),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          decoration: InputDecoration(hintText: l10n.circleNameHint),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          backgroundColor: AppColors.surfaceRaised,
+          title: Text(l10n.newCircle),
+          content: TextField(
+            controller: controller,
+            autofocus: true,
+            decoration: InputDecoration(hintText: l10n.circleNameHint),
+            onChanged: (_) => setState(() {}),
+          ),
+          actionsAlignment: MainAxisAlignment.center,
+          actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text(l10n.cancel),
+            ),
+            TextButton(
+              onPressed: controller.text.trim().isEmpty
+                  ? null
+                  : () => Navigator.of(context).pop(controller.text.trim()),
+              child: Text(l10n.create),
+            ),
+          ],
         ),
-        actionsAlignment: MainAxisAlignment.center,
-        actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text(l10n.cancel),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(controller.text.trim()),
-            child: Text(l10n.create),
-          ),
-        ],
       ),
     );
 
@@ -950,27 +960,32 @@ class _CircleDetailScreenState extends State<CircleDetailScreen> {
     final controller = TextEditingController();
     final email = await showDialog<String>(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: AppColors.surfaceRaised,
-        title: Text(l10n.inviteToCircle),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          keyboardType: TextInputType.emailAddress,
-          decoration: InputDecoration(hintText: l10n.personEmailHint),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          backgroundColor: AppColors.surfaceRaised,
+          title: Text(l10n.inviteToCircle),
+          content: TextField(
+            controller: controller,
+            autofocus: true,
+            keyboardType: TextInputType.emailAddress,
+            decoration: InputDecoration(hintText: l10n.personEmailHint),
+            onChanged: (_) => setState(() {}),
+          ),
+          actionsAlignment: MainAxisAlignment.center,
+          actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text(l10n.cancel),
+            ),
+            TextButton(
+              onPressed: controller.text.trim().isEmpty
+                  ? null
+                  : () => Navigator.of(context).pop(controller.text.trim()),
+              child: Text(l10n.invite),
+            ),
+          ],
         ),
-        actionsAlignment: MainAxisAlignment.center,
-        actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text(l10n.cancel),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(controller.text.trim()),
-            child: Text(l10n.invite),
-          ),
-        ],
       ),
     );
 
