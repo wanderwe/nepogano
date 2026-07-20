@@ -1445,9 +1445,12 @@ class _PersonDetailScreenState extends State<PersonDetailScreen> {
                   myGuess == entry.mood.dbValue
                       ? l10n.guessedRight
                       : l10n.guessedWrong,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
-                    color: AppColors.inkMuted,
+                    fontWeight: FontWeight.w600,
+                    color: myGuess == entry.mood.dbValue
+                        ? AppColors.ink
+                        : AppColors.notification,
                   ),
                 ),
               ],
