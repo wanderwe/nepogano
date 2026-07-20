@@ -665,7 +665,7 @@ abstract class AppLocalizations {
   /// No description provided for @joinCircle.
   ///
   /// In uk, this message translates to:
-  /// **'Приєднатися до кола'**
+  /// **'Вхід у коло'**
   String get joinCircle;
 
   /// No description provided for @joinCircleHint.

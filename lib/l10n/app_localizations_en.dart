@@ -311,7 +311,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get joinCircle => 'Join a circle';
+  String get joinCircle => 'Join circle';
 
   @override
   String get joinCircleHint => 'Invite code';

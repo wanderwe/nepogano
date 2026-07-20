@@ -118,7 +118,7 @@
       "code": { "type": "String" }
     }
   },
-  "joinCircle": "Приєднатися до кола",
+  "joinCircle": "Вхід у коло",
   "joinCircleHint": "Код запрошення",
   "join": "Приєднатися",
   "invalidInviteCode": "Невірний код запрошення.",

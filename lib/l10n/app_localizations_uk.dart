@@ -312,7 +312,7 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String get joinCircle => 'Приєднатися до кола';
+  String get joinCircle => 'Вхід у коло';
 
   @override
   String get joinCircleHint => 'Код запрошення';

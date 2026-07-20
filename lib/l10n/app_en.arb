@@ -109,7 +109,7 @@
       "code": { "type": "String" }
     }
   },
-  "joinCircle": "Join a circle",
+  "joinCircle": "Join circle",
   "joinCircleHint": "Invite code",
   "join": "Join",
   "invalidInviteCode": "Invalid invite code.",
