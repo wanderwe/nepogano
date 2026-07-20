@@ -344,6 +344,7 @@ class _DayCard extends StatelessWidget {
           const SizedBox(height: 24),
           Row(
             children: List.generate(MoodLevel.values.length, (i) {
+              final segmentMood = MoodLevel.values[i];
               return Expanded(
                 child: Container(
                   height: 4,
@@ -351,7 +352,9 @@ class _DayCard extends StatelessWidget {
                     right: i == MoodLevel.values.length - 1 ? 0 : 8,
                   ),
                   decoration: BoxDecoration(
-                    color: i == moodIndex ? Colors.white : Colors.white24,
+                    color: i == moodIndex
+                        ? segmentMood.color
+                        : segmentMood.color.withValues(alpha: 0.25),
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
