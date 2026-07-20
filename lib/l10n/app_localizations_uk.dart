@@ -68,13 +68,6 @@ class AppLocalizationsUk extends AppLocalizations {
       'Три прості оцінки без пафосу. Жодного тиску відповідати \"чудово\", коли насправді \"так собі\".';
 
   @override
-  String get onboarding3Headline => 'Без стріків і тиску';
-
-  @override
-  String get onboarding3Body =>
-      'Заходь, коли хочеш. Це не про дисципліну — це про чесність із собою.';
-
-  @override
   String get onboarding4Headline => 'Кола близьких';
 
   @override

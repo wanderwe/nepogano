@@ -68,13 +68,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'Three plain ratings, no hype. No pressure to say \"amazing\" when it was really just okay.';
 
   @override
-  String get onboarding3Headline => 'No streaks, no pressure';
-
-  @override
-  String get onboarding3Body =>
-      'Check in whenever you want. This isn\'t about discipline — it\'s about being honest with yourself.';
-
-  @override
   String get onboarding4Headline => 'Circles of close friends';
 
   @override

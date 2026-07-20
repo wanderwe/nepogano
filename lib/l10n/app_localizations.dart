@@ -212,18 +212,6 @@ abstract class AppLocalizations {
   /// **'Три прості оцінки без пафосу. Жодного тиску відповідати \"чудово\", коли насправді \"так собі\".'**
   String get onboarding2Body;
 
-  /// No description provided for @onboarding3Headline.
-  ///
-  /// In uk, this message translates to:
-  /// **'Без стріків і тиску'**
-  String get onboarding3Headline;
-
-  /// No description provided for @onboarding3Body.
-  ///
-  /// In uk, this message translates to:
-  /// **'Заходь, коли хочеш. Це не про дисципліну — це про чесність із собою.'**
-  String get onboarding3Body;
-
   /// No description provided for @onboarding4Headline.
   ///
   /// In uk, this message translates to:

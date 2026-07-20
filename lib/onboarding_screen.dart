@@ -15,7 +15,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   final _controller = PageController();
   int _page = 0;
 
-  static const _pageCount = 5;
+  static const _pageCount = 4;
 
   @override
   void dispose() {
@@ -42,10 +42,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       _OnboardingPage(
         headline: l10n.onboarding2Headline,
         body: l10n.onboarding2Body,
-      ),
-      _OnboardingPage(
-        headline: l10n.onboarding3Headline,
-        body: l10n.onboarding3Body,
       ),
       _OnboardingPage(
         headline: l10n.onboarding4Headline,
