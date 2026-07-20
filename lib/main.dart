@@ -315,12 +315,19 @@ class _CheckInScreenState extends State<CheckInScreen> {
   DateTime? _todayEntrySavedAt;
   List<CheckinEntry> _weekEntries = [];
   bool _hasCircleActivity = false;
+  late DateTime _visibleWeekStart;
 
   final _supabase = Supabase.instance.client;
+
+  static DateTime _mondayOf(DateTime date) {
+    final day = DateTime(date.year, date.month, date.day);
+    return day.subtract(Duration(days: day.weekday - 1));
+  }
 
   @override
   void initState() {
     super.initState();
+    _visibleWeekStart = _mondayOf(DateTime.now());
     _loadTodayEntry();
     _loadWeek();
     _checkCircleActivity();
@@ -370,15 +377,25 @@ class _CheckInScreenState extends State<CheckInScreen> {
     });
   }
 
+  bool get _isCurrentWeek => _visibleWeekStart == _mondayOf(DateTime.now());
+
+  void _changeWeek(int deltaWeeks) {
+    final next = _visibleWeekStart.add(Duration(days: 7 * deltaWeeks));
+    if (next.isAfter(_mondayOf(DateTime.now()))) return;
+    setState(() => _visibleWeekStart = next);
+    _loadWeek();
+  }
+
   Future<void> _loadWeek() async {
-    final now = DateTime.now();
-    final start = DateTime(now.year, now.month, now.day - 6).toUtc().toIso8601String();
+    final start = _visibleWeekStart.toUtc().toIso8601String();
+    final end = _visibleWeekStart.add(const Duration(days: 7)).toUtc().toIso8601String();
 
     final rows = await _supabase
         .from('checkins')
         .select('mood, note, created_at')
         .eq('user_id', _supabase.auth.currentUser!.id)
         .gte('created_at', start)
+        .lt('created_at', end)
         .order('created_at');
 
     if (!mounted) return;
@@ -702,9 +719,19 @@ class _CheckInScreenState extends State<CheckInScreen> {
     );
   }
 
+  String _weekLabel(AppLocalizations l10n) {
+    if (_isCurrentWeek) return l10n.thisWeek;
+    if (_visibleWeekStart == _mondayOf(DateTime.now()).subtract(const Duration(days: 7))) {
+      return l10n.previousWeek;
+    }
+    final end = _visibleWeekStart.add(const Duration(days: 6));
+    return '${_visibleWeekStart.day}.${_visibleWeekStart.month}–${end.day}.${end.month}';
+  }
+
   Widget _buildWeekStrip() {
+    final l10n = AppLocalizations.of(context);
     final today = DateTime.now();
-    final days = List.generate(7, (i) => DateTime(today.year, today.month, today.day - 6 + i));
+    final days = List.generate(7, (i) => _visibleWeekStart.add(Duration(days: i)));
 
     final byDay = <DateTime, MoodLevel>{};
     for (final entry in _weekEntries) {
@@ -712,37 +739,64 @@ class _CheckInScreenState extends State<CheckInScreen> {
       byDay[d] = entry.mood;
     }
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        Text(
-          AppLocalizations.of(context).lastWeek,
-          style: const TextStyle(fontSize: 12, color: AppColors.inkMuted),
-        ),
-        const SizedBox(height: 10),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: days.map((d) {
-            final mood = byDay[d];
-            final isToday = d.year == today.year && d.month == today.month && d.day == today.day;
-
-            return Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 7),
-              child: Container(
-                width: 14,
-                height: 14,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: mood?.color ?? Colors.transparent,
-                  border: mood == null
-                      ? Border.all(color: AppColors.surfaceRaised, width: 1.5)
-                      : (isToday ? Border.all(color: AppColors.ink, width: 1.5) : null),
-                ),
+    return GestureDetector(
+      onHorizontalDragEnd: (details) {
+        final velocity = details.primaryVelocity ?? 0;
+        if (velocity < -200) {
+          _changeWeek(1);
+        } else if (velocity > 200) {
+          _changeWeek(-1);
+        }
+      },
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              IconButton(
+                onPressed: () => _changeWeek(-1),
+                icon: const Icon(Icons.chevron_left, size: 18),
+                visualDensity: VisualDensity.compact,
+                color: AppColors.inkMuted,
               ),
-            );
-          }).toList(),
-        ),
-      ],
+              Text(
+                _weekLabel(l10n),
+                style: const TextStyle(fontSize: 12, color: AppColors.inkMuted),
+              ),
+              IconButton(
+                onPressed: _isCurrentWeek ? null : () => _changeWeek(1),
+                icon: const Icon(Icons.chevron_right, size: 18),
+                visualDensity: VisualDensity.compact,
+                color: AppColors.inkMuted,
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: days.map((d) {
+              final mood = byDay[d];
+              final isToday = d.year == today.year && d.month == today.month && d.day == today.day;
+
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 7),
+                child: Container(
+                  width: 14,
+                  height: 14,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: mood?.color ?? Colors.transparent,
+                    border: mood == null
+                        ? Border.all(color: AppColors.surfaceRaised, width: 1.5)
+                        : (isToday ? Border.all(color: AppColors.ink, width: 1.5) : null),
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+        ],
+      ),
     );
   }
 }

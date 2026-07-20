@@ -137,6 +137,12 @@ class AppLocalizationsUk extends AppLocalizations {
   String get lastWeek => 'Останній тиждень';
 
   @override
+  String get thisWeek => 'Цей тиждень';
+
+  @override
+  String get previousWeek => 'Минулий тиждень';
+
+  @override
   String get checkEmailToConfirm =>
       'Перевір пошту — надіслали лист для підтвердження';
 

@@ -332,6 +332,18 @@ abstract class AppLocalizations {
   /// **'Останній тиждень'**
   String get lastWeek;
 
+  /// No description provided for @thisWeek.
+  ///
+  /// In uk, this message translates to:
+  /// **'Цей тиждень'**
+  String get thisWeek;
+
+  /// No description provided for @previousWeek.
+  ///
+  /// In uk, this message translates to:
+  /// **'Минулий тиждень'**
+  String get previousWeek;
+
   /// No description provided for @checkEmailToConfirm.
   ///
   /// In uk, this message translates to:

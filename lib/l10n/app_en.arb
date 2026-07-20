@@ -43,6 +43,8 @@
   "saveFailedSnackbar": "Couldn't save. Try again.",
   "deleteAccountFailedSnackbar": "Couldn't delete account. Try again.",
   "lastWeek": "Last week",
+  "thisWeek": "This week",
+  "previousWeek": "Previous week",
 
   "checkEmailToConfirm": "Check your email — we sent a confirmation link",
   "somethingWentWrong": "Something went wrong. Try again.",

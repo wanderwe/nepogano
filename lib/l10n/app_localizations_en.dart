@@ -137,6 +137,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get lastWeek => 'Last week';
 
   @override
+  String get thisWeek => 'This week';
+
+  @override
+  String get previousWeek => 'Previous week';
+
+  @override
   String get checkEmailToConfirm =>
       'Check your email — we sent a confirmation link';
 

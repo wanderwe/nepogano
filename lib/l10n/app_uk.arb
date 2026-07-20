@@ -49,6 +49,8 @@
   "saveFailedSnackbar": "Не вдалось зберегти. Спробуй ще раз.",
   "deleteAccountFailedSnackbar": "Не вдалось видалити акаунт. Спробуй ще раз.",
   "lastWeek": "Останній тиждень",
+  "thisWeek": "Цей тиждень",
+  "previousWeek": "Минулий тиждень",
 
   "checkEmailToConfirm": "Перевір пошту — надіслали лист для підтвердження",
   "somethingWentWrong": "Щось пішло не так. Спробуй ще раз.",
