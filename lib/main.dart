@@ -1013,7 +1013,7 @@ class _CheckInScreenState extends State<CheckInScreen> {
                               _checkCircleActivity();
                             },
                             icon: const Icon(Icons.people_outline, size: 20),
-                            tooltip: l10n.circle,
+                            tooltip: l10n.circles,
                           ),
                           if (_hasCircleActivity)
                             const Positioned(

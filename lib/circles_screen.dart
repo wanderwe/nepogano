@@ -505,7 +505,7 @@ class _CirclesScreenState extends State<CirclesScreen> {
                   ),
                   const SizedBox(width: 4),
                   Expanded(
-                    child: Text(l10n.circle, style: appSerif(fontSize: 22)),
+                    child: Text(l10n.circles, style: appSerif(fontSize: 22)),
                   ),
                   IconButton(
                     onPressed: _joinByCode,
@@ -1125,7 +1125,7 @@ class _CircleDetailScreenState extends State<CircleDetailScreen> {
                         )
                       else if (others.isNotEmpty) ...[
                         Text(
-                          l10n.circle,
+                          l10n.members,
                           style: const TextStyle(
                             fontSize: 13,
                             color: AppColors.inkMuted,

@@ -110,6 +110,12 @@ class AppLocalizationsUk extends AppLocalizations {
   String get circle => 'Коло';
 
   @override
+  String get circles => 'Кола';
+
+  @override
+  String get members => 'Учасники';
+
+  @override
   String get history => 'Історія';
 
   @override

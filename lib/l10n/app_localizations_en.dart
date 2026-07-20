@@ -110,6 +110,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get circle => 'Circle';
 
   @override
+  String get circles => 'Circles';
+
+  @override
+  String get members => 'Members';
+
+  @override
   String get history => 'History';
 
   @override

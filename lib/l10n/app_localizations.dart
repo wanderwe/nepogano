@@ -290,6 +290,18 @@ abstract class AppLocalizations {
   /// **'Коло'**
   String get circle;
 
+  /// No description provided for @circles.
+  ///
+  /// In uk, this message translates to:
+  /// **'Кола'**
+  String get circles;
+
+  /// No description provided for @members.
+  ///
+  /// In uk, this message translates to:
+  /// **'Учасники'**
+  String get members;
+
   /// No description provided for @history.
   ///
   /// In uk, this message translates to:
