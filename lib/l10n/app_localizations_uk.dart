@@ -42,6 +42,9 @@ class AppLocalizationsUk extends AppLocalizations {
   String get moodZbs => 'Збс';
 
   @override
+  String get todayWasPrefix => 'Сьогодні було';
+
+  @override
   String get skip => 'Пропустити';
 
   @override

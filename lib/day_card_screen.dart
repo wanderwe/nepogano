@@ -322,9 +322,17 @@ class _DayCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 20),
-          Text(
-            '${entry.mood.label(context)}.',
-            style: appSerif(fontSize: 32, fontWeight: FontWeight.w700, color: Colors.white),
+          Text.rich(
+            TextSpan(
+              style: appSerif(fontSize: 26, fontWeight: FontWeight.w700, color: Colors.white),
+              children: [
+                TextSpan(text: '${AppLocalizations.of(context).todayWasPrefix} '),
+                TextSpan(
+                  text: entry.mood.label(context).toLowerCase(),
+                  style: TextStyle(color: entry.mood.color),
+                ),
+              ],
+            ),
           ),
           if (entry.note != null && entry.note!.isNotEmpty) ...[
             const SizedBox(height: 12),

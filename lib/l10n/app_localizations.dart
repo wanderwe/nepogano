@@ -164,6 +164,12 @@ abstract class AppLocalizations {
   /// **'Збс'**
   String get moodZbs;
 
+  /// No description provided for @todayWasPrefix.
+  ///
+  /// In uk, this message translates to:
+  /// **'Сьогодні було'**
+  String get todayWasPrefix;
+
   /// No description provided for @skip.
   ///
   /// In uk, this message translates to:
