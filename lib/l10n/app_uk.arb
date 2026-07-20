@@ -79,7 +79,7 @@
   "@notInstalled": {
     "placeholders": { "app": { "type": "String" } }
   },
-  "myDayInNepogano": "Мій день у Nepogano",
+  "myDayInNepogano": "Мій день з Nepogano",
 
   "couldNotLoadCircles": "Не вдалось завантажити кола.",
   "couldNotAcceptInvite": "Не вдалось прийняти запрошення.",

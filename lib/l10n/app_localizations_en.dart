@@ -213,7 +213,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get myDayInNepogano => 'My day in Nepogano';
+  String get myDayInNepogano => 'My day with Nepogano';
 
   @override
   String get couldNotLoadCircles => 'Couldn\'t load circles.';

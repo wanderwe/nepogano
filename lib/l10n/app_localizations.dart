@@ -479,7 +479,7 @@ abstract class AppLocalizations {
   /// No description provided for @myDayInNepogano.
   ///
   /// In uk, this message translates to:
-  /// **'Мій день у Nepogano'**
+  /// **'Мій день з Nepogano'**
   String get myDayInNepogano;
 
   /// No description provided for @couldNotLoadCircles.

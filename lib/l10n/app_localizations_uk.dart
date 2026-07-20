@@ -214,7 +214,7 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String get myDayInNepogano => 'Мій день у Nepogano';
+  String get myDayInNepogano => 'Мій день з Nepogano';
 
   @override
   String get couldNotLoadCircles => 'Не вдалось завантажити кола.';
