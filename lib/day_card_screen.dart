@@ -47,8 +47,9 @@ class _DayCardScreenState extends State<DayCardScreen> {
   }
 
   Future<String> _renderCardToFile() async {
-    final boundary = _boundaryKey.currentContext!.findRenderObject()
-        as RenderRepaintBoundary;
+    final boundary =
+        _boundaryKey.currentContext!.findRenderObject()
+            as RenderRepaintBoundary;
     final image = await boundary.toImage(pixelRatio: 3.0);
     final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
     final bytes = byteData!.buffer.asUint8List();
@@ -86,7 +87,9 @@ class _DayCardScreenState extends State<DayCardScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(AppLocalizations.of(context).prepareCardFailed)),
+          SnackBar(
+            content: Text(AppLocalizations.of(context).prepareCardFailed),
+          ),
         );
       }
       setState(() => _sharing = false);
@@ -112,75 +115,86 @@ class _DayCardScreenState extends State<DayCardScreen> {
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  IconButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    icon: const Icon(Icons.arrow_back, size: 20),
-                    tooltip: l10n.back,
-                  ),
-                  const SizedBox(width: 4),
-                  Text(l10n.dayCard, style: appSerif(fontSize: 22)),
-                ],
-              ),
-              const SizedBox(height: 32),
-              Center(
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(28),
-                    boxShadow: AppShadows.soft,
-                  ),
-                  child: _photoLoading
-                      ? const SizedBox(
-                          width: 320,
-                          height: 320,
-                          child: Center(child: CircularProgressIndicator()),
-                        )
-                      : RepaintBoundary(
-                          key: _boundaryKey,
-                          child: _DayCard(entry: widget.entry, photoBytes: _photoBytes),
-                        ),
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    IconButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      icon: const Icon(Icons.arrow_back, size: 20),
+                      tooltip: l10n.back,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(l10n.dayCard, style: appSerif(fontSize: 22)),
+                  ],
                 ),
-              ),
-              const SizedBox(height: 32),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: (_sharing || _photoLoading) ? null : _share,
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    backgroundColor: AppColors.ink,
-                    foregroundColor: AppColors.background,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                const SizedBox(height: 32),
+                Center(
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(28),
+                      boxShadow: AppShadows.soft,
+                    ),
+                    child: _photoLoading
+                        ? const SizedBox(
+                            width: 320,
+                            height: 320,
+                            child: Center(child: CircularProgressIndicator()),
+                          )
+                        : RepaintBoundary(
+                            key: _boundaryKey,
+                            child: _DayCard(
+                              entry: widget.entry,
+                              photoBytes: _photoBytes,
+                            ),
+                          ),
+                  ),
+                ),
+                const SizedBox(height: 32),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: (_sharing || _photoLoading) ? null : _share,
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      backgroundColor: AppColors.ink,
+                      foregroundColor: AppColors.background,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    icon: _sharing
+                        ? const SizedBox(
+                            height: 18,
+                            width: 18,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: AppColors.background,
+                            ),
+                          )
+                        : const Icon(Icons.ios_share, size: 18),
+                    label: Text(
+                      l10n.share,
+                      style: const TextStyle(fontSize: 16),
                     ),
                   ),
-                  icon: _sharing
-                      ? const SizedBox(
-                          height: 18,
-                          width: 18,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: AppColors.background,
-                          ),
-                        )
-                      : const Icon(Icons.ios_share, size: 18),
-                  label: Text(l10n.share, style: const TextStyle(fontSize: 16)),
                 ),
-              ),
-              const SizedBox(height: 12),
-              SizedBox(
-                width: double.infinity,
-                child: TextButton(
-                  onPressed: (_sharing || _photoLoading) ? null : _openMultiShareSheet,
-                  child: Text(l10n.shareOnSocial),
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  child: TextButton(
+                    onPressed: (_sharing || _photoLoading)
+                        ? null
+                        : _openMultiShareSheet,
+                    child: Text(l10n.shareOnSocial),
+                  ),
                 ),
-              ),
-            ],
+                const SizedBox(height: 16),
+              ],
+            ),
           ),
         ),
       ),
@@ -210,7 +224,10 @@ class _MultiShareSheetState extends State<_MultiShareSheet> {
   }
 
   Future<void> _shareFacebook() async {
-    final ok = await SocialShare.toPackage(widget.imagePath, 'com.facebook.katana');
+    final ok = await SocialShare.toPackage(
+      widget.imagePath,
+      'com.facebook.katana',
+    );
     if (!ok && mounted) {
       _showNotInstalled('Facebook');
       return;
@@ -219,9 +236,15 @@ class _MultiShareSheetState extends State<_MultiShareSheet> {
   }
 
   Future<void> _shareTikTok() async {
-    var ok = await SocialShare.toPackage(widget.imagePath, 'com.zhiliaoapp.musically');
+    var ok = await SocialShare.toPackage(
+      widget.imagePath,
+      'com.zhiliaoapp.musically',
+    );
     if (!ok) {
-      ok = await SocialShare.toPackage(widget.imagePath, 'com.ss.android.ugc.trill');
+      ok = await SocialShare.toPackage(
+        widget.imagePath,
+        'com.ss.android.ugc.trill',
+      );
     }
     if (!ok && mounted) {
       _showNotInstalled('TikTok');
@@ -232,7 +255,10 @@ class _MultiShareSheetState extends State<_MultiShareSheet> {
 
   Future<void> _shareOther() async {
     await SharePlus.instance.share(
-      ShareParams(files: [XFile(widget.imagePath)], text: AppLocalizations.of(context).myDayInNepogano),
+      ShareParams(
+        files: [XFile(widget.imagePath)],
+        text: AppLocalizations.of(context).myDayInNepogano,
+      ),
     );
     if (mounted) setState(() => _done.add('other'));
   }
@@ -260,10 +286,26 @@ class _MultiShareSheetState extends State<_MultiShareSheet> {
               style: const TextStyle(fontSize: 13, color: AppColors.inkMuted),
             ),
             const SizedBox(height: 20),
-            _ShareRow(label: 'Instagram Stories', done: _done.contains('instagram'), onTap: _shareInstagram),
-            _ShareRow(label: 'Facebook', done: _done.contains('facebook'), onTap: _shareFacebook),
-            _ShareRow(label: 'TikTok', done: _done.contains('tiktok'), onTap: _shareTikTok),
-            _ShareRow(label: l10n.other, done: _done.contains('other'), onTap: _shareOther),
+            _ShareRow(
+              label: 'Instagram Stories',
+              done: _done.contains('instagram'),
+              onTap: _shareInstagram,
+            ),
+            _ShareRow(
+              label: 'Facebook',
+              done: _done.contains('facebook'),
+              onTap: _shareFacebook,
+            ),
+            _ShareRow(
+              label: 'TikTok',
+              done: _done.contains('tiktok'),
+              onTap: _shareTikTok,
+            ),
+            _ShareRow(
+              label: l10n.other,
+              done: _done.contains('other'),
+              onTap: _shareOther,
+            ),
             const SizedBox(height: 12),
             SizedBox(
               width: double.infinity,
@@ -284,7 +326,11 @@ class _ShareRow extends StatelessWidget {
   final bool done;
   final VoidCallback onTap;
 
-  const _ShareRow({required this.label, required this.done, required this.onTap});
+  const _ShareRow({
+    required this.label,
+    required this.done,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -296,7 +342,10 @@ class _ShareRow extends StatelessWidget {
         child: Row(
           children: [
             Expanded(
-              child: Text(label, style: const TextStyle(fontSize: 16, color: AppColors.ink)),
+              child: Text(
+                label,
+                style: const TextStyle(fontSize: 16, color: AppColors.ink),
+              ),
             ),
             Icon(
               done ? Icons.check_circle : Icons.chevron_right,
@@ -351,20 +400,32 @@ class _DayCard extends StatelessWidget {
                   children: [
                     Text(
                       dateLabel,
-                      style: TextStyle(fontSize: 13, color: Colors.grey.shade500),
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Colors.grey.shade500,
+                      ),
                     ),
                     Text(
                       weekdayName,
-                      style: TextStyle(fontSize: 13, color: Colors.grey.shade500),
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Colors.grey.shade500,
+                      ),
                     ),
                   ],
                 ),
                 const SizedBox(height: 20),
                 Text.rich(
                   TextSpan(
-                    style: appSerif(fontSize: 26, fontWeight: FontWeight.w700, color: Colors.white),
+                    style: appSerif(
+                      fontSize: 26,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
+                    ),
                     children: [
-                      TextSpan(text: '${AppLocalizations.of(context).todayWasPrefix} '),
+                      TextSpan(
+                        text: '${AppLocalizations.of(context).todayWasPrefix} ',
+                      ),
                       TextSpan(
                         text: entry.mood.label(context).toLowerCase(),
                         style: TextStyle(color: entry.mood.color),
@@ -376,7 +437,11 @@ class _DayCard extends StatelessWidget {
                   const SizedBox(height: 12),
                   Text(
                     entry.note!,
-                    style: TextStyle(fontSize: 15, color: Colors.grey.shade300, height: 1.4),
+                    style: TextStyle(
+                      fontSize: 15,
+                      color: Colors.grey.shade300,
+                      height: 1.4,
+                    ),
                   ),
                 ],
                 const SizedBox(height: 24),
