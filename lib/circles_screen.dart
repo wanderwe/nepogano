@@ -8,27 +8,49 @@ import 'l10n/app_localizations.dart';
 import 'main.dart';
 import 'style.dart';
 
+/// Скільки днів назад можна побачити й здогадати чек-іни людини з кола.
+const kGuessWindowDays = 7;
+
 /// Унікальний ключ для (учасник, день) — щоб кожен день зберігав власний
 /// статус вгадування незалежно від інших днів того самого учасника.
 String _entryKey(String userId, DateTime date) =>
     '$userId|${date.year}-${date.month}-${date.day}';
 
-/// Один чек-ін конкретного учасника за конкретний день у вікні "нещодавно"
-/// (останні 3 дні) — на відміну від "тільки останній запис", дозволяє
-/// бачити й вгадувати кожен день окремо.
+bool _isSameDay(DateTime a, DateTime b) =>
+    a.year == b.year && a.month == b.month && a.day == b.day;
+
+/// Один чек-ін конкретного учасника за конкретний день у вікні "нещодавно" —
+/// дозволяє бачити й вгадувати кожен день окремо, а не тільки останній.
 class _MemberDayEntry {
   final String userId;
-  final String displayEmail;
   final MoodLevel mood;
   final String? note;
   final DateTime date;
 
   _MemberDayEntry({
     required this.userId,
-    required this.displayEmail,
     required this.mood,
     required this.note,
     required this.date,
+  });
+}
+
+/// Короткий підсумок по учаснику кола для списку членів — останній настрій
+/// (якщо є) і чи лишився серед його останніх днів хоч один невгаданий.
+/// Саме вгадування відбувається на окремому екрані людини (PersonDetailScreen).
+class _MemberSummary {
+  final String userId;
+  final String displayEmail;
+  final MoodLevel? latestMood;
+  final DateTime? latestDate;
+  final bool hasUnguessed;
+
+  _MemberSummary({
+    required this.userId,
+    required this.displayEmail,
+    required this.latestMood,
+    required this.latestDate,
+    required this.hasUnguessed,
   });
 }
 
@@ -73,27 +95,27 @@ class CircleMember {
   });
 }
 
+/// Одна людина в стрічці "Нещодавно" — один запис на людину (дедубльовано,
+/// навіть якщо вона в кількох спільних колах), з датою найновішого чек-іну
+/// та ознакою "чи є серед останніх днів хоч один ще не вгаданий".
 class RecentActivityItem {
-  final String circleId;
-  final String circleName;
   final String userId;
   final String displayEmail;
-  final DateTime createdAt;
-  final bool isGuessed;
+  final DateTime latestCreatedAt;
+  final bool hasUnguessed;
 
   RecentActivityItem({
-    required this.circleId,
-    required this.circleName,
     required this.userId,
     required this.displayEmail,
-    required this.createdAt,
-    required this.isGuessed,
+    required this.latestCreatedAt,
+    required this.hasUnguessed,
   });
 }
 
-/// Чи є серед членів кіл юзера чек-ін за останні 3 дні, який юзер ще не здогадував
-/// (для того самого дня, коли той чек-ін зроблено). Використовується для тихої
-/// крапки-індикатора на іконці "Коло" — той самий вікно, що й у стрічці "Нещодавно".
+/// Чи є серед членів кіл юзера чек-ін за останні kGuessWindowDays днів, який
+/// юзер ще не здогадував (для того самого дня, коли той чек-ін зроблено).
+/// Використовується для тихої крапки-індикатора на іконці "Коло" — те саме
+/// вікно, що й у стрічці "Нещодавно"/екрані людини.
 Future<bool> hasUnseenCircleActivity(SupabaseClient supabase) async {
   final myId = supabase.auth.currentUser?.id;
   if (myId == null) return false;
@@ -119,7 +141,7 @@ Future<bool> hasUnseenCircleActivity(SupabaseClient supabase) async {
       .toList();
   if (otherIds.isEmpty) return false;
 
-  final since = DateTime.now().subtract(const Duration(days: 3));
+  final since = DateTime.now().subtract(const Duration(days: kGuessWindowDays));
   final sinceUtc = DateTime(since.year, since.month, since.day).toUtc().toIso8601String();
 
   final checkinRows = await supabase
@@ -237,29 +259,42 @@ class _CirclesScreenState extends State<CirclesScreen> {
 
     final memberRows = await _supabase
         .from('circle_members')
-        .select('user_id, invited_email, circle_id')
+        .select('user_id, invited_email')
         .inFilter('circle_id', circleIds)
         .eq('status', 'accepted')
         .neq('user_id', myId);
 
-    final membersByUserId = <String, Map<String, dynamic>>{};
+    // Дедуплікація: та сама людина може бути в кількох спільних колах —
+    // у "Нещодавно" вона має з'явитись лише раз.
+    final emailByUserId = <String, String>{};
     for (final row in memberRows as List) {
       final uid = row['user_id'] as String?;
-      if (uid != null) membersByUserId[uid] = row;
+      if (uid != null) emailByUserId[uid] = row['invited_email'] as String;
     }
-    if (membersByUserId.isEmpty) {
+    if (emailByUserId.isEmpty) {
       if (mounted) setState(() => _recentActivity = []);
       return;
     }
 
-    final since = DateTime.now().subtract(const Duration(days: 3));
-    final sinceUtc = since.toUtc().toIso8601String();
+    final since = DateTime.now().subtract(const Duration(days: kGuessWindowDays));
+    final sinceUtc = DateTime(since.year, since.month, since.day).toUtc().toIso8601String();
     final checkinRows = await _supabase
         .from('checkins')
         .select('user_id, created_at')
-        .inFilter('user_id', membersByUserId.keys.toList())
+        .inFilter('user_id', emailByUserId.keys.toList())
         .gte('created_at', sinceUtc)
         .order('created_at', ascending: false);
+
+    final datesByUser = <String, List<DateTime>>{};
+    for (final row in checkinRows as List) {
+      final uid = row['user_id'] as String;
+      final createdAt = DateTime.parse(row['created_at'] as String).toLocal();
+      datesByUser.putIfAbsent(uid, () => []).add(createdAt);
+    }
+    if (datesByUser.isEmpty) {
+      if (mounted) setState(() => _recentActivity = []);
+      return;
+    }
 
     final sinceDate = DateTime(since.year, since.month, since.day).toIso8601String().split('T').first;
     final guessRows = await _supabase
@@ -267,34 +302,29 @@ class _CirclesScreenState extends State<CirclesScreen> {
         .select('target_user_id, target_date')
         .eq('guesser_id', myId)
         .gte('target_date', sinceDate)
-        .inFilter('target_user_id', membersByUserId.keys.toList());
+        .inFilter('target_user_id', datesByUser.keys.toList());
 
-    final guessedDatesByUser = <String, Set<String>>{};
+    final guessedKeys = <String>{};
     for (final row in guessRows as List) {
       final uid = row['target_user_id'] as String;
-      final date = row['target_date'] as String;
-      guessedDatesByUser.putIfAbsent(uid, () => {}).add(date);
+      final targetDate = DateTime.parse(row['target_date'] as String);
+      guessedKeys.add(_entryKey(uid, targetDate));
     }
-
-    final circleNameById = {for (final c in _myCircles) c.id: c.name};
 
     final activity = <RecentActivityItem>[];
-    for (final row in checkinRows as List) {
-      final uid = row['user_id'] as String;
-      final member = membersByUserId[uid];
-      if (member == null) continue;
-      final circleId = member['circle_id'] as String;
-      final createdAt = DateTime.parse(row['created_at'] as String).toLocal();
-      final entryDate = DateTime(createdAt.year, createdAt.month, createdAt.day).toIso8601String().split('T').first;
+    for (final entry in datesByUser.entries) {
+      final uid = entry.key;
+      final dates = entry.value..sort((a, b) => b.compareTo(a));
+      final hasUnguessed = dates.any((d) => !guessedKeys.contains(_entryKey(uid, d)));
       activity.add(RecentActivityItem(
-        circleId: circleId,
-        circleName: circleNameById[circleId] ?? '',
         userId: uid,
-        displayEmail: member['invited_email'] as String,
-        createdAt: createdAt,
-        isGuessed: guessedDatesByUser[uid]?.contains(entryDate) ?? false,
+        displayEmail: emailByUserId[uid] ?? '',
+        latestCreatedAt: dates.first,
+        hasUnguessed: hasUnguessed,
       ));
     }
+
+    activity.sort((a, b) => b.latestCreatedAt.compareTo(a.latestCreatedAt));
 
     if (mounted) setState(() => _recentActivity = activity);
   }
@@ -530,12 +560,14 @@ class _CirclesScreenState extends State<CirclesScreen> {
                           final displayName = item.displayEmail.split('@').first;
                           return InkWell(
                             borderRadius: BorderRadius.circular(16),
-                            onTap: () {
-                              final circle = _myCircles.firstWhere((c) => c.id == item.circleId);
-                              Navigator.of(context).push(
-                                MaterialPageRoute(builder: (_) => CircleDetailScreen(circle: circle)),
-                              );
-                            },
+                            onTap: () => Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => PersonDetailScreen(
+                                  userId: item.userId,
+                                  displayEmail: item.displayEmail,
+                                ),
+                              ),
+                            ),
                             child: Container(
                               margin: const EdgeInsets.only(bottom: 10),
                               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -552,7 +584,7 @@ class _CirclesScreenState extends State<CirclesScreen> {
                                         Row(
                                           children: [
                                             Text(displayName, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-                                            if (!item.isGuessed) ...[
+                                            if (item.hasUnguessed) ...[
                                               const SizedBox(width: 6),
                                               const DecoratedBox(
                                                 decoration: BoxDecoration(
@@ -566,7 +598,7 @@ class _CirclesScreenState extends State<CirclesScreen> {
                                         ),
                                         const SizedBox(height: 2),
                                         Text(
-                                          '${item.circleName} · ${_relativeDay(item.createdAt, l10n)}',
+                                          _relativeDay(item.latestCreatedAt, l10n),
                                           style: const TextStyle(fontSize: 12, color: AppColors.inkMuted),
                                         ),
                                       ],
@@ -634,9 +666,7 @@ class _CircleDetailScreenState extends State<CircleDetailScreen> {
   bool _loading = true;
   List<CircleMember> _members = [];
   List<CircleMember> _pendingMembers = [];
-  List<_MemberDayEntry> _recentEntries = [];
-  final Map<String, String?> _myGuesses = {};
-  final Set<String> _expandedDetails = {};
+  List<_MemberSummary> _memberSummaries = [];
 
   bool get _isOwner => widget.circle.ownerId == _supabase.auth.currentUser?.id;
 
@@ -674,45 +704,41 @@ class _CircleDetailScreenState extends State<CircleDetailScreen> {
         if (m.userId != null) m.userId!: m.invitedEmail,
     };
 
-    final entries = <_MemberDayEntry>[];
-    final guesses = <String, String?>{};
+    final summaries = <_MemberSummary>[];
 
     if (otherIds.isNotEmpty) {
-      // Кожен день кожного за останні 3 дні окремо (не тільки останній) —
-      // щоб стрічка "Нещодавно" (яка сягає на кілька днів назад) вела до
-      // конкретного дня, а не завжди до того, що зараз найновіше.
-      final since = DateTime.now().subtract(const Duration(days: 3));
+      // Тільки короткий підсумок по кожному учаснику тут — сама можливість
+      // вгадати кожен окремий день живе на екрані конкретної людини.
+      final since = DateTime.now().subtract(const Duration(days: kGuessWindowDays));
       final sinceUtc = DateTime(since.year, since.month, since.day).toUtc().toIso8601String();
 
       final checkinRows = await _supabase
           .from('checkins')
-          .select('user_id, mood, note, created_at')
+          .select('user_id, mood, created_at')
           .inFilter('user_id', otherIds)
           .gte('created_at', sinceUtc)
           .order('created_at', ascending: false);
 
-      final seenDayKeys = <String>{};
+      final datesByUser = <String, List<DateTime>>{};
+      final latestMoodByUser = <String, MoodLevel>{};
+      final latestDateByUser = <String, DateTime>{};
       for (final row in checkinRows as List) {
         final uid = row['user_id'] as String;
         final createdAt = DateTime.parse(row['created_at'] as String).toLocal();
         final date = DateTime(createdAt.year, createdAt.month, createdAt.day);
-        // На день гарантовано один чек-ін, але про всяк випадок лишаємо
-        // найновіший запис цього дня (перший у desc-порядку).
-        if (!seenDayKeys.add(_entryKey(uid, date))) continue;
-        entries.add(_MemberDayEntry(
-          userId: uid,
-          displayEmail: emailByUserId[uid] ?? '',
-          mood: moodFromDbValue(row['mood'] as String),
-          note: row['note'] as String?,
-          date: date,
-        ));
+        datesByUser.putIfAbsent(uid, () => []).add(date);
+        if (!latestMoodByUser.containsKey(uid)) {
+          latestMoodByUser[uid] = moodFromDbValue(row['mood'] as String);
+          latestDateByUser[uid] = date;
+        }
       }
 
-      if (entries.isNotEmpty) {
+      final guessedKeys = <String>{};
+      if (datesByUser.isNotEmpty) {
         final sinceDate = DateTime(since.year, since.month, since.day).toIso8601String().split('T').first;
         final guessRows = await _supabase
             .from('circle_guesses')
-            .select('target_user_id, guessed_mood, target_date')
+            .select('target_user_id, target_date')
             .eq('guesser_id', myId)
             .gte('target_date', sinceDate)
             .inFilter('target_user_id', otherIds);
@@ -720,44 +746,30 @@ class _CircleDetailScreenState extends State<CircleDetailScreen> {
         for (final row in guessRows as List) {
           final uid = row['target_user_id'] as String;
           final targetDate = DateTime.parse(row['target_date'] as String);
-          guesses[_entryKey(uid, targetDate)] = row['guessed_mood'] as String;
+          guessedKeys.add(_entryKey(uid, targetDate));
         }
       }
-    }
 
-    entries.sort((a, b) => b.date.compareTo(a.date));
+      for (final uid in otherIds) {
+        final dates = datesByUser[uid];
+        final hasUnguessed = dates != null && dates.any((d) => !guessedKeys.contains(_entryKey(uid, d)));
+        summaries.add(_MemberSummary(
+          userId: uid,
+          displayEmail: emailByUserId[uid] ?? '',
+          latestMood: latestMoodByUser[uid],
+          latestDate: latestDateByUser[uid],
+          hasUnguessed: hasUnguessed,
+        ));
+      }
+    }
 
     if (!mounted) return;
     setState(() {
       _members = members;
       _pendingMembers = pending;
-      _recentEntries = entries;
-      _myGuesses
-        ..clear()
-        ..addAll(guesses);
+      _memberSummaries = summaries;
       _loading = false;
     });
-  }
-
-  Future<void> _guess(_MemberDayEntry entry, MoodLevel guessedMood) async {
-    final targetDate = entry.date.toIso8601String().split('T').first;
-
-    try {
-      await _supabase.from('circle_guesses').insert({
-        'guesser_id': _supabase.auth.currentUser!.id,
-        'target_user_id': entry.userId,
-        'target_date': targetDate,
-        'guessed_mood': guessedMood.dbValue,
-        'correct': guessedMood == entry.mood,
-      });
-      setState(() => _myGuesses[_entryKey(entry.userId, entry.date)] = guessedMood.dbValue);
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(AppLocalizations.of(context).couldNotSaveGuess)),
-        );
-      }
-    }
   }
 
   Future<void> _invite() async {
@@ -954,10 +966,7 @@ class _CircleDetailScreenState extends State<CircleDetailScreen> {
                       else if (others.isNotEmpty) ...[
                         Text(l10n.circle, style: const TextStyle(fontSize: 13, color: AppColors.inkMuted)),
                         const SizedBox(height: 8),
-                        ..._recentEntries.map(_buildEntryCard),
-                        ...others
-                            .where((m) => !_recentEntries.any((e) => e.userId == m.userId))
-                            .map(_buildNoEntryCard),
+                        ..._memberSummaries.map(_buildMemberSummaryRow),
                       ],
                     ],
                   ),
@@ -969,39 +978,221 @@ class _CircleDetailScreenState extends State<CircleDetailScreen> {
     );
   }
 
-  Widget _buildNoEntryCard(CircleMember member) {
+  Widget _buildMemberSummaryRow(_MemberSummary summary) {
     final l10n = AppLocalizations.of(context);
-    final displayName = member.invitedEmail.split('@').first;
+    final displayName = summary.displayEmail.split('@').first;
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(displayName, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
-          const SizedBox(height: 12),
-          Text(
-            l10n.notCheckedInToday,
-            style: const TextStyle(fontSize: 13, color: AppColors.inkMuted),
+    return InkWell(
+      borderRadius: BorderRadius.circular(16),
+      onTap: () => Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => PersonDetailScreen(
+            userId: summary.userId,
+            displayEmail: summary.displayEmail,
           ),
-        ],
+        ),
+      ),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Row(
+          children: [
+            if (summary.latestMood != null) ...[
+              Container(
+                width: 10,
+                height: 10,
+                decoration: BoxDecoration(color: summary.latestMood!.color, shape: BoxShape.circle),
+              ),
+              const SizedBox(width: 10),
+            ],
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Text(displayName, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+                      if (summary.hasUnguessed) ...[
+                        const SizedBox(width: 6),
+                        const DecoratedBox(
+                          decoration: BoxDecoration(color: AppColors.notification, shape: BoxShape.circle),
+                          child: SizedBox(width: 6, height: 6),
+                        ),
+                      ],
+                    ],
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    summary.latestDate == null ? l10n.notCheckedInToday : _relativeDay(summary.latestDate!, l10n),
+                    style: const TextStyle(fontSize: 12, color: AppColors.inkMuted),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(Icons.chevron_right, size: 18, color: AppColors.inkMuted),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Екран однієї людини — до kGuessWindowDays останніх днів її чек-інів,
+/// кожен окремо можна вгадати. Єдине місце в застосунку, де відбувається
+/// вгадування (список кіл і екран кола ведуть саме сюди).
+class PersonDetailScreen extends StatefulWidget {
+  final String userId;
+  final String displayEmail;
+
+  const PersonDetailScreen({super.key, required this.userId, required this.displayEmail});
+
+  @override
+  State<PersonDetailScreen> createState() => _PersonDetailScreenState();
+}
+
+class _PersonDetailScreenState extends State<PersonDetailScreen> {
+  final _supabase = Supabase.instance.client;
+  bool _loading = true;
+  List<_MemberDayEntry> _entries = [];
+  final Map<String, String?> _myGuesses = {};
+  final Set<String> _expandedDetails = {};
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    setState(() => _loading = true);
+
+    final myId = _supabase.auth.currentUser!.id;
+    final since = DateTime.now().subtract(const Duration(days: kGuessWindowDays));
+    final sinceUtc = DateTime(since.year, since.month, since.day).toUtc().toIso8601String();
+
+    final checkinRows = await _supabase
+        .from('checkins')
+        .select('mood, note, created_at')
+        .eq('user_id', widget.userId)
+        .gte('created_at', sinceUtc)
+        .order('created_at', ascending: false);
+
+    final entries = <_MemberDayEntry>[];
+    final seenDayKeys = <String>{};
+    for (final row in checkinRows as List) {
+      final createdAt = DateTime.parse(row['created_at'] as String).toLocal();
+      final date = DateTime(createdAt.year, createdAt.month, createdAt.day);
+      if (!seenDayKeys.add(_entryKey(widget.userId, date))) continue;
+      entries.add(_MemberDayEntry(
+        userId: widget.userId,
+        mood: moodFromDbValue(row['mood'] as String),
+        note: row['note'] as String?,
+        date: date,
+      ));
+    }
+
+    final guesses = <String, String?>{};
+    if (entries.isNotEmpty) {
+      final sinceDate = DateTime(since.year, since.month, since.day).toIso8601String().split('T').first;
+      final guessRows = await _supabase
+          .from('circle_guesses')
+          .select('guessed_mood, target_date')
+          .eq('guesser_id', myId)
+          .eq('target_user_id', widget.userId)
+          .gte('target_date', sinceDate);
+
+      for (final row in guessRows as List) {
+        final targetDate = DateTime.parse(row['target_date'] as String);
+        guesses[_entryKey(widget.userId, targetDate)] = row['guessed_mood'] as String;
+      }
+    }
+
+    entries.sort((a, b) => b.date.compareTo(a.date));
+
+    if (!mounted) return;
+    setState(() {
+      _entries = entries;
+      _myGuesses
+        ..clear()
+        ..addAll(guesses);
+      _loading = false;
+    });
+  }
+
+  Future<void> _guess(_MemberDayEntry entry, MoodLevel guessedMood) async {
+    final targetDate = entry.date.toIso8601String().split('T').first;
+
+    try {
+      await _supabase.from('circle_guesses').insert({
+        'guesser_id': _supabase.auth.currentUser!.id,
+        'target_user_id': entry.userId,
+        'target_date': targetDate,
+        'guessed_mood': guessedMood.dbValue,
+        'correct': guessedMood == entry.mood,
+      });
+      setState(() => _myGuesses[_entryKey(entry.userId, entry.date)] = guessedMood.dbValue);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(AppLocalizations.of(context).couldNotSaveGuess)),
+        );
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final displayName = widget.displayEmail.split('@').first;
+
+    return Scaffold(
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  IconButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    icon: const Icon(Icons.arrow_back, size: 20),
+                    tooltip: l10n.back,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(displayName, style: appSerif(fontSize: 22)),
+                ],
+              ),
+              const SizedBox(height: 16),
+              if (_loading)
+                const Expanded(child: Center(child: CircularProgressIndicator()))
+              else if (_entries.isEmpty)
+                Expanded(
+                  child: Center(
+                    child: Text(l10n.notCheckedInToday, style: const TextStyle(color: AppColors.inkMuted)),
+                  ),
+                )
+              else
+                Expanded(
+                  child: ListView(children: _entries.map(_buildEntryCard).toList()),
+                ),
+            ],
+          ),
+        ),
       ),
     );
   }
 
   Widget _buildEntryCard(_MemberDayEntry entry) {
     final l10n = AppLocalizations.of(context);
-    final displayName = entry.displayEmail.split('@').first;
     final key = _entryKey(entry.userId, entry.date);
     final myGuess = _myGuesses[key];
-    final isToday = entry.date.year == DateTime.now().year &&
-        entry.date.month == DateTime.now().month &&
-        entry.date.day == DateTime.now().day;
+    final isToday = _isSameDay(entry.date, DateTime.now());
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -1013,19 +1204,11 @@ class _CircleDetailScreenState extends State<CircleDetailScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Text(displayName, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
-              if (!isToday) ...[
-                const SizedBox(width: 8),
-                Text(
-                  _relativeDay(entry.date, l10n),
-                  style: const TextStyle(fontSize: 12, color: AppColors.inkMuted),
-                ),
-              ],
-            ],
+          Text(
+            isToday ? l10n.today : _relativeDay(entry.date, l10n),
+            style: const TextStyle(fontSize: 13, color: AppColors.inkMuted),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
           if (myGuess != null) ...[
             Row(
               children: [
