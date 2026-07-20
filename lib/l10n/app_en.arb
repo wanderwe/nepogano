@@ -70,6 +70,7 @@
   "continueWithGoogle": "Continue with Google",
 
   "couldNotLoadHistory": "Couldn't load history.",
+  "couldNotLoadTodayEntry": "Couldn't check today's entry. Try again to avoid creating a duplicate.",
   "noEntriesThisMonth": "No entries yet this month.",
 
   "shareFailed": "Couldn't share. Try again.",

@@ -76,6 +76,7 @@
   "continueWithGoogle": "Продовжити з Google",
 
   "couldNotLoadHistory": "Не вдалось завантажити історію.",
+  "couldNotLoadTodayEntry": "Не вдалось перевірити сьогоднішній запис. Спробуй ще раз, щоб не створити дублікат.",
   "noEntriesThisMonth": "У цьому місяці ще немає записів.",
 
   "shareFailed": "Не вдалось поділитись. Спробуй ще раз.",

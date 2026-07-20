@@ -343,6 +343,13 @@ class _CheckInScreenState extends State<CheckInScreen> {
   bool _editing = false;
   bool get _showForm => _todayEntryId == null || _editing;
 
+  // Поки не підтверджено, чи є вже запис за сьогодні, НЕ показуємо форму —
+  // інакше короткочасний мережевий збій на холодному старті (той самий
+  // клас проблем, що й з фото/Google-логіном) мовчки показує "порожній"
+  // екран, ніби запису немає, і є ризик створити дублікат замість оновлення.
+  bool _loadingToday = true;
+  bool _todayLoadFailed = false;
+
   final _supabase = Supabase.instance.client;
 
   static DateTime _mondayOf(DateTime date) {
@@ -370,6 +377,21 @@ class _CheckInScreenState extends State<CheckInScreen> {
     super.dispose();
   }
 
+  Widget _buildTodayLoadError(AppLocalizations l10n) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          l10n.couldNotLoadTodayEntry,
+          textAlign: TextAlign.center,
+          style: const TextStyle(color: AppColors.inkMuted),
+        ),
+        const SizedBox(height: 12),
+        TextButton(onPressed: _loadTodayEntry, child: Text(l10n.retry)),
+      ],
+    );
+  }
+
   (String, String) _todayRangeUtc() {
     final now = DateTime.now();
     final startOfDay = DateTime(now.year, now.month, now.day);
@@ -381,33 +403,52 @@ class _CheckInScreenState extends State<CheckInScreen> {
   }
 
   Future<void> _loadTodayEntry() async {
+    setState(() {
+      _loadingToday = true;
+      _todayLoadFailed = false;
+    });
     final (startOfDay, startOfNextDay) = _todayRangeUtc();
 
-    final rows = await _supabase
-        .from('checkins')
-        .select('id, mood, note, created_at, photo_path, photo_align_y')
-        .eq('user_id', _supabase.auth.currentUser!.id)
-        .gte('created_at', startOfDay)
-        .lt('created_at', startOfNextDay)
-        .order('created_at', ascending: false)
-        .limit(1);
+    try {
+      final rows = await _supabase
+          .from('checkins')
+          .select('id, mood, note, created_at, photo_path, photo_align_y')
+          .eq('user_id', _supabase.auth.currentUser!.id)
+          .gte('created_at', startOfDay)
+          .lt('created_at', startOfNextDay)
+          .order('created_at', ascending: false)
+          .limit(1);
 
-    if (!mounted || (rows as List).isEmpty) return;
+      if (!mounted) return;
 
-    final row = rows.first;
-    setState(() {
-      _todayEntryId = row['id'];
-      _selected = moodFromDbValue(row['mood'] as String);
-      _noteController.text = (row['note'] as String?) ?? '';
-      _todayEntrySavedAt = DateTime.parse(
-        row['created_at'] as String,
-      ).toLocal();
-      _existingPhotoPath = row['photo_path'] as String?;
-      _photoAlignY = (row['photo_align_y'] as num?)?.toDouble() ?? 0;
-      _pickedPhotoFile = null;
-      _removePhoto = false;
-      _editing = false;
-    });
+      if ((rows as List).isEmpty) {
+        setState(() => _loadingToday = false);
+        return;
+      }
+
+      final row = rows.first;
+      setState(() {
+        _todayEntryId = row['id'];
+        _selected = moodFromDbValue(row['mood'] as String);
+        _noteController.text = (row['note'] as String?) ?? '';
+        _todayEntrySavedAt = DateTime.parse(
+          row['created_at'] as String,
+        ).toLocal();
+        _existingPhotoPath = row['photo_path'] as String?;
+        _photoAlignY = (row['photo_align_y'] as num?)?.toDouble() ?? 0;
+        _pickedPhotoFile = null;
+        _removePhoto = false;
+        _editing = false;
+        _loadingToday = false;
+      });
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _loadingToday = false;
+          _todayLoadFailed = true;
+        });
+      }
+    }
   }
 
   void _startEditing() => setState(() => _editing = true);
@@ -551,7 +592,9 @@ class _CheckInScreenState extends State<CheckInScreen> {
           foregroundColor: AppColors.inkMuted,
           side: const BorderSide(color: AppColors.divider),
           padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
         ),
       ),
     );
@@ -1052,36 +1095,40 @@ class _CheckInScreenState extends State<CheckInScreen> {
               ),
               Expanded(
                 child: Center(
-                  child: SingleChildScrollView(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Text(
-                          l10n.howAreThingsToday,
-                          style: appSerif(fontSize: 28),
-                        ),
-                        if (_todayEntrySavedAt != null) ...[
-                          const SizedBox(height: 6),
-                          Text(
-                            l10n.alreadySavedToday(
-                              '${_todayEntrySavedAt!.hour.toString().padLeft(2, '0')}:'
-                              '${_todayEntrySavedAt!.minute.toString().padLeft(2, '0')}',
-                            ),
-                            style: const TextStyle(
-                              fontSize: 13,
-                              color: AppColors.inkMuted,
-                            ),
+                  child: _loadingToday
+                      ? const CircularProgressIndicator()
+                      : _todayLoadFailed
+                      ? _buildTodayLoadError(l10n)
+                      : SingleChildScrollView(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              Text(
+                                l10n.howAreThingsToday,
+                                style: appSerif(fontSize: 28),
+                              ),
+                              if (_todayEntrySavedAt != null) ...[
+                                const SizedBox(height: 6),
+                                Text(
+                                  l10n.alreadySavedToday(
+                                    '${_todayEntrySavedAt!.hour.toString().padLeft(2, '0')}:'
+                                    '${_todayEntrySavedAt!.minute.toString().padLeft(2, '0')}',
+                                  ),
+                                  style: const TextStyle(
+                                    fontSize: 13,
+                                    color: AppColors.inkMuted,
+                                  ),
+                                ),
+                              ],
+                              const SizedBox(height: 32),
+                              if (_showForm)
+                                ..._buildFormContent(l10n)
+                              else
+                                ..._buildSummaryContent(l10n),
+                            ],
                           ),
-                        ],
-                        const SizedBox(height: 32),
-                        if (_showForm)
-                          ..._buildFormContent(l10n)
-                        else
-                          ..._buildSummaryContent(l10n),
-                      ],
-                    ),
-                  ),
+                        ),
                 ),
               ),
               _buildWeekStrip(),

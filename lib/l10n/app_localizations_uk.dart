@@ -210,6 +210,10 @@ class AppLocalizationsUk extends AppLocalizations {
   String get couldNotLoadHistory => 'Не вдалось завантажити історію.';
 
   @override
+  String get couldNotLoadTodayEntry =>
+      'Не вдалось перевірити сьогоднішній запис. Спробуй ще раз, щоб не створити дублікат.';
+
+  @override
   String get noEntriesThisMonth => 'У цьому місяці ще немає записів.';
 
   @override
