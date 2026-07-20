@@ -28,6 +28,7 @@ class _MemberDayEntry {
   final MoodLevel mood;
   final String? note;
   final String? photoPath;
+  final double photoAlignY;
   final DateTime date;
 
   _MemberDayEntry({
@@ -35,6 +36,7 @@ class _MemberDayEntry {
     required this.mood,
     required this.note,
     required this.photoPath,
+    required this.photoAlignY,
     required this.date,
   });
 }
@@ -129,7 +131,9 @@ Future<bool> hasUnseenCircleActivity(SupabaseClient supabase) async {
       .select('circle_id')
       .eq('user_id', myId)
       .eq('status', 'accepted');
-  final circleIds = (memberRows as List).map((r) => r['circle_id'] as String).toList();
+  final circleIds = (memberRows as List)
+      .map((r) => r['circle_id'] as String)
+      .toList();
   if (circleIds.isEmpty) return false;
 
   final otherRows = await supabase
@@ -146,7 +150,11 @@ Future<bool> hasUnseenCircleActivity(SupabaseClient supabase) async {
   if (otherIds.isEmpty) return false;
 
   final since = DateTime.now().subtract(const Duration(days: kGuessWindowDays));
-  final sinceUtc = DateTime(since.year, since.month, since.day).toUtc().toIso8601String();
+  final sinceUtc = DateTime(
+    since.year,
+    since.month,
+    since.day,
+  ).toUtc().toIso8601String();
 
   final checkinRows = await supabase
       .from('checkins')
@@ -163,7 +171,11 @@ Future<bool> hasUnseenCircleActivity(SupabaseClient supabase) async {
   }
   if (latestByUser.isEmpty) return false;
 
-  final sinceDate = DateTime(since.year, since.month, since.day).toIso8601String().split('T').first;
+  final sinceDate = DateTime(
+    since.year,
+    since.month,
+    since.day,
+  ).toIso8601String().split('T').first;
   final guessRows = await supabase
       .from('circle_guesses')
       .select('target_user_id, target_date')
@@ -280,8 +292,14 @@ class _CirclesScreenState extends State<CirclesScreen> {
       return;
     }
 
-    final since = DateTime.now().subtract(const Duration(days: kGuessWindowDays));
-    final sinceUtc = DateTime(since.year, since.month, since.day).toUtc().toIso8601String();
+    final since = DateTime.now().subtract(
+      const Duration(days: kGuessWindowDays),
+    );
+    final sinceUtc = DateTime(
+      since.year,
+      since.month,
+      since.day,
+    ).toUtc().toIso8601String();
     final checkinRows = await _supabase
         .from('checkins')
         .select('user_id, created_at')
@@ -300,7 +318,11 @@ class _CirclesScreenState extends State<CirclesScreen> {
       return;
     }
 
-    final sinceDate = DateTime(since.year, since.month, since.day).toIso8601String().split('T').first;
+    final sinceDate = DateTime(
+      since.year,
+      since.month,
+      since.day,
+    ).toIso8601String().split('T').first;
     final guessRows = await _supabase
         .from('circle_guesses')
         .select('target_user_id, target_date')
@@ -319,13 +341,17 @@ class _CirclesScreenState extends State<CirclesScreen> {
     for (final entry in datesByUser.entries) {
       final uid = entry.key;
       final dates = entry.value..sort((a, b) => b.compareTo(a));
-      final hasUnguessed = dates.any((d) => !guessedKeys.contains(_entryKey(uid, d)));
-      activity.add(RecentActivityItem(
-        userId: uid,
-        displayEmail: emailByUserId[uid] ?? '',
-        latestCreatedAt: dates.first,
-        hasUnguessed: hasUnguessed,
-      ));
+      final hasUnguessed = dates.any(
+        (d) => !guessedKeys.contains(_entryKey(uid, d)),
+      );
+      activity.add(
+        RecentActivityItem(
+          userId: uid,
+          displayEmail: emailByUserId[uid] ?? '',
+          latestCreatedAt: dates.first,
+          hasUnguessed: hasUnguessed,
+        ),
+      );
     }
 
     activity.sort((a, b) => b.latestCreatedAt.compareTo(a.latestCreatedAt));
@@ -335,15 +361,20 @@ class _CirclesScreenState extends State<CirclesScreen> {
 
   Future<void> _acceptInvite(String memberRowId) async {
     try {
-      await _supabase.from('circle_members').update({
-        'user_id': _supabase.auth.currentUser!.id,
-        'status': 'accepted',
-      }).eq('id', memberRowId);
+      await _supabase
+          .from('circle_members')
+          .update({
+            'user_id': _supabase.auth.currentUser!.id,
+            'status': 'accepted',
+          })
+          .eq('id', memberRowId);
       _load();
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(AppLocalizations.of(context).couldNotAcceptInvite)),
+          SnackBar(
+            content: Text(AppLocalizations.of(context).couldNotAcceptInvite),
+          ),
         );
       }
     }
@@ -383,16 +414,16 @@ class _CirclesScreenState extends State<CirclesScreen> {
     try {
       await _supabase.rpc('join_circle_by_code', params: {'code': code});
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(l10n.joinedCircleSuccess)),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(l10n.joinedCircleSuccess)));
       }
       _load();
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(l10n.invalidInviteCode)),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(l10n.invalidInviteCode)));
       }
     }
   }
@@ -446,7 +477,9 @@ class _CirclesScreenState extends State<CirclesScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(AppLocalizations.of(context).couldNotCreateCircle)),
+          SnackBar(
+            content: Text(AppLocalizations.of(context).couldNotCreateCircle),
+          ),
         );
       }
     }
@@ -471,7 +504,9 @@ class _CirclesScreenState extends State<CirclesScreen> {
                     tooltip: l10n.back,
                   ),
                   const SizedBox(width: 4),
-                  Expanded(child: Text(l10n.circle, style: appSerif(fontSize: 22))),
+                  Expanded(
+                    child: Text(l10n.circle, style: appSerif(fontSize: 22)),
+                  ),
                   IconButton(
                     onPressed: _joinByCode,
                     icon: const Icon(Icons.vpn_key_outlined, size: 20),
@@ -486,14 +521,29 @@ class _CirclesScreenState extends State<CirclesScreen> {
               ),
               const SizedBox(height: 8),
               if (_loading)
-                const Expanded(child: Center(child: CircularProgressIndicator()))
+                const Expanded(
+                  child: Center(child: CircularProgressIndicator()),
+                )
               else if (_error != null)
-                Expanded(child: Center(child: Text(_error!, style: const TextStyle(color: AppColors.inkMuted))))
+                Expanded(
+                  child: Center(
+                    child: Text(
+                      _error!,
+                      style: const TextStyle(color: AppColors.inkMuted),
+                    ),
+                  ),
+                )
               else
                 Expanded(
                   child: ListView(
                     children: [
-                      Text(l10n.myCircles, style: const TextStyle(fontSize: 13, color: AppColors.inkMuted)),
+                      Text(
+                        l10n.myCircles,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          color: AppColors.inkMuted,
+                        ),
+                      ),
                       const SizedBox(height: 8),
                       if (_myCircles.isEmpty)
                         Padding(
@@ -509,7 +559,10 @@ class _CirclesScreenState extends State<CirclesScreen> {
                           child: InkWell(
                             borderRadius: BorderRadius.circular(16),
                             onTap: () => Navigator.of(context).push(
-                              MaterialPageRoute(builder: (_) => CircleDetailScreen(circle: circle)),
+                              MaterialPageRoute(
+                                builder: (_) =>
+                                    CircleDetailScreen(circle: circle),
+                              ),
                             ),
                             child: Container(
                               padding: const EdgeInsets.all(16),
@@ -520,9 +573,19 @@ class _CirclesScreenState extends State<CirclesScreen> {
                               child: Row(
                                 children: [
                                   Expanded(
-                                    child: Text(circle.name, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                                    child: Text(
+                                      circle.name,
+                                      style: const TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
                                   ),
-                                  const Icon(Icons.chevron_right, size: 20, color: AppColors.inkMuted),
+                                  const Icon(
+                                    Icons.chevron_right,
+                                    size: 20,
+                                    color: AppColors.inkMuted,
+                                  ),
                                 ],
                               ),
                             ),
@@ -531,10 +594,17 @@ class _CirclesScreenState extends State<CirclesScreen> {
                       }),
                       if (_pendingInvites.isNotEmpty) ...[
                         const SizedBox(height: 20),
-                        Text(l10n.invitations, style: const TextStyle(fontSize: 13, color: AppColors.inkMuted)),
+                        Text(
+                          l10n.invitations,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: AppColors.inkMuted,
+                          ),
+                        ),
                         const SizedBox(height: 8),
                         ..._pendingInvites.map((invite) {
-                          final circleName = invite['circles']?['name'] ?? l10n.circle;
+                          final circleName =
+                              invite['circles']?['name'] ?? l10n.circle;
                           return Container(
                             margin: const EdgeInsets.only(bottom: 10),
                             padding: const EdgeInsets.all(14),
@@ -545,10 +615,14 @@ class _CirclesScreenState extends State<CirclesScreen> {
                             child: Row(
                               children: [
                                 Expanded(
-                                  child: Text(circleName, style: const TextStyle(fontSize: 15)),
+                                  child: Text(
+                                    circleName,
+                                    style: const TextStyle(fontSize: 15),
+                                  ),
                                 ),
                                 TextButton(
-                                  onPressed: () => _acceptInvite(invite['id'] as String),
+                                  onPressed: () =>
+                                      _acceptInvite(invite['id'] as String),
                                   child: Text(l10n.accept),
                                 ),
                               ],
@@ -558,10 +632,18 @@ class _CirclesScreenState extends State<CirclesScreen> {
                       ],
                       if (_recentActivity.isNotEmpty) ...[
                         const SizedBox(height: 20),
-                        Text(l10n.recentActivity, style: const TextStyle(fontSize: 13, color: AppColors.inkMuted)),
+                        Text(
+                          l10n.recentActivity,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: AppColors.inkMuted,
+                          ),
+                        ),
                         const SizedBox(height: 8),
                         ..._recentActivity.take(5).map((item) {
-                          final displayName = item.displayEmail.split('@').first;
+                          final displayName = item.displayEmail
+                              .split('@')
+                              .first;
                           return InkWell(
                             borderRadius: BorderRadius.circular(16),
                             onTap: () => Navigator.of(context).push(
@@ -574,7 +656,10 @@ class _CirclesScreenState extends State<CirclesScreen> {
                             ),
                             child: Container(
                               margin: const EdgeInsets.only(bottom: 10),
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 12,
+                              ),
                               decoration: BoxDecoration(
                                 color: AppColors.surface,
                                 borderRadius: BorderRadius.circular(16),
@@ -583,11 +668,18 @@ class _CirclesScreenState extends State<CirclesScreen> {
                                 children: [
                                   Expanded(
                                     child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
                                         Row(
                                           children: [
-                                            Text(displayName, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                                            Text(
+                                              displayName,
+                                              style: const TextStyle(
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                            ),
                                             if (item.hasUnguessed) ...[
                                               const SizedBox(width: 6),
                                               const DecoratedBox(
@@ -595,20 +687,33 @@ class _CirclesScreenState extends State<CirclesScreen> {
                                                   color: AppColors.notification,
                                                   shape: BoxShape.circle,
                                                 ),
-                                                child: SizedBox(width: 6, height: 6),
+                                                child: SizedBox(
+                                                  width: 6,
+                                                  height: 6,
+                                                ),
                                               ),
                                             ],
                                           ],
                                         ),
                                         const SizedBox(height: 2),
                                         Text(
-                                          _relativeDay(item.latestCreatedAt, l10n),
-                                          style: const TextStyle(fontSize: 12, color: AppColors.inkMuted),
+                                          _relativeDay(
+                                            item.latestCreatedAt,
+                                            l10n,
+                                          ),
+                                          style: const TextStyle(
+                                            fontSize: 12,
+                                            color: AppColors.inkMuted,
+                                          ),
                                         ),
                                       ],
                                     ),
                                   ),
-                                  const Icon(Icons.chevron_right, size: 18, color: AppColors.inkMuted),
+                                  const Icon(
+                                    Icons.chevron_right,
+                                    size: 18,
+                                    color: AppColors.inkMuted,
+                                  ),
                                 ],
                               ),
                             ),
@@ -648,7 +753,10 @@ class _CircleMenuRow extends StatelessWidget {
           children: [
             Icon(icon, size: 20, color: AppColors.ink),
             const SizedBox(width: 16),
-            Text(label, style: const TextStyle(fontSize: 16, color: AppColors.ink)),
+            Text(
+              label,
+              style: const TextStyle(fontSize: 16, color: AppColors.ink),
+            ),
           ],
         ),
       ),
@@ -702,7 +810,11 @@ class _CircleDetailScreenState extends State<CircleDetailScreen> {
     final pending = allMembers.where((m) => m.status == 'invited').toList();
 
     final myId = _supabase.auth.currentUser!.id;
-    final otherIds = members.map((m) => m.userId).whereType<String>().where((id) => id != myId).toList();
+    final otherIds = members
+        .map((m) => m.userId)
+        .whereType<String>()
+        .where((id) => id != myId)
+        .toList();
     final emailByUserId = {
       for (final m in members)
         if (m.userId != null) m.userId!: m.invitedEmail,
@@ -713,8 +825,14 @@ class _CircleDetailScreenState extends State<CircleDetailScreen> {
     if (otherIds.isNotEmpty) {
       // Тільки короткий підсумок по кожному учаснику тут — сама можливість
       // вгадати кожен окремий день живе на екрані конкретної людини.
-      final since = DateTime.now().subtract(const Duration(days: kGuessWindowDays));
-      final sinceUtc = DateTime(since.year, since.month, since.day).toUtc().toIso8601String();
+      final since = DateTime.now().subtract(
+        const Duration(days: kGuessWindowDays),
+      );
+      final sinceUtc = DateTime(
+        since.year,
+        since.month,
+        since.day,
+      ).toUtc().toIso8601String();
 
       final checkinRows = await _supabase
           .from('checkins')
@@ -739,7 +857,11 @@ class _CircleDetailScreenState extends State<CircleDetailScreen> {
 
       final guessedKeys = <String>{};
       if (datesByUser.isNotEmpty) {
-        final sinceDate = DateTime(since.year, since.month, since.day).toIso8601String().split('T').first;
+        final sinceDate = DateTime(
+          since.year,
+          since.month,
+          since.day,
+        ).toIso8601String().split('T').first;
         final guessRows = await _supabase
             .from('circle_guesses')
             .select('target_user_id, target_date')
@@ -756,14 +878,18 @@ class _CircleDetailScreenState extends State<CircleDetailScreen> {
 
       for (final uid in otherIds) {
         final dates = datesByUser[uid];
-        final hasUnguessed = dates != null && dates.any((d) => !guessedKeys.contains(_entryKey(uid, d)));
-        summaries.add(_MemberSummary(
-          userId: uid,
-          displayEmail: emailByUserId[uid] ?? '',
-          latestMood: latestMoodByUser[uid],
-          latestDate: latestDateByUser[uid],
-          hasUnguessed: hasUnguessed,
-        ));
+        final hasUnguessed =
+            dates != null &&
+            dates.any((d) => !guessedKeys.contains(_entryKey(uid, d)));
+        summaries.add(
+          _MemberSummary(
+            userId: uid,
+            displayEmail: emailByUserId[uid] ?? '',
+            latestMood: latestMoodByUser[uid],
+            latestDate: latestDateByUser[uid],
+            hasUnguessed: hasUnguessed,
+          ),
+        );
       }
     }
 
@@ -812,7 +938,10 @@ class _CircleDetailScreenState extends State<CircleDetailScreen> {
 
   Future<void> _shareInviteLink() async {
     final l10n = AppLocalizations.of(context);
-    final text = l10n.inviteShareText(widget.circle.name, widget.circle.inviteCode);
+    final text = l10n.inviteShareText(
+      widget.circle.name,
+      widget.circle.inviteCode,
+    );
     await SharePlus.instance.share(ShareParams(text: text));
   }
 
@@ -833,7 +962,10 @@ class _CircleDetailScreenState extends State<CircleDetailScreen> {
         actionsAlignment: MainAxisAlignment.center,
         actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
         actions: [
-          TextButton(onPressed: () => Navigator.of(context).pop(), child: Text(l10n.cancel)),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text(l10n.cancel),
+          ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(controller.text.trim()),
             child: Text(l10n.invite),
@@ -851,16 +983,16 @@ class _CircleDetailScreenState extends State<CircleDetailScreen> {
         'status': 'invited',
       });
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(l10n.inviteAdded)),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(l10n.inviteAdded)));
       }
       _load();
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(l10n.couldNotInvite)),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(l10n.couldNotInvite)));
       }
     }
   }
@@ -872,7 +1004,9 @@ class _CircleDetailScreenState extends State<CircleDetailScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(AppLocalizations.of(context).couldNotCancelInvite)),
+          SnackBar(
+            content: Text(AppLocalizations.of(context).couldNotCancelInvite),
+          ),
         );
       }
     }
@@ -900,7 +1034,12 @@ class _CircleDetailScreenState extends State<CircleDetailScreen> {
                     tooltip: l10n.back,
                   ),
                   const SizedBox(width: 4),
-                  Expanded(child: Text(widget.circle.name, style: appSerif(fontSize: 22))),
+                  Expanded(
+                    child: Text(
+                      widget.circle.name,
+                      style: appSerif(fontSize: 22),
+                    ),
+                  ),
                   if (_isOwner)
                     IconButton(
                       onPressed: _invite,
@@ -911,51 +1050,68 @@ class _CircleDetailScreenState extends State<CircleDetailScreen> {
               ),
               const SizedBox(height: 16),
               if (_loading)
-                const Expanded(child: Center(child: CircularProgressIndicator()))
+                const Expanded(
+                  child: Center(child: CircularProgressIndicator()),
+                )
               else
                 Expanded(
                   child: ListView(
                     children: [
                       if (_isOwner && _pendingMembers.isNotEmpty) ...[
-                        Text(l10n.pending, style: const TextStyle(fontSize: 13, color: AppColors.inkMuted)),
+                        Text(
+                          l10n.pending,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: AppColors.inkMuted,
+                          ),
+                        ),
                         const SizedBox(height: 8),
-                        ..._pendingMembers.map((m) => Container(
-                              margin: const EdgeInsets.only(bottom: 10),
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                              decoration: BoxDecoration(
-                                color: AppColors.surface,
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                              child: Row(
-                                children: [
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          m.invitedEmail,
-                                          style: const TextStyle(fontSize: 14),
-                                          overflow: TextOverflow.ellipsis,
+                        ..._pendingMembers.map(
+                          (m) => Container(
+                            margin: const EdgeInsets.only(bottom: 10),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 12,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppColors.surface,
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        m.invitedEmail,
+                                        style: const TextStyle(fontSize: 14),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        l10n.notJoinedYet,
+                                        style: const TextStyle(
+                                          fontSize: 12,
+                                          color: AppColors.inkMuted,
                                         ),
-                                        const SizedBox(height: 4),
-                                        Text(
-                                          l10n.notJoinedYet,
-                                          style: const TextStyle(fontSize: 12, color: AppColors.inkMuted),
-                                        ),
-                                      ],
-                                    ),
+                                      ),
+                                    ],
                                   ),
-                                  IconButton(
-                                    onPressed: () => _cancelInvite(m.id),
-                                    icon: const Icon(Icons.close, size: 18),
-                                    tooltip: l10n.cancelInviteTooltip,
-                                    color: AppColors.inkMuted,
-                                    padding: EdgeInsets.zero,
-                                    constraints: const BoxConstraints(),
-                                  ),
-                                ],
-                              ),
-                            )),
+                                ),
+                                IconButton(
+                                  onPressed: () => _cancelInvite(m.id),
+                                  icon: const Icon(Icons.close, size: 18),
+                                  tooltip: l10n.cancelInviteTooltip,
+                                  color: AppColors.inkMuted,
+                                  padding: EdgeInsets.zero,
+                                  constraints: const BoxConstraints(),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
                         const SizedBox(height: 20),
                       ],
                       if (others.isEmpty && _pendingMembers.isEmpty)
@@ -968,7 +1124,13 @@ class _CircleDetailScreenState extends State<CircleDetailScreen> {
                           ),
                         )
                       else if (others.isNotEmpty) ...[
-                        Text(l10n.circle, style: const TextStyle(fontSize: 13, color: AppColors.inkMuted)),
+                        Text(
+                          l10n.circle,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: AppColors.inkMuted,
+                          ),
+                        ),
                         const SizedBox(height: 8),
                         ..._memberSummaries.map(_buildMemberSummaryRow),
                       ],
@@ -1009,7 +1171,10 @@ class _CircleDetailScreenState extends State<CircleDetailScreen> {
               Container(
                 width: 10,
                 height: 10,
-                decoration: BoxDecoration(color: summary.latestMood!.color, shape: BoxShape.circle),
+                decoration: BoxDecoration(
+                  color: summary.latestMood!.color,
+                  shape: BoxShape.circle,
+                ),
               ),
               const SizedBox(width: 10),
             ],
@@ -1019,11 +1184,20 @@ class _CircleDetailScreenState extends State<CircleDetailScreen> {
                 children: [
                   Row(
                     children: [
-                      Text(displayName, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+                      Text(
+                        displayName,
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                       if (summary.hasUnguessed) ...[
                         const SizedBox(width: 6),
                         const DecoratedBox(
-                          decoration: BoxDecoration(color: AppColors.notification, shape: BoxShape.circle),
+                          decoration: BoxDecoration(
+                            color: AppColors.notification,
+                            shape: BoxShape.circle,
+                          ),
                           child: SizedBox(width: 6, height: 6),
                         ),
                       ],
@@ -1031,13 +1205,22 @@ class _CircleDetailScreenState extends State<CircleDetailScreen> {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    summary.latestDate == null ? l10n.notCheckedInToday : _relativeDay(summary.latestDate!, l10n),
-                    style: const TextStyle(fontSize: 12, color: AppColors.inkMuted),
+                    summary.latestDate == null
+                        ? l10n.notCheckedInToday
+                        : _relativeDay(summary.latestDate!, l10n),
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: AppColors.inkMuted,
+                    ),
                   ),
                 ],
               ),
             ),
-            const Icon(Icons.chevron_right, size: 18, color: AppColors.inkMuted),
+            const Icon(
+              Icons.chevron_right,
+              size: 18,
+              color: AppColors.inkMuted,
+            ),
           ],
         ),
       ),
@@ -1052,7 +1235,11 @@ class PersonDetailScreen extends StatefulWidget {
   final String userId;
   final String displayEmail;
 
-  const PersonDetailScreen({super.key, required this.userId, required this.displayEmail});
+  const PersonDetailScreen({
+    super.key,
+    required this.userId,
+    required this.displayEmail,
+  });
 
   @override
   State<PersonDetailScreen> createState() => _PersonDetailScreenState();
@@ -1074,12 +1261,18 @@ class _PersonDetailScreenState extends State<PersonDetailScreen> {
     setState(() => _loading = true);
 
     final myId = _supabase.auth.currentUser!.id;
-    final since = DateTime.now().subtract(const Duration(days: kGuessWindowDays));
-    final sinceUtc = DateTime(since.year, since.month, since.day).toUtc().toIso8601String();
+    final since = DateTime.now().subtract(
+      const Duration(days: kGuessWindowDays),
+    );
+    final sinceUtc = DateTime(
+      since.year,
+      since.month,
+      since.day,
+    ).toUtc().toIso8601String();
 
     final checkinRows = await _supabase
         .from('checkins')
-        .select('mood, note, photo_path, created_at')
+        .select('mood, note, photo_path, photo_align_y, created_at')
         .eq('user_id', widget.userId)
         .gte('created_at', sinceUtc)
         .order('created_at', ascending: false);
@@ -1090,18 +1283,25 @@ class _PersonDetailScreenState extends State<PersonDetailScreen> {
       final createdAt = DateTime.parse(row['created_at'] as String).toLocal();
       final date = DateTime(createdAt.year, createdAt.month, createdAt.day);
       if (!seenDayKeys.add(_entryKey(widget.userId, date))) continue;
-      entries.add(_MemberDayEntry(
-        userId: widget.userId,
-        mood: moodFromDbValue(row['mood'] as String),
-        note: row['note'] as String?,
-        photoPath: row['photo_path'] as String?,
-        date: date,
-      ));
+      entries.add(
+        _MemberDayEntry(
+          userId: widget.userId,
+          mood: moodFromDbValue(row['mood'] as String),
+          note: row['note'] as String?,
+          photoPath: row['photo_path'] as String?,
+          photoAlignY: (row['photo_align_y'] as num?)?.toDouble() ?? 0,
+          date: date,
+        ),
+      );
     }
 
     final guesses = <String, String?>{};
     if (entries.isNotEmpty) {
-      final sinceDate = DateTime(since.year, since.month, since.day).toIso8601String().split('T').first;
+      final sinceDate = DateTime(
+        since.year,
+        since.month,
+        since.day,
+      ).toIso8601String().split('T').first;
       final guessRows = await _supabase
           .from('circle_guesses')
           .select('guessed_mood, target_date')
@@ -1111,7 +1311,8 @@ class _PersonDetailScreenState extends State<PersonDetailScreen> {
 
       for (final row in guessRows as List) {
         final targetDate = DateTime.parse(row['target_date'] as String);
-        guesses[_entryKey(widget.userId, targetDate)] = row['guessed_mood'] as String;
+        guesses[_entryKey(widget.userId, targetDate)] =
+            row['guessed_mood'] as String;
       }
     }
 
@@ -1143,7 +1344,9 @@ class _PersonDetailScreenState extends State<PersonDetailScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(AppLocalizations.of(context).couldNotSaveGuess)),
+          SnackBar(
+            content: Text(AppLocalizations.of(context).couldNotSaveGuess),
+          ),
         );
       }
     }
@@ -1175,16 +1378,23 @@ class _PersonDetailScreenState extends State<PersonDetailScreen> {
               ),
               const SizedBox(height: 16),
               if (_loading)
-                const Expanded(child: Center(child: CircularProgressIndicator()))
+                const Expanded(
+                  child: Center(child: CircularProgressIndicator()),
+                )
               else if (_entries.isEmpty)
                 Expanded(
                   child: Center(
-                    child: Text(l10n.notCheckedInToday, style: const TextStyle(color: AppColors.inkMuted)),
+                    child: Text(
+                      l10n.notCheckedInToday,
+                      style: const TextStyle(color: AppColors.inkMuted),
+                    ),
                   ),
                 )
               else
                 Expanded(
-                  child: ListView(children: _entries.map(_buildEntryCard).toList()),
+                  child: ListView(
+                    children: _entries.map(_buildEntryCard).toList(),
+                  ),
                 ),
             ],
           ),
@@ -1220,14 +1430,25 @@ class _PersonDetailScreenState extends State<PersonDetailScreen> {
                 Container(
                   width: 10,
                   height: 10,
-                  decoration: BoxDecoration(color: entry.mood.color, shape: BoxShape.circle),
+                  decoration: BoxDecoration(
+                    color: entry.mood.color,
+                    shape: BoxShape.circle,
+                  ),
                 ),
                 const SizedBox(width: 8),
-                Text(entry.mood.label(context), style: const TextStyle(fontSize: 14)),
+                Text(
+                  entry.mood.label(context),
+                  style: const TextStyle(fontSize: 14),
+                ),
                 const SizedBox(width: 10),
                 Text(
-                  myGuess == entry.mood.dbValue ? l10n.guessedRight : l10n.guessedWrong,
-                  style: const TextStyle(fontSize: 12, color: AppColors.inkMuted),
+                  myGuess == entry.mood.dbValue
+                      ? l10n.guessedRight
+                      : l10n.guessedWrong,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: AppColors.inkMuted,
+                  ),
                 ),
               ],
             ),
@@ -1235,7 +1456,11 @@ class _PersonDetailScreenState extends State<PersonDetailScreen> {
               const SizedBox(height: 8),
               Text(
                 entry.note!,
-                style: const TextStyle(fontSize: 13, color: AppColors.inkMuted, height: 1.4),
+                style: const TextStyle(
+                  fontSize: 13,
+                  color: AppColors.inkMuted,
+                  height: 1.4,
+                ),
               ),
             ],
             if (entry.photoPath != null) ...[
@@ -1262,6 +1487,7 @@ class _PersonDetailScreenState extends State<PersonDetailScreen> {
                       height: 140,
                       width: double.infinity,
                       fit: BoxFit.cover,
+                      alignment: Alignment(0, entry.photoAlignY),
                     ),
                   );
                 },
@@ -1281,9 +1507,15 @@ class _PersonDetailScreenState extends State<PersonDetailScreen> {
                     onPressed: () => _guess(entry, mood),
                     style: OutlinedButton.styleFrom(
                       side: BorderSide(color: mood.color),
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
                     ),
-                    child: Text(mood.label(context), style: const TextStyle(fontSize: 13)),
+                    child: Text(
+                      mood.label(context),
+                      style: const TextStyle(fontSize: 13),
+                    ),
                   ),
                 );
               }).toList(),

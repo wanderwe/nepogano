@@ -97,6 +97,16 @@ class AppLocalizationsUk extends AppLocalizations {
   String get removePhotoTooltip => 'Прибрати фото';
 
   @override
+  String get repositionPhoto => 'Розташування фото';
+
+  @override
+  String get repositionPhotoHint =>
+      'Перетягни фото вгору чи вниз, щоб показати потрібну частину';
+
+  @override
+  String get repositionPhotoTooltip => 'Змінити розташування фото';
+
+  @override
   String get circle => 'Коло';
 
   @override

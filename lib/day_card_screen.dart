@@ -387,7 +387,11 @@ class _DayCard extends StatelessWidget {
           if (photoBytes != null)
             AspectRatio(
               aspectRatio: 16 / 10,
-              child: Image.memory(photoBytes!, fit: BoxFit.cover),
+              child: Image.memory(
+                photoBytes!,
+                fit: BoxFit.cover,
+                alignment: Alignment(0, entry.photoAlignY),
+              ),
             ),
           Padding(
             padding: const EdgeInsets.all(24),

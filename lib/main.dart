@@ -17,6 +17,7 @@ import 'history_screen.dart';
 import 'l10n/app_localizations.dart';
 import 'locale_provider.dart';
 import 'onboarding_screen.dart';
+import 'photo_reposition_screen.dart';
 import 'photo_storage.dart';
 import 'style.dart';
 
@@ -90,7 +91,9 @@ class NepoganoApp extends StatelessWidget {
           title: 'Nepogano',
           debugShowCheckedModeBanner: false,
           scaffoldMessengerKey: scaffoldMessengerKey,
-          theme: base.copyWith(textTheme: GoogleFonts.interTextTheme(base.textTheme)),
+          theme: base.copyWith(
+            textTheme: GoogleFonts.interTextTheme(base.textTheme),
+          ),
           locale: locale,
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
@@ -159,7 +162,10 @@ class _AuthGateState extends State<AuthGate> {
     pendingJoinCode.value = null;
     final l10n = AppLocalizations.of(context);
     try {
-      await Supabase.instance.client.rpc('join_circle_by_code', params: {'code': code});
+      await Supabase.instance.client.rpc(
+        'join_circle_by_code',
+        params: {'code': code},
+      );
       scaffoldMessengerKey.currentState?.showSnackBar(
         SnackBar(content: Text(l10n.joinedCircleSuccess)),
       );
@@ -273,7 +279,9 @@ class _MoodTileState extends State<_MoodTile> {
           curve: Curves.easeOutCubic,
           padding: const EdgeInsets.symmetric(vertical: 20),
           decoration: BoxDecoration(
-            color: isSelected ? mood.color.withValues(alpha: 0.16) : AppColors.surface,
+            color: isSelected
+                ? mood.color.withValues(alpha: 0.16)
+                : AppColors.surface,
             borderRadius: BorderRadius.circular(18),
             border: isSelected ? Border.all(color: mood.color, width: 2) : null,
           ),
@@ -282,7 +290,10 @@ class _MoodTileState extends State<_MoodTile> {
               Container(
                 width: 12,
                 height: 12,
-                decoration: BoxDecoration(color: mood.color, shape: BoxShape.circle),
+                decoration: BoxDecoration(
+                  color: mood.color,
+                  shape: BoxShape.circle,
+                ),
               ),
               const SizedBox(height: 10),
               Text(
@@ -324,6 +335,7 @@ class _CheckInScreenState extends State<CheckInScreen> {
   String? _existingPhotoPath;
   File? _pickedPhotoFile;
   bool _removePhoto = false;
+  double _photoAlignY = 0;
 
   // Якщо запис за сьогодні вже є — за замовчуванням показуємо його як
   // готовий підсумок, а не одразу активну форму. Форма з'являється тільки
@@ -373,7 +385,7 @@ class _CheckInScreenState extends State<CheckInScreen> {
 
     final rows = await _supabase
         .from('checkins')
-        .select('id, mood, note, created_at, photo_path')
+        .select('id, mood, note, created_at, photo_path, photo_align_y')
         .eq('user_id', _supabase.auth.currentUser!.id)
         .gte('created_at', startOfDay)
         .lt('created_at', startOfNextDay)
@@ -387,8 +399,11 @@ class _CheckInScreenState extends State<CheckInScreen> {
       _todayEntryId = row['id'];
       _selected = moodFromDbValue(row['mood'] as String);
       _noteController.text = (row['note'] as String?) ?? '';
-      _todayEntrySavedAt = DateTime.parse(row['created_at'] as String).toLocal();
+      _todayEntrySavedAt = DateTime.parse(
+        row['created_at'] as String,
+      ).toLocal();
       _existingPhotoPath = row['photo_path'] as String?;
+      _photoAlignY = (row['photo_align_y'] as num?)?.toDouble() ?? 0;
       _pickedPhotoFile = null;
       _removePhoto = false;
       _editing = false;
@@ -412,10 +427,29 @@ class _CheckInScreenState extends State<CheckInScreen> {
       imageQuality: 80,
     );
     if (picked == null || !mounted) return;
+
+    final file = File(picked.path);
+    final alignY = await Navigator.of(context).push<double>(
+      MaterialPageRoute(
+        builder: (_) => PhotoRepositionScreen(image: FileImage(file)),
+      ),
+    );
+    if (!mounted) return;
     setState(() {
-      _pickedPhotoFile = File(picked.path);
+      _pickedPhotoFile = file;
+      _photoAlignY = alignY ?? 0;
       _removePhoto = false;
     });
+  }
+
+  Future<void> _repositionPhoto(ImageProvider image) async {
+    final alignY = await Navigator.of(context).push<double>(
+      MaterialPageRoute(
+        builder: (_) =>
+            PhotoRepositionScreen(image: image, initialAlignY: _photoAlignY),
+      ),
+    );
+    if (alignY != null && mounted) setState(() => _photoAlignY = alignY);
   }
 
   Future<void> _choosePhotoSource() async {
@@ -451,15 +485,23 @@ class _CheckInScreenState extends State<CheckInScreen> {
     setState(() {
       _pickedPhotoFile = null;
       _removePhoto = _existingPhotoPath != null;
+      _photoAlignY = 0;
     });
   }
 
   Widget _buildPhotoPicker(AppLocalizations l10n) {
     if (_pickedPhotoFile != null) {
+      final image = FileImage(_pickedPhotoFile!);
       return _PhotoPreview(
-        image: Image.file(_pickedPhotoFile!, fit: BoxFit.cover),
+        image: Image(
+          image: image,
+          fit: BoxFit.cover,
+          alignment: Alignment(0, _photoAlignY),
+        ),
         onRemove: _clearPhoto,
+        onReposition: () => _repositionPhoto(image),
         removeTooltip: l10n.removePhotoTooltip,
+        repositionTooltip: l10n.repositionPhotoTooltip,
       );
     }
 
@@ -483,10 +525,17 @@ class _CheckInScreenState extends State<CheckInScreen> {
               ),
             );
           }
+          final image = MemoryImage(snapshot.data!);
           return _PhotoPreview(
-            image: Image.memory(snapshot.data!, fit: BoxFit.cover),
+            image: Image(
+              image: image,
+              fit: BoxFit.cover,
+              alignment: Alignment(0, _photoAlignY),
+            ),
             onRemove: _clearPhoto,
+            onReposition: () => _repositionPhoto(image),
             removeTooltip: l10n.removePhotoTooltip,
+            repositionTooltip: l10n.repositionPhotoTooltip,
           );
         },
       );
@@ -510,8 +559,11 @@ class _CheckInScreenState extends State<CheckInScreen> {
       entry: CheckinEntry(
         createdAt: _todayEntrySavedAt ?? DateTime.now(),
         mood: _selected!,
-        note: _noteController.text.trim().isEmpty ? null : _noteController.text.trim(),
+        note: _noteController.text.trim().isEmpty
+            ? null
+            : _noteController.text.trim(),
         photoPath: _existingPhotoPath,
+        photoAlignY: _photoAlignY,
       ),
     );
   }
@@ -598,7 +650,9 @@ class _CheckInScreenState extends State<CheckInScreen> {
                       width: double.infinity,
                       child: TextButton.icon(
                         onPressed: () => Navigator.of(context).push(
-                          MaterialPageRoute(builder: (_) => _buildDayCardScreen()),
+                          MaterialPageRoute(
+                            builder: (_) => _buildDayCardScreen(),
+                          ),
                         ),
                         icon: const Icon(Icons.ios_share, size: 18),
                         label: Text(l10n.dayCard),
@@ -626,7 +680,11 @@ class _CheckInScreenState extends State<CheckInScreen> {
           children: [
             Text.rich(
               TextSpan(
-                style: appSerif(fontSize: 22, fontWeight: FontWeight.w700, color: AppColors.ink),
+                style: appSerif(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.ink,
+                ),
                 children: [
                   TextSpan(text: '${l10n.todayWasPrefix} '),
                   TextSpan(
@@ -640,7 +698,11 @@ class _CheckInScreenState extends State<CheckInScreen> {
               const SizedBox(height: 10),
               Text(
                 _noteController.text.trim(),
-                style: const TextStyle(fontSize: 14, color: AppColors.inkMuted, height: 1.4),
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: AppColors.inkMuted,
+                  height: 1.4,
+                ),
               ),
             ],
             if (_existingPhotoPath != null) ...[
@@ -667,6 +729,7 @@ class _CheckInScreenState extends State<CheckInScreen> {
                       height: 160,
                       width: double.infinity,
                       fit: BoxFit.cover,
+                      alignment: Alignment(0, _photoAlignY),
                     ),
                   );
                 },
@@ -686,7 +749,9 @@ class _CheckInScreenState extends State<CheckInScreen> {
             padding: const EdgeInsets.symmetric(vertical: 14),
             foregroundColor: AppColors.ink,
             side: const BorderSide(color: AppColors.divider),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
           ),
         ),
       ),
@@ -694,9 +759,9 @@ class _CheckInScreenState extends State<CheckInScreen> {
       SizedBox(
         width: double.infinity,
         child: TextButton.icon(
-          onPressed: () => Navigator.of(context).push(
-            MaterialPageRoute(builder: (_) => _buildDayCardScreen()),
-          ),
+          onPressed: () => Navigator.of(
+            context,
+          ).push(MaterialPageRoute(builder: (_) => _buildDayCardScreen())),
           icon: const Icon(Icons.ios_share, size: 18),
           label: Text(l10n.dayCard),
         ),
@@ -706,13 +771,15 @@ class _CheckInScreenState extends State<CheckInScreen> {
 
   bool get _isCurrentWeek => _visibleWeekStart == _mondayOf(DateTime.now());
   bool get _isPreviousWeek =>
-      _visibleWeekStart == _mondayOf(DateTime.now()).subtract(const Duration(days: 7));
+      _visibleWeekStart ==
+      _mondayOf(DateTime.now()).subtract(const Duration(days: 7));
 
   void _changeWeek(int deltaWeeks) {
     final currentMonday = _mondayOf(DateTime.now());
     final next = _visibleWeekStart.add(Duration(days: 7 * deltaWeeks));
     // Лише поточний і минулий тиждень — не глибше і не в майбутнє.
-    if (next.isAfter(currentMonday) || next.isBefore(currentMonday.subtract(const Duration(days: 7)))) {
+    if (next.isAfter(currentMonday) ||
+        next.isBefore(currentMonday.subtract(const Duration(days: 7)))) {
       return;
     }
     setState(() => _visibleWeekStart = next);
@@ -721,7 +788,10 @@ class _CheckInScreenState extends State<CheckInScreen> {
 
   Future<void> _loadWeek() async {
     final start = _visibleWeekStart.toUtc().toIso8601String();
-    final end = _visibleWeekStart.add(const Duration(days: 7)).toUtc().toIso8601String();
+    final end = _visibleWeekStart
+        .add(const Duration(days: 7))
+        .toUtc()
+        .toIso8601String();
 
     final rows = await _supabase
         .from('checkins')
@@ -769,6 +839,7 @@ class _CheckInScreenState extends State<CheckInScreen> {
             ? null
             : _noteController.text.trim(),
         'photo_path': photoPath,
+        'photo_align_y': photoPath == null ? 0 : _photoAlignY,
       };
 
       if (_todayEntryId != null) {
@@ -778,12 +849,20 @@ class _CheckInScreenState extends State<CheckInScreen> {
             .eq('id', _todayEntryId as Object)
             .select('id');
         if ((updated as List).isEmpty) {
-          throw Exception('Update affected 0 rows — check RLS UPDATE policy on checkins.');
+          throw Exception(
+            'Update affected 0 rows — check RLS UPDATE policy on checkins.',
+          );
         }
       } else {
-        final inserted = await _supabase.from('checkins').insert(payload).select('id, created_at').single();
+        final inserted = await _supabase
+            .from('checkins')
+            .insert(payload)
+            .select('id, created_at')
+            .single();
         _todayEntryId = inserted['id'];
-        _todayEntrySavedAt = DateTime.parse(inserted['created_at'] as String).toLocal();
+        _todayEntrySavedAt = DateTime.parse(
+          inserted['created_at'] as String,
+        ).toLocal();
       }
       _existingPhotoPath = photoPath;
       _pickedPhotoFile = null;
@@ -794,7 +873,11 @@ class _CheckInScreenState extends State<CheckInScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(AppLocalizations.of(context).savedSnackbar(_selected!.label(context))),
+            content: Text(
+              AppLocalizations.of(
+                context,
+              ).savedSnackbar(_selected!.label(context)),
+            ),
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -802,7 +885,9 @@ class _CheckInScreenState extends State<CheckInScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(AppLocalizations.of(context).saveFailedSnackbar)),
+          SnackBar(
+            content: Text(AppLocalizations.of(context).saveFailedSnackbar),
+          ),
         );
       }
     } finally {
@@ -825,7 +910,9 @@ class _CheckInScreenState extends State<CheckInScreen> {
         onLanguage: () {
           Navigator.of(sheetContext).pop();
           setAppLocale(
-            appLocale.value.languageCode == 'uk' ? const Locale('en') : const Locale('uk'),
+            appLocale.value.languageCode == 'uk'
+                ? const Locale('en')
+                : const Locale('uk'),
           );
         },
         onSignOut: () {
@@ -857,7 +944,10 @@ class _CheckInScreenState extends State<CheckInScreen> {
           ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: Text(l10n.delete, style: const TextStyle(color: Colors.redAccent)),
+            child: Text(
+              l10n.delete,
+              style: const TextStyle(color: Colors.redAccent),
+            ),
           ),
         ],
       ),
@@ -871,7 +961,11 @@ class _CheckInScreenState extends State<CheckInScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(AppLocalizations.of(context).deleteAccountFailedSnackbar)),
+          SnackBar(
+            content: Text(
+              AppLocalizations.of(context).deleteAccountFailedSnackbar,
+            ),
+          ),
         );
       }
     }
@@ -896,7 +990,10 @@ class _CheckInScreenState extends State<CheckInScreen> {
                 children: [
                   Text(
                     dateLabel,
-                    style: const TextStyle(fontSize: 14, color: AppColors.inkMuted),
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: AppColors.inkMuted,
+                    ),
                   ),
                   Row(
                     children: [
@@ -906,7 +1003,9 @@ class _CheckInScreenState extends State<CheckInScreen> {
                           IconButton(
                             onPressed: () async {
                               await Navigator.of(context).push(
-                                MaterialPageRoute(builder: (_) => const CirclesScreen()),
+                                MaterialPageRoute(
+                                  builder: (_) => const CirclesScreen(),
+                                ),
                               );
                               _checkCircleActivity();
                             },
@@ -929,9 +1028,14 @@ class _CheckInScreenState extends State<CheckInScreen> {
                       ),
                       IconButton(
                         onPressed: () => Navigator.of(context).push(
-                          MaterialPageRoute(builder: (_) => const HistoryScreen()),
+                          MaterialPageRoute(
+                            builder: (_) => const HistoryScreen(),
+                          ),
                         ),
-                        icon: const Icon(Icons.calendar_month_outlined, size: 20),
+                        icon: const Icon(
+                          Icons.calendar_month_outlined,
+                          size: 20,
+                        ),
                         tooltip: l10n.history,
                       ),
                       IconButton(
@@ -961,11 +1065,17 @@ class _CheckInScreenState extends State<CheckInScreen> {
                               '${_todayEntrySavedAt!.hour.toString().padLeft(2, '0')}:'
                               '${_todayEntrySavedAt!.minute.toString().padLeft(2, '0')}',
                             ),
-                            style: const TextStyle(fontSize: 13, color: AppColors.inkMuted),
+                            style: const TextStyle(
+                              fontSize: 13,
+                              color: AppColors.inkMuted,
+                            ),
                           ),
                         ],
                         const SizedBox(height: 32),
-                        if (_showForm) ..._buildFormContent(l10n) else ..._buildSummaryContent(l10n),
+                        if (_showForm)
+                          ..._buildFormContent(l10n)
+                        else
+                          ..._buildSummaryContent(l10n),
                       ],
                     ),
                   ),
@@ -980,16 +1090,24 @@ class _CheckInScreenState extends State<CheckInScreen> {
     );
   }
 
-  String _weekLabel(AppLocalizations l10n) => _isCurrentWeek ? l10n.thisWeek : l10n.previousWeek;
+  String _weekLabel(AppLocalizations l10n) =>
+      _isCurrentWeek ? l10n.thisWeek : l10n.previousWeek;
 
   Widget _buildWeekStrip() {
     final l10n = AppLocalizations.of(context);
     final today = DateTime.now();
-    final days = List.generate(7, (i) => _visibleWeekStart.add(Duration(days: i)));
+    final days = List.generate(
+      7,
+      (i) => _visibleWeekStart.add(Duration(days: i)),
+    );
 
     final byDay = <DateTime, MoodLevel>{};
     for (final entry in _weekEntries) {
-      final d = DateTime(entry.createdAt.year, entry.createdAt.month, entry.createdAt.day);
+      final d = DateTime(
+        entry.createdAt.year,
+        entry.createdAt.month,
+        entry.createdAt.day,
+      );
       byDay[d] = entry.mood;
     }
 
@@ -1031,7 +1149,10 @@ class _CheckInScreenState extends State<CheckInScreen> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: days.map((d) {
               final mood = byDay[d];
-              final isToday = d.year == today.year && d.month == today.month && d.day == today.day;
+              final isToday =
+                  d.year == today.year &&
+                  d.month == today.month &&
+                  d.day == today.day;
 
               return Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 7),
@@ -1043,7 +1164,9 @@ class _CheckInScreenState extends State<CheckInScreen> {
                     color: mood?.color ?? Colors.transparent,
                     border: mood == null
                         ? Border.all(color: AppColors.surfaceRaised, width: 1.5)
-                        : (isToday ? Border.all(color: AppColors.ink, width: 1.5) : null),
+                        : (isToday
+                              ? Border.all(color: AppColors.ink, width: 1.5)
+                              : null),
                   ),
                 ),
               );
@@ -1077,14 +1200,11 @@ class _MoreMenuSheet extends StatelessWidget {
           children: [
             _MenuRow(
               icon: Icons.language,
-              label: '${l10n.language}: ${appLocale.value.languageCode == 'uk' ? 'UK' : 'EN'}',
+              label:
+                  '${l10n.language}: ${appLocale.value.languageCode == 'uk' ? 'UK' : 'EN'}',
               onTap: onLanguage,
             ),
-            _MenuRow(
-              icon: Icons.logout,
-              label: l10n.signOut,
-              onTap: onSignOut,
-            ),
+            _MenuRow(icon: Icons.logout, label: l10n.signOut, onTap: onSignOut),
             const Padding(
               padding: EdgeInsets.symmetric(vertical: 8),
               child: Divider(color: AppColors.divider, height: 1),
@@ -1138,12 +1258,16 @@ class _MenuRow extends StatelessWidget {
 class _PhotoPreview extends StatelessWidget {
   final Widget image;
   final VoidCallback onRemove;
+  final VoidCallback onReposition;
   final String removeTooltip;
+  final String repositionTooltip;
 
   const _PhotoPreview({
     required this.image,
     required this.onRemove,
+    required this.onReposition,
     required this.removeTooltip,
+    required this.repositionTooltip,
   });
 
   @override
@@ -1152,7 +1276,27 @@ class _PhotoPreview extends StatelessWidget {
       children: [
         ClipRRect(
           borderRadius: BorderRadius.circular(16),
-          child: SizedBox(height: 140, width: double.infinity, child: image),
+          child: SizedBox(
+            height: 140,
+            width: double.infinity,
+            child: GestureDetector(onTap: onReposition, child: image),
+          ),
+        ),
+        Positioned(
+          top: 8,
+          left: 8,
+          child: Material(
+            color: Colors.black54,
+            shape: const CircleBorder(),
+            child: IconButton(
+              onPressed: onReposition,
+              icon: const Icon(Icons.open_with, size: 16, color: Colors.white),
+              tooltip: repositionTooltip,
+              padding: const EdgeInsets.all(6),
+              constraints: const BoxConstraints(),
+              visualDensity: VisualDensity.compact,
+            ),
+          ),
         ),
         Positioned(
           top: 8,

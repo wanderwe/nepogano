@@ -14,8 +14,15 @@ class CheckinEntry {
   final MoodLevel mood;
   final String? note;
   final String? photoPath;
+  final double photoAlignY;
 
-  CheckinEntry({required this.createdAt, required this.mood, this.note, this.photoPath});
+  CheckinEntry({
+    required this.createdAt,
+    required this.mood,
+    this.note,
+    this.photoPath,
+    this.photoAlignY = 0,
+  });
 }
 
 class HistoryScreen extends StatefulWidget {
@@ -54,7 +61,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
     try {
       final rows = await _supabase
           .from('checkins')
-          .select('mood, note, created_at, photo_path')
+          .select('mood, note, created_at, photo_path, photo_align_y')
           .eq('user_id', _supabase.auth.currentUser!.id)
           .order('created_at');
 
@@ -64,6 +71,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
           mood: moodFromDbValue(row['mood'] as String),
           note: row['note'] as String?,
           photoPath: row['photo_path'] as String?,
+          photoAlignY: (row['photo_align_y'] as num?)?.toDouble() ?? 0,
         );
       }).toList();
 
@@ -118,9 +126,13 @@ class _HistoryScreenState extends State<HistoryScreen> {
   }
 
   List<CheckinEntry> get _monthEntriesDesc {
-    final list = _entries.where((e) =>
-        e.createdAt.year == _visibleMonth.year &&
-        e.createdAt.month == _visibleMonth.month).toList();
+    final list = _entries
+        .where(
+          (e) =>
+              e.createdAt.year == _visibleMonth.year &&
+              e.createdAt.month == _visibleMonth.month,
+        )
+        .toList();
     list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
     return list;
   }
@@ -158,14 +170,19 @@ class _HistoryScreenState extends State<HistoryScreen> {
               ),
               const SizedBox(height: 8),
               if (_loading)
-                const Expanded(child: Center(child: CircularProgressIndicator()))
+                const Expanded(
+                  child: Center(child: CircularProgressIndicator()),
+                )
               else if (_error != null)
                 Expanded(
                   child: Center(
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text(_error!, style: const TextStyle(color: AppColors.inkMuted)),
+                        Text(
+                          _error!,
+                          style: const TextStyle(color: AppColors.inkMuted),
+                        ),
                         const SizedBox(height: 12),
                         TextButton(onPressed: _load, child: Text(l10n.retry)),
                       ],
@@ -184,8 +201,13 @@ class _HistoryScreenState extends State<HistoryScreen> {
   Widget _buildContent() {
     final locale = Localizations.localeOf(context);
     final entriesByDay = _entriesByDay;
-    final daysInMonth = DateTime(_visibleMonth.year, _visibleMonth.month + 1, 0).day;
-    final leadingBlanks = DateTime(_visibleMonth.year, _visibleMonth.month, 1).weekday - 1;
+    final daysInMonth = DateTime(
+      _visibleMonth.year,
+      _visibleMonth.month + 1,
+      0,
+    ).day;
+    final leadingBlanks =
+        DateTime(_visibleMonth.year, _visibleMonth.month, 1).weekday - 1;
     final today = DateTime.now();
 
     return ListView(
@@ -210,14 +232,19 @@ class _HistoryScreenState extends State<HistoryScreen> {
         const SizedBox(height: 8),
         Row(
           children: List.generate(7, (i) => i + 1)
-              .map((weekday) => Expanded(
-                    child: Center(
-                      child: Text(
-                        weekdayLabel(weekday, locale),
-                        style: const TextStyle(fontSize: 12, color: AppColors.inkMuted),
+              .map(
+                (weekday) => Expanded(
+                  child: Center(
+                    child: Text(
+                      weekdayLabel(weekday, locale),
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: AppColors.inkMuted,
                       ),
                     ),
-                  ))
+                  ),
+                ),
+              )
               .toList(),
         ),
         const SizedBox(height: 8),
@@ -236,8 +263,11 @@ class _HistoryScreenState extends State<HistoryScreen> {
             final day = index - leadingBlanks + 1;
             final date = DateTime(_visibleMonth.year, _visibleMonth.month, day);
             final entry = entriesByDay[day];
-            final isFuture = date.isAfter(DateTime(today.year, today.month, today.day));
-            final isToday = date.year == today.year &&
+            final isFuture = date.isAfter(
+              DateTime(today.year, today.month, today.day),
+            );
+            final isToday =
+                date.year == today.year &&
                 date.month == today.month &&
                 date.day == today.day;
 
@@ -254,14 +284,18 @@ class _HistoryScreenState extends State<HistoryScreen> {
                           ? entry.mood.color.withValues(alpha: 0.85)
                           : AppColors.surface,
                       borderRadius: BorderRadius.circular(9),
-                      border: isToday ? Border.all(color: AppColors.ink, width: 1.5) : null,
+                      border: isToday
+                          ? Border.all(color: AppColors.ink, width: 1.5)
+                          : null,
                     ),
                     alignment: Alignment.center,
                     child: Text(
                       '$day',
                       style: TextStyle(
                         fontSize: 12,
-                        fontWeight: entry != null ? FontWeight.w600 : FontWeight.w400,
+                        fontWeight: entry != null
+                            ? FontWeight.w600
+                            : FontWeight.w400,
                         color: entry != null
                             ? Colors.white
                             : (isFuture ? Colors.white24 : AppColors.inkMuted),
@@ -282,7 +316,9 @@ class _HistoryScreenState extends State<HistoryScreen> {
 
   Widget _buildRetrospective() {
     final counts = _monthMoodCounts;
-    final moodsWithData = MoodLevel.values.where((m) => (counts[m] ?? 0) > 0).toList();
+    final moodsWithData = MoodLevel.values
+        .where((m) => (counts[m] ?? 0) > 0)
+        .toList();
     if (moodsWithData.isEmpty) return const SizedBox.shrink();
 
     final l10n = AppLocalizations.of(context);
@@ -297,7 +333,10 @@ class _HistoryScreenState extends State<HistoryScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(l10n.thisMonth, style: const TextStyle(fontSize: 13, color: AppColors.inkMuted)),
+          Text(
+            l10n.thisMonth,
+            style: const TextStyle(fontSize: 13, color: AppColors.inkMuted),
+          ),
           const SizedBox(height: 12),
           Row(
             children: moodsWithData.map((mood) {
@@ -305,7 +344,9 @@ class _HistoryScreenState extends State<HistoryScreen> {
                 flex: counts[mood]!,
                 child: Container(
                   height: 8,
-                  margin: EdgeInsets.only(right: mood == moodsWithData.last ? 0 : 3),
+                  margin: EdgeInsets.only(
+                    right: mood == moodsWithData.last ? 0 : 3,
+                  ),
                   decoration: BoxDecoration(
                     color: mood.color,
                     borderRadius: BorderRadius.circular(4),
@@ -325,12 +366,18 @@ class _HistoryScreenState extends State<HistoryScreen> {
                   Container(
                     width: 8,
                     height: 8,
-                    decoration: BoxDecoration(color: mood.color, shape: BoxShape.circle),
+                    decoration: BoxDecoration(
+                      color: mood.color,
+                      shape: BoxShape.circle,
+                    ),
                   ),
                   const SizedBox(width: 6),
                   Text(
                     '${mood.label(context)} · ${counts[mood]}',
-                    style: const TextStyle(fontSize: 13, color: AppColors.inkMuted),
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: AppColors.inkMuted,
+                    ),
                   ),
                 ],
               );
@@ -378,7 +425,10 @@ class _HistoryScreenState extends State<HistoryScreen> {
                 width: 10,
                 height: 10,
                 margin: const EdgeInsets.only(top: 5),
-                decoration: BoxDecoration(color: entry.mood.color, shape: BoxShape.circle),
+                decoration: BoxDecoration(
+                  color: entry.mood.color,
+                  shape: BoxShape.circle,
+                ),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -389,12 +439,18 @@ class _HistoryScreenState extends State<HistoryScreen> {
                       children: [
                         Text(
                           entry.mood.label(context),
-                          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+                          style: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                         const SizedBox(width: 8),
                         Text(
                           dateLabel,
-                          style: const TextStyle(fontSize: 12, color: AppColors.inkMuted),
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: AppColors.inkMuted,
+                          ),
                         ),
                       ],
                     ),
@@ -402,7 +458,10 @@ class _HistoryScreenState extends State<HistoryScreen> {
                       const SizedBox(height: 4),
                       Text(
                         entry.note!,
-                        style: const TextStyle(fontSize: 13, color: AppColors.inkMuted),
+                        style: const TextStyle(
+                          fontSize: 13,
+                          color: AppColors.inkMuted,
+                        ),
                       ),
                     ],
                     if (entry.photoPath != null) ...[
@@ -418,6 +477,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                               height: 90,
                               width: double.infinity,
                               fit: BoxFit.cover,
+                              alignment: Alignment(0, entry.photoAlignY),
                             ),
                           );
                         },
@@ -428,7 +488,9 @@ class _HistoryScreenState extends State<HistoryScreen> {
               ),
               IconButton(
                 onPressed: () => Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => DayCardScreen(entry: entry)),
+                  MaterialPageRoute(
+                    builder: (_) => DayCardScreen(entry: entry),
+                  ),
                 ),
                 icon: const Icon(Icons.ios_share, size: 18),
                 tooltip: AppLocalizations.of(context).dayCard,

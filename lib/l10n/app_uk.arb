@@ -32,6 +32,9 @@
   "takePhoto": "Зробити фото",
   "chooseFromGallery": "Обрати з галереї",
   "removePhotoTooltip": "Прибрати фото",
+  "repositionPhoto": "Розташування фото",
+  "repositionPhotoHint": "Перетягни фото вгору чи вниз, щоб показати потрібну частину",
+  "repositionPhotoTooltip": "Змінити розташування фото",
 
   "circle": "Коло",
   "history": "Історія",

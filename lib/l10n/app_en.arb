@@ -32,6 +32,9 @@
   "takePhoto": "Take photo",
   "chooseFromGallery": "Choose from gallery",
   "removePhotoTooltip": "Remove photo",
+  "repositionPhoto": "Reposition photo",
+  "repositionPhotoHint": "Drag the photo up or down to show the right part",
+  "repositionPhotoTooltip": "Reposition photo",
 
   "circle": "Circle",
   "history": "History",

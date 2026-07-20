@@ -97,6 +97,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get removePhotoTooltip => 'Remove photo';
 
   @override
+  String get repositionPhoto => 'Reposition photo';
+
+  @override
+  String get repositionPhotoHint =>
+      'Drag the photo up or down to show the right part';
+
+  @override
+  String get repositionPhotoTooltip => 'Reposition photo';
+
+  @override
   String get circle => 'Circle';
 
   @override

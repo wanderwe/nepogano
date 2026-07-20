@@ -266,6 +266,24 @@ abstract class AppLocalizations {
   /// **'Прибрати фото'**
   String get removePhotoTooltip;
 
+  /// No description provided for @repositionPhoto.
+  ///
+  /// In uk, this message translates to:
+  /// **'Розташування фото'**
+  String get repositionPhoto;
+
+  /// No description provided for @repositionPhotoHint.
+  ///
+  /// In uk, this message translates to:
+  /// **'Перетягни фото вгору чи вниз, щоб показати потрібну частину'**
+  String get repositionPhotoHint;
+
+  /// No description provided for @repositionPhotoTooltip.
+  ///
+  /// In uk, this message translates to:
+  /// **'Змінити розташування фото'**
+  String get repositionPhotoTooltip;
+
   /// No description provided for @circle.
   ///
   /// In uk, this message translates to:
