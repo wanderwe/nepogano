@@ -122,6 +122,12 @@ abstract class AppLocalizations {
   /// **'Оновити'**
   String get update;
 
+  /// No description provided for @edit.
+  ///
+  /// In uk, this message translates to:
+  /// **'Редагувати'**
+  String get edit;
+
   /// No description provided for @retry.
   ///
   /// In uk, this message translates to:

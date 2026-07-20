@@ -21,6 +21,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get update => 'Update';
 
   @override
+  String get edit => 'Edit';
+
+  @override
   String get retry => 'Try again';
 
   @override

@@ -325,6 +325,12 @@ class _CheckInScreenState extends State<CheckInScreen> {
   File? _pickedPhotoFile;
   bool _removePhoto = false;
 
+  // Якщо запис за сьогодні вже є — за замовчуванням показуємо його як
+  // готовий підсумок, а не одразу активну форму. Форма з'являється тільки
+  // для нового запису або коли юзер явно тисне "Редагувати".
+  bool _editing = false;
+  bool get _showForm => _todayEntryId == null || _editing;
+
   final _supabase = Supabase.instance.client;
 
   static DateTime _mondayOf(DateTime date) {
@@ -383,7 +389,20 @@ class _CheckInScreenState extends State<CheckInScreen> {
       _noteController.text = (row['note'] as String?) ?? '';
       _todayEntrySavedAt = DateTime.parse(row['created_at'] as String).toLocal();
       _existingPhotoPath = row['photo_path'] as String?;
+      _pickedPhotoFile = null;
+      _removePhoto = false;
+      _editing = false;
     });
+  }
+
+  void _startEditing() => setState(() => _editing = true);
+
+  void _cancelEditing() {
+    setState(() {
+      _pickedPhotoFile = null;
+      _removePhoto = false;
+    });
+    _loadTodayEntry();
   }
 
   Future<void> _pickPhoto(ImageSource source) async {
@@ -486,6 +505,205 @@ class _CheckInScreenState extends State<CheckInScreen> {
     );
   }
 
+  DayCardScreen _buildDayCardScreen() {
+    return DayCardScreen(
+      entry: CheckinEntry(
+        createdAt: _todayEntrySavedAt ?? DateTime.now(),
+        mood: _selected!,
+        note: _noteController.text.trim().isEmpty ? null : _noteController.text.trim(),
+        photoPath: _existingPhotoPath,
+      ),
+    );
+  }
+
+  List<Widget> _buildFormContent(AppLocalizations l10n) {
+    return [
+      Row(
+        children: MoodLevel.values.map((mood) {
+          return Expanded(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 6),
+              child: _MoodTile(
+                mood: mood,
+                isSelected: _selected == mood,
+                onTap: () => setState(() => _selected = mood),
+              ),
+            ),
+          );
+        }).toList(),
+      ),
+      const SizedBox(height: 24),
+      AnimatedSwitcher(
+        duration: const Duration(milliseconds: 250),
+        child: _selected != null
+            ? Column(
+                key: const ValueKey('note-field'),
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  TextField(
+                    controller: _noteController,
+                    maxLines: 3,
+                    decoration: InputDecoration(
+                      hintText: l10n.notePlaceholder,
+                      filled: true,
+                      fillColor: AppColors.surface,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide.none,
+                      ),
+                      contentPadding: const EdgeInsets.all(16),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  _buildPhotoPicker(l10n),
+                  const SizedBox(height: 20),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: _saving ? null : _save,
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        backgroundColor: AppColors.ink,
+                        foregroundColor: AppColors.background,
+                      ),
+                      child: _saving
+                          ? const SizedBox(
+                              height: 18,
+                              width: 18,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: AppColors.background,
+                              ),
+                            )
+                          : Text(
+                              _todayEntryId != null ? l10n.update : l10n.save,
+                              style: const TextStyle(fontSize: 16),
+                            ),
+                    ),
+                  ),
+                  if (_todayEntryId != null) ...[
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      width: double.infinity,
+                      child: TextButton(
+                        onPressed: _saving ? null : _cancelEditing,
+                        child: Text(l10n.cancel),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    SizedBox(
+                      width: double.infinity,
+                      child: TextButton.icon(
+                        onPressed: () => Navigator.of(context).push(
+                          MaterialPageRoute(builder: (_) => _buildDayCardScreen()),
+                        ),
+                        icon: const Icon(Icons.ios_share, size: 18),
+                        label: Text(l10n.dayCard),
+                      ),
+                    ),
+                  ],
+                ],
+              )
+            : const SizedBox.shrink(key: ValueKey('empty')),
+      ),
+    ];
+  }
+
+  List<Widget> _buildSummaryContent(AppLocalizations l10n) {
+    return [
+      Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text.rich(
+              TextSpan(
+                style: appSerif(fontSize: 22, fontWeight: FontWeight.w700, color: AppColors.ink),
+                children: [
+                  TextSpan(text: '${l10n.todayWasPrefix} '),
+                  TextSpan(
+                    text: _selected!.label(context).toLowerCase(),
+                    style: TextStyle(color: _selected!.color),
+                  ),
+                ],
+              ),
+            ),
+            if (_noteController.text.trim().isNotEmpty) ...[
+              const SizedBox(height: 10),
+              Text(
+                _noteController.text.trim(),
+                style: const TextStyle(fontSize: 14, color: AppColors.inkMuted, height: 1.4),
+              ),
+            ],
+            if (_existingPhotoPath != null) ...[
+              const SizedBox(height: 14),
+              FutureBuilder<Uint8List?>(
+                future: downloadCheckinPhoto(_existingPhotoPath!),
+                builder: (context, snapshot) {
+                  if (!snapshot.hasData) {
+                    return const SizedBox(
+                      height: 140,
+                      child: Center(
+                        child: SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                      ),
+                    );
+                  }
+                  return ClipRRect(
+                    borderRadius: BorderRadius.circular(14),
+                    child: Image.memory(
+                      snapshot.data!,
+                      height: 160,
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                    ),
+                  );
+                },
+              ),
+            ],
+          ],
+        ),
+      ),
+      const SizedBox(height: 20),
+      SizedBox(
+        width: double.infinity,
+        child: OutlinedButton.icon(
+          onPressed: _startEditing,
+          icon: const Icon(Icons.edit_outlined, size: 18),
+          label: Text(l10n.edit),
+          style: OutlinedButton.styleFrom(
+            padding: const EdgeInsets.symmetric(vertical: 14),
+            foregroundColor: AppColors.ink,
+            side: const BorderSide(color: AppColors.divider),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+        ),
+      ),
+      const SizedBox(height: 12),
+      SizedBox(
+        width: double.infinity,
+        child: TextButton.icon(
+          onPressed: () => Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => _buildDayCardScreen()),
+          ),
+          icon: const Icon(Icons.ios_share, size: 18),
+          label: Text(l10n.dayCard),
+        ),
+      ),
+    ];
+  }
+
   bool get _isCurrentWeek => _visibleWeekStart == _mondayOf(DateTime.now());
   bool get _isPreviousWeek =>
       _visibleWeekStart == _mondayOf(DateTime.now()).subtract(const Duration(days: 7));
@@ -570,6 +788,7 @@ class _CheckInScreenState extends State<CheckInScreen> {
       _existingPhotoPath = photoPath;
       _pickedPhotoFile = null;
       _removePhoto = false;
+      _editing = false;
       unawaited(_loadWeek());
 
       if (mounted) {
@@ -746,100 +965,7 @@ class _CheckInScreenState extends State<CheckInScreen> {
                           ),
                         ],
                         const SizedBox(height: 32),
-                        Row(
-                          children: MoodLevel.values.map((mood) {
-                            return Expanded(
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 6),
-                                child: _MoodTile(
-                                  mood: mood,
-                                  isSelected: _selected == mood,
-                                  onTap: () => setState(() => _selected = mood),
-                                ),
-                              ),
-                            );
-                          }).toList(),
-                        ),
-                        const SizedBox(height: 24),
-                        AnimatedSwitcher(
-                          duration: const Duration(milliseconds: 250),
-                          child: _selected != null
-                              ? Column(
-                                  key: const ValueKey('note-field'),
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    TextField(
-                                      controller: _noteController,
-                                      maxLines: 3,
-                                      decoration: InputDecoration(
-                                        hintText: l10n.notePlaceholder,
-                                        filled: true,
-                                        fillColor: AppColors.surface,
-                                        border: OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(16),
-                                          borderSide: BorderSide.none,
-                                        ),
-                                        contentPadding: const EdgeInsets.all(16),
-                                      ),
-                                    ),
-                                    const SizedBox(height: 12),
-                                    _buildPhotoPicker(l10n),
-                                    const SizedBox(height: 20),
-                                    SizedBox(
-                                      width: double.infinity,
-                                      child: ElevatedButton(
-                                        onPressed: _saving ? null : _save,
-                                        style: ElevatedButton.styleFrom(
-                                          padding: const EdgeInsets.symmetric(vertical: 16),
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(12),
-                                          ),
-                                          backgroundColor: AppColors.ink,
-                                          foregroundColor: AppColors.background,
-                                        ),
-                                        child: _saving
-                                            ? const SizedBox(
-                                                height: 18,
-                                                width: 18,
-                                                child: CircularProgressIndicator(
-                                                  strokeWidth: 2,
-                                                  color: AppColors.background,
-                                                ),
-                                              )
-                                            : Text(
-                                                _todayEntryId != null ? l10n.update : l10n.save,
-                                                style: const TextStyle(fontSize: 16),
-                                              ),
-                                      ),
-                                    ),
-                                    if (_todayEntryId != null) ...[
-                                      const SizedBox(height: 12),
-                                      SizedBox(
-                                        width: double.infinity,
-                                        child: TextButton.icon(
-                                          onPressed: () => Navigator.of(context).push(
-                                            MaterialPageRoute(
-                                              builder: (_) => DayCardScreen(
-                                                entry: CheckinEntry(
-                                                  createdAt: _todayEntrySavedAt ?? DateTime.now(),
-                                                  mood: _selected!,
-                                                  note: _noteController.text.trim().isEmpty
-                                                      ? null
-                                                      : _noteController.text.trim(),
-                                                  photoPath: _existingPhotoPath,
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                          icon: const Icon(Icons.ios_share, size: 18),
-                                          label: Text(l10n.dayCard),
-                                        ),
-                                      ),
-                                    ],
-                                  ],
-                                )
-                              : const SizedBox.shrink(key: ValueKey('empty')),
-                        ),
+                        if (_showForm) ..._buildFormContent(l10n) else ..._buildSummaryContent(l10n),
                       ],
                     ),
                   ),

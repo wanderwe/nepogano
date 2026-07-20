@@ -21,6 +21,9 @@ class AppLocalizationsUk extends AppLocalizations {
   String get update => 'Оновити';
 
   @override
+  String get edit => 'Редагувати';
+
+  @override
   String get retry => 'Спробувати ще раз';
 
   @override
