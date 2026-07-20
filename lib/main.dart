@@ -378,10 +378,16 @@ class _CheckInScreenState extends State<CheckInScreen> {
   }
 
   bool get _isCurrentWeek => _visibleWeekStart == _mondayOf(DateTime.now());
+  bool get _isPreviousWeek =>
+      _visibleWeekStart == _mondayOf(DateTime.now()).subtract(const Duration(days: 7));
 
   void _changeWeek(int deltaWeeks) {
+    final currentMonday = _mondayOf(DateTime.now());
     final next = _visibleWeekStart.add(Duration(days: 7 * deltaWeeks));
-    if (next.isAfter(_mondayOf(DateTime.now()))) return;
+    // Лише поточний і минулий тиждень — не глибше і не в майбутнє.
+    if (next.isAfter(currentMonday) || next.isBefore(currentMonday.subtract(const Duration(days: 7)))) {
+      return;
+    }
     setState(() => _visibleWeekStart = next);
     _loadWeek();
   }
@@ -719,14 +725,7 @@ class _CheckInScreenState extends State<CheckInScreen> {
     );
   }
 
-  String _weekLabel(AppLocalizations l10n) {
-    if (_isCurrentWeek) return l10n.thisWeek;
-    if (_visibleWeekStart == _mondayOf(DateTime.now()).subtract(const Duration(days: 7))) {
-      return l10n.previousWeek;
-    }
-    final end = _visibleWeekStart.add(const Duration(days: 6));
-    return '${_visibleWeekStart.day}.${_visibleWeekStart.month}–${end.day}.${end.month}';
-  }
+  String _weekLabel(AppLocalizations l10n) => _isCurrentWeek ? l10n.thisWeek : l10n.previousWeek;
 
   Widget _buildWeekStrip() {
     final l10n = AppLocalizations.of(context);
@@ -755,7 +754,7 @@ class _CheckInScreenState extends State<CheckInScreen> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               IconButton(
-                onPressed: () => _changeWeek(-1),
+                onPressed: _isPreviousWeek ? null : () => _changeWeek(-1),
                 icon: const Icon(Icons.chevron_left, size: 18),
                 visualDensity: VisualDensity.compact,
                 color: AppColors.inkMuted,
