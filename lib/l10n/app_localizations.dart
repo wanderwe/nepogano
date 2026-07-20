@@ -347,7 +347,7 @@ abstract class AppLocalizations {
   /// No description provided for @alreadySavedToday.
   ///
   /// In uk, this message translates to:
-  /// **'Вже зберіг сьогодні о {time}'**
+  /// **'Вже зберіг о {time}'**
   String alreadySavedToday(String time);
 
   /// No description provided for @notePlaceholder.

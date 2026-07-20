@@ -46,7 +46,7 @@
   "deleteAccountConfirmTitle": "Видалити акаунт?",
   "deleteAccountConfirmBody": "Це видалить твій акаунт і всі записи назавжди. Скасувати неможливо.",
   "howAreThingsToday": "Як справи сьогодні?",
-  "alreadySavedToday": "Вже зберіг сьогодні о {time}",
+  "alreadySavedToday": "Вже зберіг о {time}",
   "@alreadySavedToday": {
     "placeholders": { "time": { "type": "String" } }
   },

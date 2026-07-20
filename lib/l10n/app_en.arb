@@ -46,7 +46,7 @@
   "deleteAccountConfirmTitle": "Delete account?",
   "deleteAccountConfirmBody": "This will permanently delete your account and all entries. This cannot be undone.",
   "howAreThingsToday": "How's it going today?",
-  "alreadySavedToday": "Already saved today at {time}",
+  "alreadySavedToday": "Already saved at {time}",
   "notePlaceholder": "A few words about your day (optional)",
   "dayCard": "Day card",
   "savedSnackbar": "Saved: {mood}",

@@ -139,7 +139,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String alreadySavedToday(String time) {
-    return 'Already saved today at $time';
+    return 'Already saved at $time';
   }
 
   @override

@@ -139,7 +139,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String alreadySavedToday(String time) {
-    return 'Вже зберіг сьогодні о $time';
+    return 'Вже зберіг о $time';
   }
 
   @override
