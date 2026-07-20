@@ -1,9 +1,12 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'date_labels.dart';
 import 'day_card_screen.dart';
 import 'l10n/app_localizations.dart';
 import 'main.dart';
+import 'photo_storage.dart';
 import 'style.dart';
 
 class CheckinEntry {
@@ -400,6 +403,24 @@ class _HistoryScreenState extends State<HistoryScreen> {
                       Text(
                         entry.note!,
                         style: const TextStyle(fontSize: 13, color: AppColors.inkMuted),
+                      ),
+                    ],
+                    if (entry.photoPath != null) ...[
+                      const SizedBox(height: 8),
+                      FutureBuilder<Uint8List?>(
+                        future: downloadCheckinPhoto(entry.photoPath!),
+                        builder: (context, snapshot) {
+                          if (!snapshot.hasData) return const SizedBox.shrink();
+                          return ClipRRect(
+                            borderRadius: BorderRadius.circular(10),
+                            child: Image.memory(
+                              snapshot.data!,
+                              height: 90,
+                              width: double.infinity,
+                              fit: BoxFit.cover,
+                            ),
+                          );
+                        },
                       ),
                     ],
                   ],

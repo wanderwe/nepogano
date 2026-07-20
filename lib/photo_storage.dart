@@ -26,17 +26,25 @@ Future<String> uploadCheckinPhoto(File file) async {
 /// повторно при кожному перебудуванні екрана.
 final Map<String, Uint8List> _photoCache = {};
 
-Future<Uint8List?> downloadCheckinPhoto(String path) async {
+Future<Uint8List?> downloadCheckinPhoto(String path, {int retries = 3}) async {
   final cached = _photoCache[path];
   if (cached != null) return cached;
 
-  try {
-    final bytes = await Supabase.instance.client.storage.from(_bucket).download(path);
-    _photoCache[path] = bytes;
-    return bytes;
-  } catch (e) {
-    return null;
+  // Той самий клас короткочасних мережевих похибок, що й для решти запитів
+  // Supabase (SocketException одразу після старту застосунку) — тут теж
+  // ретраїмо, бо storage.download() не проходить через наш загальний
+  // RetryClient.
+  for (var attempt = 0; attempt <= retries; attempt++) {
+    try {
+      final bytes = await Supabase.instance.client.storage.from(_bucket).download(path);
+      _photoCache[path] = bytes;
+      return bytes;
+    } catch (e) {
+      if (attempt == retries) return null;
+      await Future.delayed(Duration(milliseconds: 500 * (attempt + 1)));
+    }
   }
+  return null;
 }
 
 Future<void> deleteCheckinPhoto(String path) async {
