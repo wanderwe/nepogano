@@ -1119,12 +1119,18 @@ class _PersonDetailScreenState extends State<PersonDetailScreen> {
       _myGuesses
         ..clear()
         ..addAll(guesses);
+      // Деталі (нотатка) видно одразу для всього, що вже вгадано раніше —
+      // не треба зайвого тапу "Показати деталі" щоразу після вгадування.
+      _expandedDetails
+        ..clear()
+        ..addAll(guesses.keys);
       _loading = false;
     });
   }
 
   Future<void> _guess(_MemberDayEntry entry, MoodLevel guessedMood) async {
     final targetDate = entry.date.toIso8601String().split('T').first;
+    final key = _entryKey(entry.userId, entry.date);
 
     try {
       await _supabase.from('circle_guesses').insert({
@@ -1134,7 +1140,10 @@ class _PersonDetailScreenState extends State<PersonDetailScreen> {
         'guessed_mood': guessedMood.dbValue,
         'correct': guessedMood == entry.mood,
       });
-      setState(() => _myGuesses[_entryKey(entry.userId, entry.date)] = guessedMood.dbValue);
+      setState(() {
+        _myGuesses[key] = guessedMood.dbValue;
+        _expandedDetails.add(key);
+      });
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

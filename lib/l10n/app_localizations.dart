@@ -248,6 +248,30 @@ abstract class AppLocalizations {
   /// **'Записи складаються в спокійну ретроспективу — без оцінок, просто дзеркало твого місяця.'**
   String get onboarding5Body;
 
+  /// No description provided for @addPhoto.
+  ///
+  /// In uk, this message translates to:
+  /// **'Додати фото'**
+  String get addPhoto;
+
+  /// No description provided for @takePhoto.
+  ///
+  /// In uk, this message translates to:
+  /// **'Зробити фото'**
+  String get takePhoto;
+
+  /// No description provided for @chooseFromGallery.
+  ///
+  /// In uk, this message translates to:
+  /// **'Обрати з галереї'**
+  String get chooseFromGallery;
+
+  /// No description provided for @removePhotoTooltip.
+  ///
+  /// In uk, this message translates to:
+  /// **'Прибрати фото'**
+  String get removePhotoTooltip;
+
   /// No description provided for @circle.
   ///
   /// In uk, this message translates to:

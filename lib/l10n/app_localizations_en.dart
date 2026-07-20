@@ -89,6 +89,18 @@ class AppLocalizationsEn extends AppLocalizations {
       'Your entries add up into a quiet retrospective — no scoring, just a mirror of your month.';
 
   @override
+  String get addPhoto => 'Add photo';
+
+  @override
+  String get takePhoto => 'Take photo';
+
+  @override
+  String get chooseFromGallery => 'Choose from gallery';
+
+  @override
+  String get removePhotoTooltip => 'Remove photo';
+
+  @override
   String get circle => 'Circle';
 
   @override

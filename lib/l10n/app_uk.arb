@@ -29,6 +29,11 @@
   "onboarding5Headline": "Погляд на місяць",
   "onboarding5Body": "Записи складаються в спокійну ретроспективу — без оцінок, просто дзеркало твого місяця.",
 
+  "addPhoto": "Додати фото",
+  "takePhoto": "Зробити фото",
+  "chooseFromGallery": "Обрати з галереї",
+  "removePhotoTooltip": "Прибрати фото",
+
   "circle": "Коло",
   "history": "Історія",
   "moreTooltip": "Ще",

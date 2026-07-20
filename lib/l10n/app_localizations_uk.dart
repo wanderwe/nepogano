@@ -89,6 +89,18 @@ class AppLocalizationsUk extends AppLocalizations {
       'Записи складаються в спокійну ретроспективу — без оцінок, просто дзеркало твого місяця.';
 
   @override
+  String get addPhoto => 'Додати фото';
+
+  @override
+  String get takePhoto => 'Зробити фото';
+
+  @override
+  String get chooseFromGallery => 'Обрати з галереї';
+
+  @override
+  String get removePhotoTooltip => 'Прибрати фото';
+
+  @override
   String get circle => 'Коло';
 
   @override

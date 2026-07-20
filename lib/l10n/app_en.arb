@@ -29,6 +29,11 @@
   "onboarding5Headline": "A look back at your month",
   "onboarding5Body": "Your entries add up into a quiet retrospective — no scoring, just a mirror of your month.",
 
+  "addPhoto": "Add photo",
+  "takePhoto": "Take photo",
+  "chooseFromGallery": "Choose from gallery",
+  "removePhotoTooltip": "Remove photo",
+
   "circle": "Circle",
   "history": "History",
   "moreTooltip": "More",

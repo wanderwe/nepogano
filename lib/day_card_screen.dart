@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
@@ -10,6 +11,7 @@ import 'date_labels.dart';
 import 'history_screen.dart';
 import 'l10n/app_localizations.dart';
 import 'main.dart';
+import 'photo_storage.dart';
 import 'social_share.dart';
 import 'style.dart';
 
@@ -25,6 +27,24 @@ class DayCardScreen extends StatefulWidget {
 class _DayCardScreenState extends State<DayCardScreen> {
   final _boundaryKey = GlobalKey();
   bool _sharing = false;
+  bool _photoLoading = false;
+  Uint8List? _photoBytes;
+
+  @override
+  void initState() {
+    super.initState();
+    final photoPath = widget.entry.photoPath;
+    if (photoPath != null) {
+      _photoLoading = true;
+      downloadCheckinPhoto(photoPath).then((bytes) {
+        if (!mounted) return;
+        setState(() {
+          _photoBytes = bytes;
+          _photoLoading = false;
+        });
+      });
+    }
+  }
 
   Future<String> _renderCardToFile() async {
     final boundary = _boundaryKey.currentContext!.findRenderObject()
@@ -114,17 +134,23 @@ class _DayCardScreenState extends State<DayCardScreen> {
                     borderRadius: BorderRadius.circular(28),
                     boxShadow: AppShadows.soft,
                   ),
-                  child: RepaintBoundary(
-                    key: _boundaryKey,
-                    child: _DayCard(entry: widget.entry),
-                  ),
+                  child: _photoLoading
+                      ? const SizedBox(
+                          width: 320,
+                          height: 320,
+                          child: Center(child: CircularProgressIndicator()),
+                        )
+                      : RepaintBoundary(
+                          key: _boundaryKey,
+                          child: _DayCard(entry: widget.entry, photoBytes: _photoBytes),
+                        ),
                 ),
               ),
               const SizedBox(height: 32),
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(
-                  onPressed: _sharing ? null : _share,
+                  onPressed: (_sharing || _photoLoading) ? null : _share,
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     backgroundColor: AppColors.ink,
@@ -150,7 +176,7 @@ class _DayCardScreenState extends State<DayCardScreen> {
               SizedBox(
                 width: double.infinity,
                 child: TextButton(
-                  onPressed: _sharing ? null : _openMultiShareSheet,
+                  onPressed: (_sharing || _photoLoading) ? null : _openMultiShareSheet,
                   child: Text(l10n.shareOnSocial),
                 ),
               ),
@@ -286,8 +312,9 @@ class _ShareRow extends StatelessWidget {
 
 class _DayCard extends StatelessWidget {
   final CheckinEntry entry;
+  final Uint8List? photoBytes;
 
-  const _DayCard({required this.entry});
+  const _DayCard({required this.entry, this.photoBytes});
 
   @override
   Widget build(BuildContext context) {
@@ -299,72 +326,86 @@ class _DayCard extends StatelessWidget {
 
     return Container(
       width: 320,
-      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: const Color(0xFF1C1C1E),
         borderRadius: BorderRadius.circular(28),
       ),
+      clipBehavior: Clip.antiAlias,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                dateLabel,
-                style: TextStyle(fontSize: 13, color: Colors.grey.shade500),
-              ),
-              Text(
-                weekdayName,
-                style: TextStyle(fontSize: 13, color: Colors.grey.shade500),
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
-          Text.rich(
-            TextSpan(
-              style: appSerif(fontSize: 26, fontWeight: FontWeight.w700, color: Colors.white),
+          if (photoBytes != null)
+            AspectRatio(
+              aspectRatio: 16 / 10,
+              child: Image.memory(photoBytes!, fit: BoxFit.cover),
+            ),
+          Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
-                TextSpan(text: '${AppLocalizations.of(context).todayWasPrefix} '),
-                TextSpan(
-                  text: entry.mood.label(context).toLowerCase(),
-                  style: TextStyle(color: entry.mood.color),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      dateLabel,
+                      style: TextStyle(fontSize: 13, color: Colors.grey.shade500),
+                    ),
+                    Text(
+                      weekdayName,
+                      style: TextStyle(fontSize: 13, color: Colors.grey.shade500),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                Text.rich(
+                  TextSpan(
+                    style: appSerif(fontSize: 26, fontWeight: FontWeight.w700, color: Colors.white),
+                    children: [
+                      TextSpan(text: '${AppLocalizations.of(context).todayWasPrefix} '),
+                      TextSpan(
+                        text: entry.mood.label(context).toLowerCase(),
+                        style: TextStyle(color: entry.mood.color),
+                      ),
+                    ],
+                  ),
+                ),
+                if (entry.note != null && entry.note!.isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  Text(
+                    entry.note!,
+                    style: TextStyle(fontSize: 15, color: Colors.grey.shade300, height: 1.4),
+                  ),
+                ],
+                const SizedBox(height: 24),
+                Row(
+                  children: List.generate(MoodLevel.values.length, (i) {
+                    final segmentMood = MoodLevel.values[i];
+                    return Expanded(
+                      child: Container(
+                        height: 4,
+                        margin: EdgeInsets.only(
+                          right: i == MoodLevel.values.length - 1 ? 0 : 8,
+                        ),
+                        decoration: BoxDecoration(
+                          color: i == moodIndex
+                              ? segmentMood.color
+                              : segmentMood.color.withValues(alpha: 0.25),
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                    );
+                  }),
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  'nepogano.app',
+                  style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
                 ),
               ],
             ),
-          ),
-          if (entry.note != null && entry.note!.isNotEmpty) ...[
-            const SizedBox(height: 12),
-            Text(
-              entry.note!,
-              style: TextStyle(fontSize: 15, color: Colors.grey.shade300, height: 1.4),
-            ),
-          ],
-          const SizedBox(height: 24),
-          Row(
-            children: List.generate(MoodLevel.values.length, (i) {
-              final segmentMood = MoodLevel.values[i];
-              return Expanded(
-                child: Container(
-                  height: 4,
-                  margin: EdgeInsets.only(
-                    right: i == MoodLevel.values.length - 1 ? 0 : 8,
-                  ),
-                  decoration: BoxDecoration(
-                    color: i == moodIndex
-                        ? segmentMood.color
-                        : segmentMood.color.withValues(alpha: 0.25),
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              );
-            }),
-          ),
-          const SizedBox(height: 20),
-          Text(
-            'nepogano.app',
-            style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
           ),
         ],
       ),

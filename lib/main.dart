@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/retry.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'auth_screen.dart';
@@ -16,6 +17,7 @@ import 'history_screen.dart';
 import 'l10n/app_localizations.dart';
 import 'locale_provider.dart';
 import 'onboarding_screen.dart';
+import 'photo_storage.dart';
 import 'style.dart';
 
 // TODO: встав сюди свій Project URL і anon key з Supabase (Settings → API)
@@ -317,6 +319,12 @@ class _CheckInScreenState extends State<CheckInScreen> {
   bool _hasCircleActivity = false;
   late DateTime _visibleWeekStart;
 
+  // Фото: або вже збережений шлях (з попереднього завантаження цього дня),
+  // або щойно обраний локальний файл, що чекає на завантаження при _save().
+  String? _existingPhotoPath;
+  File? _pickedPhotoFile;
+  bool _removePhoto = false;
+
   final _supabase = Supabase.instance.client;
 
   static DateTime _mondayOf(DateTime date) {
@@ -359,7 +367,7 @@ class _CheckInScreenState extends State<CheckInScreen> {
 
     final rows = await _supabase
         .from('checkins')
-        .select('id, mood, note, created_at')
+        .select('id, mood, note, created_at, photo_path')
         .eq('user_id', _supabase.auth.currentUser!.id)
         .gte('created_at', startOfDay)
         .lt('created_at', startOfNextDay)
@@ -374,7 +382,108 @@ class _CheckInScreenState extends State<CheckInScreen> {
       _selected = moodFromDbValue(row['mood'] as String);
       _noteController.text = (row['note'] as String?) ?? '';
       _todayEntrySavedAt = DateTime.parse(row['created_at'] as String).toLocal();
+      _existingPhotoPath = row['photo_path'] as String?;
     });
+  }
+
+  Future<void> _pickPhoto(ImageSource source) async {
+    final picked = await ImagePicker().pickImage(
+      source: source,
+      maxWidth: 1600,
+      imageQuality: 80,
+    );
+    if (picked == null || !mounted) return;
+    setState(() {
+      _pickedPhotoFile = File(picked.path);
+      _removePhoto = false;
+    });
+  }
+
+  Future<void> _choosePhotoSource() async {
+    final l10n = AppLocalizations.of(context);
+    final source = await showModalBottomSheet<ImageSource>(
+      context: context,
+      backgroundColor: AppColors.surfaceRaised,
+      builder: (context) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(8, 12, 8, 8),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _MenuRow(
+                icon: Icons.photo_camera_outlined,
+                label: l10n.takePhoto,
+                onTap: () => Navigator.of(context).pop(ImageSource.camera),
+              ),
+              _MenuRow(
+                icon: Icons.photo_library_outlined,
+                label: l10n.chooseFromGallery,
+                onTap: () => Navigator.of(context).pop(ImageSource.gallery),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+    if (source != null) await _pickPhoto(source);
+  }
+
+  void _clearPhoto() {
+    setState(() {
+      _pickedPhotoFile = null;
+      _removePhoto = _existingPhotoPath != null;
+    });
+  }
+
+  Widget _buildPhotoPicker(AppLocalizations l10n) {
+    if (_pickedPhotoFile != null) {
+      return _PhotoPreview(
+        image: Image.file(_pickedPhotoFile!, fit: BoxFit.cover),
+        onRemove: _clearPhoto,
+        removeTooltip: l10n.removePhotoTooltip,
+      );
+    }
+
+    if (_existingPhotoPath != null && !_removePhoto) {
+      return FutureBuilder<Uint8List?>(
+        future: downloadCheckinPhoto(_existingPhotoPath!),
+        builder: (context, snapshot) {
+          if (!snapshot.hasData) {
+            return Container(
+              height: 96,
+              width: 96,
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              alignment: Alignment.center,
+              child: const SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+            );
+          }
+          return _PhotoPreview(
+            image: Image.memory(snapshot.data!, fit: BoxFit.cover),
+            onRemove: _clearPhoto,
+            removeTooltip: l10n.removePhotoTooltip,
+          );
+        },
+      );
+    }
+
+    return OutlinedButton.icon(
+      onPressed: _choosePhotoSource,
+      icon: const Icon(Icons.photo_camera_outlined, size: 18),
+      label: Text(l10n.addPhoto),
+      style: OutlinedButton.styleFrom(
+        foregroundColor: AppColors.inkMuted,
+        side: const BorderSide(color: AppColors.divider),
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+    );
   }
 
   bool get _isCurrentWeek => _visibleWeekStart == _mondayOf(DateTime.now());
@@ -423,11 +532,25 @@ class _CheckInScreenState extends State<CheckInScreen> {
     setState(() => _saving = true);
 
     try {
+      String? photoPath = _existingPhotoPath;
+      if (_pickedPhotoFile != null) {
+        photoPath = await uploadCheckinPhoto(_pickedPhotoFile!);
+        if (_existingPhotoPath != null) {
+          unawaited(deleteCheckinPhoto(_existingPhotoPath!));
+        }
+      } else if (_removePhoto) {
+        if (_existingPhotoPath != null) {
+          unawaited(deleteCheckinPhoto(_existingPhotoPath!));
+        }
+        photoPath = null;
+      }
+
       final payload = {
         'mood': _selected!.dbValue,
         'note': _noteController.text.trim().isEmpty
             ? null
             : _noteController.text.trim(),
+        'photo_path': photoPath,
       };
 
       if (_todayEntryId != null) {
@@ -444,6 +567,9 @@ class _CheckInScreenState extends State<CheckInScreen> {
         _todayEntryId = inserted['id'];
         _todayEntrySavedAt = DateTime.parse(inserted['created_at'] as String).toLocal();
       }
+      _existingPhotoPath = photoPath;
+      _pickedPhotoFile = null;
+      _removePhoto = false;
       unawaited(_loadWeek());
 
       if (mounted) {
@@ -656,6 +782,8 @@ class _CheckInScreenState extends State<CheckInScreen> {
                                         contentPadding: const EdgeInsets.all(16),
                                       ),
                                     ),
+                                    const SizedBox(height: 12),
+                                    _buildPhotoPicker(l10n),
                                     const SizedBox(height: 20),
                                     SizedBox(
                                       width: double.infinity,
@@ -698,6 +826,7 @@ class _CheckInScreenState extends State<CheckInScreen> {
                                                   note: _noteController.text.trim().isEmpty
                                                       ? null
                                                       : _noteController.text.trim(),
+                                                  photoPath: _existingPhotoPath,
                                                 ),
                                               ),
                                             ),
@@ -876,6 +1005,46 @@ class _MenuRow extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _PhotoPreview extends StatelessWidget {
+  final Widget image;
+  final VoidCallback onRemove;
+  final String removeTooltip;
+
+  const _PhotoPreview({
+    required this.image,
+    required this.onRemove,
+    required this.removeTooltip,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(16),
+          child: SizedBox(height: 140, width: double.infinity, child: image),
+        ),
+        Positioned(
+          top: 8,
+          right: 8,
+          child: Material(
+            color: Colors.black54,
+            shape: const CircleBorder(),
+            child: IconButton(
+              onPressed: onRemove,
+              icon: const Icon(Icons.close, size: 16, color: Colors.white),
+              tooltip: removeTooltip,
+              padding: const EdgeInsets.all(6),
+              constraints: const BoxConstraints(),
+              visualDensity: VisualDensity.compact,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

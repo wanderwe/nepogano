@@ -10,8 +10,9 @@ class CheckinEntry {
   final DateTime createdAt;
   final MoodLevel mood;
   final String? note;
+  final String? photoPath;
 
-  CheckinEntry({required this.createdAt, required this.mood, this.note});
+  CheckinEntry({required this.createdAt, required this.mood, this.note, this.photoPath});
 }
 
 class HistoryScreen extends StatefulWidget {
@@ -50,7 +51,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
     try {
       final rows = await _supabase
           .from('checkins')
-          .select('mood, note, created_at')
+          .select('mood, note, created_at, photo_path')
           .eq('user_id', _supabase.auth.currentUser!.id)
           .order('created_at');
 
@@ -59,6 +60,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
           createdAt: DateTime.parse(row['created_at'] as String).toLocal(),
           mood: moodFromDbValue(row['mood'] as String),
           note: row['note'] as String?,
+          photoPath: row['photo_path'] as String?,
         );
       }).toList();
 
