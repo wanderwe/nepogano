@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
@@ -6,6 +7,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'l10n/app_localizations.dart';
 import 'main.dart';
+import 'photo_storage.dart';
 import 'style.dart';
 
 /// Скільки днів назад можна побачити й здогадати чек-іни людини з кола.
@@ -25,12 +27,14 @@ class _MemberDayEntry {
   final String userId;
   final MoodLevel mood;
   final String? note;
+  final String? photoPath;
   final DateTime date;
 
   _MemberDayEntry({
     required this.userId,
     required this.mood,
     required this.note,
+    required this.photoPath,
     required this.date,
   });
 }
@@ -1059,7 +1063,6 @@ class _PersonDetailScreenState extends State<PersonDetailScreen> {
   bool _loading = true;
   List<_MemberDayEntry> _entries = [];
   final Map<String, String?> _myGuesses = {};
-  final Set<String> _expandedDetails = {};
 
   @override
   void initState() {
@@ -1076,7 +1079,7 @@ class _PersonDetailScreenState extends State<PersonDetailScreen> {
 
     final checkinRows = await _supabase
         .from('checkins')
-        .select('mood, note, created_at')
+        .select('mood, note, photo_path, created_at')
         .eq('user_id', widget.userId)
         .gte('created_at', sinceUtc)
         .order('created_at', ascending: false);
@@ -1091,6 +1094,7 @@ class _PersonDetailScreenState extends State<PersonDetailScreen> {
         userId: widget.userId,
         mood: moodFromDbValue(row['mood'] as String),
         note: row['note'] as String?,
+        photoPath: row['photo_path'] as String?,
         date: date,
       ));
     }
@@ -1119,11 +1123,6 @@ class _PersonDetailScreenState extends State<PersonDetailScreen> {
       _myGuesses
         ..clear()
         ..addAll(guesses);
-      // Деталі (нотатка) видно одразу для всього, що вже вгадано раніше —
-      // не треба зайвого тапу "Показати деталі" щоразу після вгадування.
-      _expandedDetails
-        ..clear()
-        ..addAll(guesses.keys);
       _loading = false;
     });
   }
@@ -1140,10 +1139,7 @@ class _PersonDetailScreenState extends State<PersonDetailScreen> {
         'guessed_mood': guessedMood.dbValue,
         'correct': guessedMood == entry.mood,
       });
-      setState(() {
-        _myGuesses[key] = guessedMood.dbValue;
-        _expandedDetails.add(key);
-      });
+      setState(() => _myGuesses[key] = guessedMood.dbValue);
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -1237,26 +1233,39 @@ class _PersonDetailScreenState extends State<PersonDetailScreen> {
             ),
             if ((entry.note ?? '').isNotEmpty) ...[
               const SizedBox(height: 8),
-              InkWell(
-                onTap: () => setState(() {
-                  if (_expandedDetails.contains(key)) {
-                    _expandedDetails.remove(key);
-                  } else {
-                    _expandedDetails.add(key);
-                  }
-                }),
-                child: Text(
-                  _expandedDetails.contains(key) ? l10n.hideDetails : l10n.showDetails,
-                  style: TextStyle(fontSize: 12, color: MoodLevel.zbs.color),
-                ),
+              Text(
+                entry.note!,
+                style: const TextStyle(fontSize: 13, color: AppColors.inkMuted, height: 1.4),
               ),
-              if (_expandedDetails.contains(key)) ...[
-                const SizedBox(height: 6),
-                Text(
-                  entry.note!,
-                  style: const TextStyle(fontSize: 13, color: AppColors.inkMuted, height: 1.4),
-                ),
-              ],
+            ],
+            if (entry.photoPath != null) ...[
+              const SizedBox(height: 10),
+              FutureBuilder<Uint8List?>(
+                future: downloadCheckinPhoto(entry.photoPath!),
+                builder: (context, snapshot) {
+                  if (!snapshot.hasData) {
+                    return const SizedBox(
+                      height: 140,
+                      child: Center(
+                        child: SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                      ),
+                    );
+                  }
+                  return ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: Image.memory(
+                      snapshot.data!,
+                      height: 140,
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                    ),
+                  );
+                },
+              ),
             ],
           ] else ...[
             Text(

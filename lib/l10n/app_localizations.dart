@@ -686,18 +686,6 @@ abstract class AppLocalizations {
   /// **'не вгадав(ла)'**
   String get guessedWrong;
 
-  /// No description provided for @showDetails.
-  ///
-  /// In uk, this message translates to:
-  /// **'Показати деталі'**
-  String get showDetails;
-
-  /// No description provided for @hideDetails.
-  ///
-  /// In uk, this message translates to:
-  /// **'Сховати деталі'**
-  String get hideDetails;
-
   /// No description provided for @howAreTheyToday.
   ///
   /// In uk, this message translates to:

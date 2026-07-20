@@ -322,12 +322,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get guessedWrong => 'not quite';
 
   @override
-  String get showDetails => 'Show details';
-
-  @override
-  String get hideDetails => 'Hide details';
-
-  @override
   String get howAreTheyToday => 'How do you think they\'re doing?';
 
   @override

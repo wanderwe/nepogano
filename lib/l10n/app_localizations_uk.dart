@@ -323,12 +323,6 @@ class AppLocalizationsUk extends AppLocalizations {
   String get guessedWrong => 'не вгадав(ла)';
 
   @override
-  String get showDetails => 'Показати деталі';
-
-  @override
-  String get hideDetails => 'Сховати деталі';
-
-  @override
   String get howAreTheyToday => 'Як думаєш, як у них?';
 
   @override
