@@ -118,23 +118,32 @@ class _OnboardingPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            headline,
-            textAlign: TextAlign.center,
-            style: appSerif(fontSize: 28, fontWeight: FontWeight.w700, height: 1.2),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return SingleChildScrollView(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minHeight: constraints.maxHeight),
+            child: Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    headline,
+                    textAlign: TextAlign.center,
+                    style: appSerif(fontSize: 28, fontWeight: FontWeight.w700, height: 1.2),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    body,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(fontSize: 16, color: AppColors.inkMuted, height: 1.4),
+                  ),
+                ],
+              ),
+            ),
           ),
-          const SizedBox(height: 16),
-          Text(
-            body,
-            textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 16, color: AppColors.inkMuted, height: 1.4),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 }
