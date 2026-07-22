@@ -299,8 +299,8 @@ class AppLocalizationsUk extends AppLocalizations {
   String get shareMyLink => 'Поділитися посиланням';
 
   @override
-  String friendInviteShareText(String code) {
-    return 'Додай мене другом у Nepogano!\n\nВстанови застосунок і введи мій код: $code';
+  String friendInviteShareText(String name, String code) {
+    return '$name хоче додати тебе другом у Nepogano!\n\nВстанови застосунок і введи код: $code';
   }
 
   @override
@@ -322,7 +322,24 @@ class AppLocalizationsUk extends AppLocalizations {
   String get friendRequestTitle => 'Хтось хоче додати тебе другом';
 
   @override
+  String friendRequestTitleNamed(String name) {
+    return '$name хоче додати тебе другом';
+  }
+
+  @override
   String get friendAdded => 'Готово! Тепер ви друзі.';
+
+  @override
+  String get editDisplayName => 'Твоє ім\'я';
+
+  @override
+  String get displayNameHint => 'Як тебе підписати для друзів';
+
+  @override
+  String get setDisplayName => 'Додати своє ім\'я';
+
+  @override
+  String get couldNotSaveDisplayName => 'Не вдалось зберегти ім\'я.';
 
   @override
   String get notCheckedInToday => 'Давно не було новин';

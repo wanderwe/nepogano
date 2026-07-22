@@ -299,8 +299,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get shareMyLink => 'Share my link';
 
   @override
-  String friendInviteShareText(String code) {
-    return 'Add me as a friend on Nepogano!\n\nInstall the app and enter my code: $code';
+  String friendInviteShareText(String name, String code) {
+    return '$name wants to add you as a friend on Nepogano!\n\nInstall the app and enter this code: $code';
   }
 
   @override
@@ -322,7 +322,24 @@ class AppLocalizationsEn extends AppLocalizations {
   String get friendRequestTitle => 'Someone wants to add you as a friend';
 
   @override
+  String friendRequestTitleNamed(String name) {
+    return '$name wants to add you as a friend';
+  }
+
+  @override
   String get friendAdded => 'Done! You\'re friends now.';
+
+  @override
+  String get editDisplayName => 'Your name';
+
+  @override
+  String get displayNameHint => 'How friends will see you';
+
+  @override
+  String get setDisplayName => 'Add your name';
+
+  @override
+  String get couldNotSaveDisplayName => 'Couldn\'t save your name.';
 
   @override
   String get notCheckedInToday => 'No news in a while';

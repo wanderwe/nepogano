@@ -48,6 +48,7 @@ class Friend {
   final String friendshipId;
   final String userId;
   final String displayEmail;
+  final String? displayName;
   final MoodLevel? latestMood;
   final DateTime? latestDate;
   final bool hasUnguessed;
@@ -56,10 +57,13 @@ class Friend {
     required this.friendshipId,
     required this.userId,
     required this.displayEmail,
+    required this.displayName,
     required this.latestMood,
     required this.latestDate,
     required this.hasUnguessed,
   });
+
+  String get name => displayName ?? displayEmail.split('@').first;
 }
 
 class FriendFolder {
@@ -197,6 +201,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
   bool _loading = true;
   String? _error;
   String? _myFriendCode;
+  String? _myDisplayName;
   List<Friend> _friends = [];
   List<Map<String, dynamic>> _pendingInvites = [];
   List<FriendFolder> _folders = [];
@@ -221,7 +226,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
 
       final profileRow = await _supabase
           .from('profiles')
-          .select('friend_code')
+          .select('friend_code, display_name')
           .eq('user_id', myId)
           .maybeSingle();
 
@@ -309,6 +314,15 @@ class _FriendsScreenState extends State<FriendsScreen> {
           }
         }
 
+        final nameRows = await _supabase
+            .from('profiles')
+            .select('user_id, display_name')
+            .inFilter('user_id', friendIds);
+        final displayNameByUser = <String, String?>{
+          for (final row in nameRows as List)
+            row['user_id'] as String: row['display_name'] as String?,
+        };
+
         final guessedKeys = <String>{};
         if (datesByUser.isNotEmpty) {
           final sinceDate = DateTime(
@@ -348,6 +362,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
               friendshipId: row['id'],
               userId: friendUserId,
               displayEmail: friendBasics[friendUserId] ?? '',
+              displayName: displayNameByUser[friendUserId],
               latestMood: latestMoodByUser[friendUserId],
               latestDate: latestDateByUser[friendUserId],
               hasUnguessed: hasUnguessed,
@@ -364,6 +379,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
         if (!mounted) return;
         setState(() {
           _myFriendCode = profileRow?['friend_code'] as String?;
+          _myDisplayName = profileRow?['display_name'] as String?;
           _friends = friends;
           _pendingInvites = (inviteRows as List).cast<Map<String, dynamic>>();
           _folders = folders;
@@ -374,6 +390,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
         if (!mounted) return;
         setState(() {
           _myFriendCode = profileRow?['friend_code'] as String?;
+          _myDisplayName = profileRow?['display_name'] as String?;
           _friends = [];
           _pendingInvites = (inviteRows as List).cast<Map<String, dynamic>>();
           _folders = folders;
@@ -501,8 +518,63 @@ class _FriendsScreenState extends State<FriendsScreen> {
     final l10n = AppLocalizations.of(context);
     final code = _myFriendCode;
     if (code == null) return;
-    final text = l10n.friendInviteShareText(code);
+    final myName =
+        _myDisplayName ??
+        (_supabase.auth.currentUser?.email ?? '').split('@').first;
+    final text = l10n.friendInviteShareText(myName, code);
     await SharePlus.instance.share(ShareParams(text: text));
+  }
+
+  Future<void> _editDisplayName() async {
+    final l10n = AppLocalizations.of(context);
+    final controller = TextEditingController(text: _myDisplayName ?? '');
+    final name = await showDialog<String>(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          backgroundColor: AppColors.surfaceRaised,
+          title: Text(l10n.editDisplayName),
+          content: TextField(
+            controller: controller,
+            autofocus: true,
+            decoration: InputDecoration(hintText: l10n.displayNameHint),
+            onChanged: (_) => setState(() {}),
+          ),
+          actionsAlignment: MainAxisAlignment.center,
+          actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text(l10n.cancel),
+            ),
+            TextButton(
+              onPressed: controller.text.trim().isEmpty
+                  ? null
+                  : () => Navigator.of(context).pop(controller.text.trim()),
+              child: Text(l10n.save),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (name == null || name.isEmpty) return;
+
+    try {
+      await _supabase
+          .from('profiles')
+          .update({'display_name': name})
+          .eq('user_id', _supabase.auth.currentUser!.id);
+      if (mounted) setState(() => _myDisplayName = name);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(AppLocalizations.of(context).couldNotSaveDisplayName),
+          ),
+        );
+      }
+    }
   }
 
   Future<void> _enterFriendCode() async {
@@ -805,6 +877,37 @@ class _FriendsScreenState extends State<FriendsScreen> {
                 Expanded(
                   child: ListView(
                     children: [
+                      InkWell(
+                        borderRadius: BorderRadius.circular(12),
+                        onTap: _editDisplayName,
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.badge_outlined,
+                                size: 16,
+                                color: AppColors.inkMuted,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                _myDisplayName ?? l10n.setDisplayName,
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  color: AppColors.inkMuted,
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              const Icon(
+                                Icons.edit,
+                                size: 14,
+                                color: AppColors.inkMuted,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 4),
                       if (_folders.isNotEmpty) ...[
                         SizedBox(
                           height: 36,
@@ -893,7 +996,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
 
   Widget _buildFriendRow(Friend friend) {
     final l10n = AppLocalizations.of(context);
-    final displayName = friend.displayEmail.split('@').first;
+    final displayName = friend.name;
 
     return InkWell(
       borderRadius: BorderRadius.circular(16),
@@ -902,6 +1005,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
           builder: (_) => PersonDetailScreen(
             userId: friend.userId,
             displayEmail: friend.displayEmail,
+            displayName: friend.displayName,
           ),
         ),
       ),
@@ -1018,11 +1122,13 @@ class _FolderChip extends StatelessWidget {
 class PersonDetailScreen extends StatefulWidget {
   final String userId;
   final String displayEmail;
+  final String? displayName;
 
   const PersonDetailScreen({
     super.key,
     required this.userId,
     required this.displayEmail,
+    this.displayName,
   });
 
   @override
@@ -1139,7 +1245,8 @@ class _PersonDetailScreenState extends State<PersonDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final displayName = widget.displayEmail.split('@').first;
+    final displayName =
+        widget.displayName ?? widget.displayEmail.split('@').first;
 
     return Scaffold(
       body: SafeArea(

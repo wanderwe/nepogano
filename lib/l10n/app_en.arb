@@ -99,9 +99,10 @@
   "friendInviteSent": "Sent. They'll see the invite when they open \"Friends\" in the app.",
   "couldNotInviteFriend": "Couldn't invite. They may already be invited.",
   "shareMyLink": "Share my link",
-  "friendInviteShareText": "Add me as a friend on Nepogano!\n\nInstall the app and enter my code: {code}",
+  "friendInviteShareText": "{name} wants to add you as a friend on Nepogano!\n\nInstall the app and enter this code: {code}",
   "@friendInviteShareText": {
     "placeholders": {
+      "name": { "type": "String" },
       "code": { "type": "String" }
     }
   },
@@ -111,7 +112,17 @@
   "join": "Add",
   "invalidInviteCode": "Invalid invite code.",
   "friendRequestTitle": "Someone wants to add you as a friend",
+  "friendRequestTitleNamed": "{name} wants to add you as a friend",
+  "@friendRequestTitleNamed": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
   "friendAdded": "Done! You're friends now.",
+  "editDisplayName": "Your name",
+  "displayNameHint": "How friends will see you",
+  "setDisplayName": "Add your name",
+  "couldNotSaveDisplayName": "Couldn't save your name.",
   "notCheckedInToday": "No news in a while",
   "guessedRight": "you got it",
   "guessedWrong": "not quite",

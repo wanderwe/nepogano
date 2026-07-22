@@ -162,13 +162,32 @@ class _AuthGateState extends State<AuthGate> {
     pendingJoinCode.value = null;
     final l10n = AppLocalizations.of(context);
 
+    // Підтягуємо ім'я того, хто поділився кодом, щоб діалог підтвердження
+    // називав конкретну людину, а не "хтось" — якщо не вдалось, fallback
+    // на загальний варіант тексту нижче.
+    String? requesterName;
+    try {
+      final result = await Supabase.instance.client.rpc(
+        'resolve_friend_code',
+        params: {'code': code},
+      );
+      requesterName = result as String?;
+    } catch (e) {
+      // ignore — покажемо загальний заголовок
+    }
+    if (!mounted) return;
+
     // Питаємо підтвердження, а не тихо додаємо в друзі одразу — це має
     // відчуватись як прийняття запиту в друзі, а не виконання коду.
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: AppColors.surfaceRaised,
-        title: Text(l10n.friendRequestTitle),
+        title: Text(
+          requesterName != null
+              ? l10n.friendRequestTitleNamed(requesterName)
+              : l10n.friendRequestTitle,
+        ),
         actionsAlignment: MainAxisAlignment.center,
         actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
         actions: [

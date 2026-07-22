@@ -8,10 +8,12 @@
 -- в БД невикористаними, приберемо окремо пізніше.
 
 -- profiles: персональний код для додавання в друзі (аналог invite_code
--- у circles, тільки на людину, не на коло).
+-- у circles, тільки на людину, не на коло) + опційне ім'я, під яким тебе
+-- бачать інші — без нього довелось би розпізнавати одне одного по email.
 create table public.profiles (
   user_id uuid primary key references auth.users(id) on delete cascade,
-  friend_code text not null unique default substr(md5(random()::text), 1, 8)
+  friend_code text not null unique default substr(md5(random()::text), 1, 8),
+  display_name text
 );
 
 alter table public.profiles enable row level security;
@@ -22,6 +24,11 @@ using (user_id = auth.uid());
 
 create policy "profiles_insert_own"
 on public.profiles for insert
+with check (user_id = auth.uid());
+
+create policy "profiles_update_own"
+on public.profiles for update
+using (user_id = auth.uid())
 with check (user_id = auth.uid());
 
 -- backfill для вже існуючих акаунтів
@@ -89,6 +96,45 @@ with check (addressee_email = auth.jwt() ->> 'email' or requester_id = auth.uid(
 create policy "friendships_delete"
 on public.friendships for delete
 using (requester_id = auth.uid() or addressee_id = auth.uid());
+
+-- друзі бачать ім'я одне одного (дзеркалить checkins_select_friends нижче) —
+-- інакше після прийняття запрошення ти й далі бачив би лише email.
+create policy "profiles_select_friends"
+on public.profiles for select
+using (
+  user_id in (
+    select addressee_id from public.friendships
+    where requester_id = auth.uid() and status = 'accepted' and addressee_id is not null
+    union
+    select requester_id from public.friendships
+    where addressee_id = auth.uid() and status = 'accepted'
+  )
+);
+
+-- дозволяє показати ім'я того, хто поділився кодом, ще ДО прийняття
+-- запиту в друзі (звичайний select тут не спрацював би — той, хто ще не
+-- друг, не має прав бачити чужий profiles-рядок). Повертає display_name,
+-- а якщо він не заданий — частину email до "@".
+create or replace function public.resolve_friend_code(code text)
+returns text
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  result text;
+begin
+  select coalesce(p.display_name, split_part(u.email, '@', 1))
+  into result
+  from public.profiles p
+  join auth.users u on u.id = p.user_id
+  where p.friend_code = lower(trim(code));
+
+  return result;
+end;
+$$;
+
+grant execute on function public.resolve_friend_code(text) to authenticated;
 
 -- додавання за особистим кодом: одразу 'accepted' в обидва боки (поділився
 -- кодом = дав згоду, той самий принцип, що join_circle_by_code). Якщо вже

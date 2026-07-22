@@ -108,9 +108,10 @@
   "friendInviteSent": "Запрошення надіслано. Людина побачить його, коли відкриє \"Друзі\" в застосунку.",
   "couldNotInviteFriend": "Не вдалось запросити. Можливо, вже запрошений.",
   "shareMyLink": "Поділитися посиланням",
-  "friendInviteShareText": "Додай мене другом у Nepogano!\n\nВстанови застосунок і введи мій код: {code}",
+  "friendInviteShareText": "{name} хоче додати тебе другом у Nepogano!\n\nВстанови застосунок і введи код: {code}",
   "@friendInviteShareText": {
     "placeholders": {
+      "name": { "type": "String" },
       "code": { "type": "String" }
     }
   },
@@ -120,7 +121,17 @@
   "join": "Додати",
   "invalidInviteCode": "Невірний код запрошення.",
   "friendRequestTitle": "Хтось хоче додати тебе другом",
+  "friendRequestTitleNamed": "{name} хоче додати тебе другом",
+  "@friendRequestTitleNamed": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
   "friendAdded": "Готово! Тепер ви друзі.",
+  "editDisplayName": "Твоє ім'я",
+  "displayNameHint": "Як тебе підписати для друзів",
+  "setDisplayName": "Додати своє ім'я",
+  "couldNotSaveDisplayName": "Не вдалось зберегти ім'я.",
   "notCheckedInToday": "Давно не було новин",
   "guessedRight": "вгадав(ла)",
   "guessedWrong": "не вгадав(ла)",

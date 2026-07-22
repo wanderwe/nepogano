@@ -641,8 +641,8 @@ abstract class AppLocalizations {
   /// No description provided for @friendInviteShareText.
   ///
   /// In uk, this message translates to:
-  /// **'Додай мене другом у Nepogano!\n\nВстанови застосунок і введи мій код: {code}'**
-  String friendInviteShareText(String code);
+  /// **'{name} хоче додати тебе другом у Nepogano!\n\nВстанови застосунок і введи код: {code}'**
+  String friendInviteShareText(String name, String code);
 
   /// No description provided for @haveCode.
   ///
@@ -680,11 +680,41 @@ abstract class AppLocalizations {
   /// **'Хтось хоче додати тебе другом'**
   String get friendRequestTitle;
 
+  /// No description provided for @friendRequestTitleNamed.
+  ///
+  /// In uk, this message translates to:
+  /// **'{name} хоче додати тебе другом'**
+  String friendRequestTitleNamed(String name);
+
   /// No description provided for @friendAdded.
   ///
   /// In uk, this message translates to:
   /// **'Готово! Тепер ви друзі.'**
   String get friendAdded;
+
+  /// No description provided for @editDisplayName.
+  ///
+  /// In uk, this message translates to:
+  /// **'Твоє ім\'я'**
+  String get editDisplayName;
+
+  /// No description provided for @displayNameHint.
+  ///
+  /// In uk, this message translates to:
+  /// **'Як тебе підписати для друзів'**
+  String get displayNameHint;
+
+  /// No description provided for @setDisplayName.
+  ///
+  /// In uk, this message translates to:
+  /// **'Додати своє ім\'я'**
+  String get setDisplayName;
+
+  /// No description provided for @couldNotSaveDisplayName.
+  ///
+  /// In uk, this message translates to:
+  /// **'Не вдалось зберегти ім\'я.'**
+  String get couldNotSaveDisplayName;
 
   /// No description provided for @notCheckedInToday.
   ///
