@@ -71,11 +71,11 @@ class AppLocalizationsUk extends AppLocalizations {
       'Три прості оцінки без пафосу. Жодного тиску відповідати \"чудово\", коли насправді \"так собі\".';
 
   @override
-  String get onboarding4Headline => 'Кола близьких';
+  String get onboarding4Headline => 'Близькі поруч';
 
   @override
   String get onboarding4Body =>
-      'Створи коло з друзями чи родиною, побач їхній настрій і спробуй вгадати, як минув їхній день.';
+      'Додай друзів, побач їхній настрій і спробуй вгадати, як минув їхній день.';
 
   @override
   String get onboarding5Headline => 'Погляд на місяць';
@@ -105,15 +105,6 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get repositionPhotoTooltip => 'Змінити розташування фото';
-
-  @override
-  String get circle => 'Коло';
-
-  @override
-  String get circles => 'Кола';
-
-  @override
-  String get members => 'Учасники';
 
   @override
   String get history => 'Історія';
@@ -254,22 +245,16 @@ class AppLocalizationsUk extends AppLocalizations {
   String get myDayInNepogano => 'Мій день з Nepogano';
 
   @override
-  String get couldNotLoadCircles => 'Не вдалось завантажити кола.';
+  String get friends => 'Друзі';
+
+  @override
+  String get addFriend => 'Додати друга';
+
+  @override
+  String get couldNotLoadFriends => 'Не вдалось завантажити друзів.';
 
   @override
   String get couldNotAcceptInvite => 'Не вдалось прийняти запрошення.';
-
-  @override
-  String get newCircle => 'Нове коло';
-
-  @override
-  String get circleNameHint => 'Наприклад, Родина';
-
-  @override
-  String get create => 'Створити';
-
-  @override
-  String get couldNotCreateCircle => 'Не вдалось створити коло.';
 
   @override
   String get invitations => 'Запрошення';
@@ -278,72 +263,66 @@ class AppLocalizationsUk extends AppLocalizations {
   String get accept => 'Прийняти';
 
   @override
-  String get myCircles => 'Мої кола';
+  String get noFriendsYet => 'Ще немає друзів. Додай когось кнопкою вгорі.';
 
   @override
-  String get noCirclesYet =>
-      'Ще немає жодного кола. Створи своє кнопкою \"+\" зверху.';
+  String get removeFriend => 'Видалити з друзів';
 
   @override
-  String get pending => 'Очікують';
+  String get removeFriendConfirmTitle => 'Видалити з друзів?';
 
   @override
-  String get notJoinedYet => 'ще не приєднався(лась)';
+  String get removeFriendConfirmBody =>
+      'Ви більше не будете бачити чек-іни одне одного.';
 
   @override
-  String get cancelInviteTooltip => 'Скасувати запрошення';
-
-  @override
-  String get nobodyHereYet =>
-      'Тут поки нікого немає.\nЗапроси когось у це коло.';
+  String get couldNotRemoveFriend => 'Не вдалось видалити з друзів.';
 
   @override
   String get invite => 'Запросити';
 
   @override
-  String get inviteToCircle => 'Запросити в коло';
-
-  @override
   String get personEmailHint => 'Email людини';
 
   @override
-  String get inviteAdded =>
-      'Додано. Людина побачить запрошення, коли відкриє \"Коло\" в застосунку.';
+  String get inviteFriendByEmail => 'Запросити друга по email';
 
   @override
-  String get couldNotInvite => 'Не вдалось запросити. Можливо, вже запрошений.';
+  String get friendInviteSent =>
+      'Запрошення надіслано. Людина побачить його, коли відкриє \"Друзі\" в застосунку.';
 
   @override
-  String get couldNotCancelInvite => 'Не вдалось скасувати запрошення.';
+  String get couldNotInviteFriend =>
+      'Не вдалось запросити. Можливо, вже запрошений.';
 
   @override
-  String get shareInviteLink => 'Поділитися запрошенням';
+  String get shareMyLink => 'Поділитися посиланням';
 
   @override
-  String inviteShareText(String circleName, String code) {
-    return 'Приєднайся до мого кола \"$circleName\" у Nepogano!\n\nВстанови застосунок і введи код запрошення: $code';
+  String friendInviteShareText(String code) {
+    return 'Додай мене другом у Nepogano!\n\nВстанови застосунок і введи мій код: $code';
   }
 
   @override
-  String get joinCircle => 'Вхід у коло';
+  String get haveCode => 'Маю код';
 
   @override
-  String get joinCircleHint => 'Код запрошення';
+  String get enterFriendCode => 'Ввести код друга';
 
   @override
-  String get join => 'Приєднатися';
+  String get friendCodeHint => 'Код друга';
+
+  @override
+  String get join => 'Додати';
 
   @override
   String get invalidInviteCode => 'Невірний код запрошення.';
 
   @override
-  String get joinedCircleSuccess => 'Готово! Ти приєднався(лась) до кола.';
+  String get friendRequestTitle => 'Хтось хоче додати тебе другом';
 
   @override
-  String get haveInviteCode => 'Маю код запрошення';
-
-  @override
-  String get inviteByEmail => 'Запросити по email';
+  String get friendAdded => 'Готово! Тепер ви друзі.';
 
   @override
   String get notCheckedInToday => 'Давно не було новин';
@@ -361,10 +340,28 @@ class AppLocalizationsUk extends AppLocalizations {
   String get couldNotSaveGuess => 'Не вдалось зберегти здогадку.';
 
   @override
-  String get language => 'Мова';
+  String get allFriends => 'Усі';
 
   @override
-  String get recentActivity => 'Нещодавно';
+  String get newFolder => 'Нова папка';
+
+  @override
+  String get folderNameHint => 'Наприклад, Родина';
+
+  @override
+  String get create => 'Створити';
+
+  @override
+  String get couldNotCreateFolder => 'Не вдалось створити папку.';
+
+  @override
+  String get addToFolder => 'Додати в папку';
+
+  @override
+  String get noFoldersYet => 'Ще немає папок.';
+
+  @override
+  String get language => 'Мова';
 
   @override
   String get today => 'сьогодні';

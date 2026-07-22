@@ -221,13 +221,13 @@ abstract class AppLocalizations {
   /// No description provided for @onboarding4Headline.
   ///
   /// In uk, this message translates to:
-  /// **'Кола близьких'**
+  /// **'Близькі поруч'**
   String get onboarding4Headline;
 
   /// No description provided for @onboarding4Body.
   ///
   /// In uk, this message translates to:
-  /// **'Створи коло з друзями чи родиною, побач їхній настрій і спробуй вгадати, як минув їхній день.'**
+  /// **'Додай друзів, побач їхній настрій і спробуй вгадати, як минув їхній день.'**
   String get onboarding4Body;
 
   /// No description provided for @onboarding5Headline.
@@ -283,24 +283,6 @@ abstract class AppLocalizations {
   /// In uk, this message translates to:
   /// **'Змінити розташування фото'**
   String get repositionPhotoTooltip;
-
-  /// No description provided for @circle.
-  ///
-  /// In uk, this message translates to:
-  /// **'Коло'**
-  String get circle;
-
-  /// No description provided for @circles.
-  ///
-  /// In uk, this message translates to:
-  /// **'Кола'**
-  String get circles;
-
-  /// No description provided for @members.
-  ///
-  /// In uk, this message translates to:
-  /// **'Учасники'**
-  String get members;
 
   /// No description provided for @history.
   ///
@@ -554,41 +536,29 @@ abstract class AppLocalizations {
   /// **'Мій день з Nepogano'**
   String get myDayInNepogano;
 
-  /// No description provided for @couldNotLoadCircles.
+  /// No description provided for @friends.
   ///
   /// In uk, this message translates to:
-  /// **'Не вдалось завантажити кола.'**
-  String get couldNotLoadCircles;
+  /// **'Друзі'**
+  String get friends;
+
+  /// No description provided for @addFriend.
+  ///
+  /// In uk, this message translates to:
+  /// **'Додати друга'**
+  String get addFriend;
+
+  /// No description provided for @couldNotLoadFriends.
+  ///
+  /// In uk, this message translates to:
+  /// **'Не вдалось завантажити друзів.'**
+  String get couldNotLoadFriends;
 
   /// No description provided for @couldNotAcceptInvite.
   ///
   /// In uk, this message translates to:
   /// **'Не вдалось прийняти запрошення.'**
   String get couldNotAcceptInvite;
-
-  /// No description provided for @newCircle.
-  ///
-  /// In uk, this message translates to:
-  /// **'Нове коло'**
-  String get newCircle;
-
-  /// No description provided for @circleNameHint.
-  ///
-  /// In uk, this message translates to:
-  /// **'Наприклад, Родина'**
-  String get circleNameHint;
-
-  /// No description provided for @create.
-  ///
-  /// In uk, this message translates to:
-  /// **'Створити'**
-  String get create;
-
-  /// No description provided for @couldNotCreateCircle.
-  ///
-  /// In uk, this message translates to:
-  /// **'Не вдалось створити коло.'**
-  String get couldNotCreateCircle;
 
   /// No description provided for @invitations.
   ///
@@ -602,41 +572,35 @@ abstract class AppLocalizations {
   /// **'Прийняти'**
   String get accept;
 
-  /// No description provided for @myCircles.
+  /// No description provided for @noFriendsYet.
   ///
   /// In uk, this message translates to:
-  /// **'Мої кола'**
-  String get myCircles;
+  /// **'Ще немає друзів. Додай когось кнопкою вгорі.'**
+  String get noFriendsYet;
 
-  /// No description provided for @noCirclesYet.
+  /// No description provided for @removeFriend.
   ///
   /// In uk, this message translates to:
-  /// **'Ще немає жодного кола. Створи своє кнопкою \"+\" зверху.'**
-  String get noCirclesYet;
+  /// **'Видалити з друзів'**
+  String get removeFriend;
 
-  /// No description provided for @pending.
+  /// No description provided for @removeFriendConfirmTitle.
   ///
   /// In uk, this message translates to:
-  /// **'Очікують'**
-  String get pending;
+  /// **'Видалити з друзів?'**
+  String get removeFriendConfirmTitle;
 
-  /// No description provided for @notJoinedYet.
+  /// No description provided for @removeFriendConfirmBody.
   ///
   /// In uk, this message translates to:
-  /// **'ще не приєднався(лась)'**
-  String get notJoinedYet;
+  /// **'Ви більше не будете бачити чек-іни одне одного.'**
+  String get removeFriendConfirmBody;
 
-  /// No description provided for @cancelInviteTooltip.
+  /// No description provided for @couldNotRemoveFriend.
   ///
   /// In uk, this message translates to:
-  /// **'Скасувати запрошення'**
-  String get cancelInviteTooltip;
-
-  /// No description provided for @nobodyHereYet.
-  ///
-  /// In uk, this message translates to:
-  /// **'Тут поки нікого немає.\nЗапроси когось у це коло.'**
-  String get nobodyHereYet;
+  /// **'Не вдалось видалити з друзів.'**
+  String get couldNotRemoveFriend;
 
   /// No description provided for @invite.
   ///
@@ -644,64 +608,64 @@ abstract class AppLocalizations {
   /// **'Запросити'**
   String get invite;
 
-  /// No description provided for @inviteToCircle.
-  ///
-  /// In uk, this message translates to:
-  /// **'Запросити в коло'**
-  String get inviteToCircle;
-
   /// No description provided for @personEmailHint.
   ///
   /// In uk, this message translates to:
   /// **'Email людини'**
   String get personEmailHint;
 
-  /// No description provided for @inviteAdded.
+  /// No description provided for @inviteFriendByEmail.
   ///
   /// In uk, this message translates to:
-  /// **'Додано. Людина побачить запрошення, коли відкриє \"Коло\" в застосунку.'**
-  String get inviteAdded;
+  /// **'Запросити друга по email'**
+  String get inviteFriendByEmail;
 
-  /// No description provided for @couldNotInvite.
+  /// No description provided for @friendInviteSent.
+  ///
+  /// In uk, this message translates to:
+  /// **'Запрошення надіслано. Людина побачить його, коли відкриє \"Друзі\" в застосунку.'**
+  String get friendInviteSent;
+
+  /// No description provided for @couldNotInviteFriend.
   ///
   /// In uk, this message translates to:
   /// **'Не вдалось запросити. Можливо, вже запрошений.'**
-  String get couldNotInvite;
+  String get couldNotInviteFriend;
 
-  /// No description provided for @couldNotCancelInvite.
+  /// No description provided for @shareMyLink.
   ///
   /// In uk, this message translates to:
-  /// **'Не вдалось скасувати запрошення.'**
-  String get couldNotCancelInvite;
+  /// **'Поділитися посиланням'**
+  String get shareMyLink;
 
-  /// No description provided for @shareInviteLink.
+  /// No description provided for @friendInviteShareText.
   ///
   /// In uk, this message translates to:
-  /// **'Поділитися запрошенням'**
-  String get shareInviteLink;
+  /// **'Додай мене другом у Nepogano!\n\nВстанови застосунок і введи мій код: {code}'**
+  String friendInviteShareText(String code);
 
-  /// No description provided for @inviteShareText.
+  /// No description provided for @haveCode.
   ///
   /// In uk, this message translates to:
-  /// **'Приєднайся до мого кола \"{circleName}\" у Nepogano!\n\nВстанови застосунок і введи код запрошення: {code}'**
-  String inviteShareText(String circleName, String code);
+  /// **'Маю код'**
+  String get haveCode;
 
-  /// No description provided for @joinCircle.
+  /// No description provided for @enterFriendCode.
   ///
   /// In uk, this message translates to:
-  /// **'Вхід у коло'**
-  String get joinCircle;
+  /// **'Ввести код друга'**
+  String get enterFriendCode;
 
-  /// No description provided for @joinCircleHint.
+  /// No description provided for @friendCodeHint.
   ///
   /// In uk, this message translates to:
-  /// **'Код запрошення'**
-  String get joinCircleHint;
+  /// **'Код друга'**
+  String get friendCodeHint;
 
   /// No description provided for @join.
   ///
   /// In uk, this message translates to:
-  /// **'Приєднатися'**
+  /// **'Додати'**
   String get join;
 
   /// No description provided for @invalidInviteCode.
@@ -710,23 +674,17 @@ abstract class AppLocalizations {
   /// **'Невірний код запрошення.'**
   String get invalidInviteCode;
 
-  /// No description provided for @joinedCircleSuccess.
+  /// No description provided for @friendRequestTitle.
   ///
   /// In uk, this message translates to:
-  /// **'Готово! Ти приєднався(лась) до кола.'**
-  String get joinedCircleSuccess;
+  /// **'Хтось хоче додати тебе другом'**
+  String get friendRequestTitle;
 
-  /// No description provided for @haveInviteCode.
+  /// No description provided for @friendAdded.
   ///
   /// In uk, this message translates to:
-  /// **'Маю код запрошення'**
-  String get haveInviteCode;
-
-  /// No description provided for @inviteByEmail.
-  ///
-  /// In uk, this message translates to:
-  /// **'Запросити по email'**
-  String get inviteByEmail;
+  /// **'Готово! Тепер ви друзі.'**
+  String get friendAdded;
 
   /// No description provided for @notCheckedInToday.
   ///
@@ -758,17 +716,53 @@ abstract class AppLocalizations {
   /// **'Не вдалось зберегти здогадку.'**
   String get couldNotSaveGuess;
 
+  /// No description provided for @allFriends.
+  ///
+  /// In uk, this message translates to:
+  /// **'Усі'**
+  String get allFriends;
+
+  /// No description provided for @newFolder.
+  ///
+  /// In uk, this message translates to:
+  /// **'Нова папка'**
+  String get newFolder;
+
+  /// No description provided for @folderNameHint.
+  ///
+  /// In uk, this message translates to:
+  /// **'Наприклад, Родина'**
+  String get folderNameHint;
+
+  /// No description provided for @create.
+  ///
+  /// In uk, this message translates to:
+  /// **'Створити'**
+  String get create;
+
+  /// No description provided for @couldNotCreateFolder.
+  ///
+  /// In uk, this message translates to:
+  /// **'Не вдалось створити папку.'**
+  String get couldNotCreateFolder;
+
+  /// No description provided for @addToFolder.
+  ///
+  /// In uk, this message translates to:
+  /// **'Додати в папку'**
+  String get addToFolder;
+
+  /// No description provided for @noFoldersYet.
+  ///
+  /// In uk, this message translates to:
+  /// **'Ще немає папок.'**
+  String get noFoldersYet;
+
   /// No description provided for @language.
   ///
   /// In uk, this message translates to:
   /// **'Мова'**
   String get language;
-
-  /// No description provided for @recentActivity.
-  ///
-  /// In uk, this message translates to:
-  /// **'Нещодавно'**
-  String get recentActivity;
 
   /// No description provided for @today.
   ///

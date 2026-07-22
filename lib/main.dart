@@ -11,8 +11,8 @@ import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'auth_screen.dart';
-import 'circles_screen.dart';
 import 'day_card_screen.dart';
+import 'friends_screen.dart';
 import 'history_screen.dart';
 import 'l10n/app_localizations.dart';
 import 'locale_provider.dart';
@@ -26,11 +26,11 @@ const supabaseUrl = 'https://wxxvqscmalcuurhvzufl.supabase.co';
 const supabaseAnonKey = 'sb_publishable_H5DIUfH_i4_Mm5VKSoAoNA__tT60BUI';
 
 /// Показує SnackBar незалежно від того, який екран зараз активний —
-/// потрібно, щоб підтвердити автоприєднання до кола за диплінком.
+/// потрібно, щоб підтвердити додавання в друзі за диплінком.
 final scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
 
-/// Код запрошення в коло з диплінку (io.supabase.nepogano://join/<code>),
-/// що чекає на автора, поки той не залогіниться (диплінк може прийти ще до
+/// Особистий код друга з диплінку (io.supabase.nepogano://join/<code>), що
+/// чекає на автора, поки той не залогіниться (диплінк може прийти ще до
 /// входу в застосунок).
 final ValueNotifier<String?> pendingJoinCode = ValueNotifier<String?>(null);
 
@@ -161,13 +161,37 @@ class _AuthGateState extends State<AuthGate> {
 
     pendingJoinCode.value = null;
     final l10n = AppLocalizations.of(context);
+
+    // Питаємо підтвердження, а не тихо додаємо в друзі одразу — це має
+    // відчуватись як прийняття запиту в друзі, а не виконання коду.
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppColors.surfaceRaised,
+        title: Text(l10n.friendRequestTitle),
+        actionsAlignment: MainAxisAlignment.center,
+        actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(l10n.no),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: Text(l10n.accept),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
     try {
       await Supabase.instance.client.rpc(
-        'join_circle_by_code',
+        'add_friend_by_code',
         params: {'code': code},
       );
       scaffoldMessengerKey.currentState?.showSnackBar(
-        SnackBar(content: Text(l10n.joinedCircleSuccess)),
+        SnackBar(content: Text(l10n.friendAdded)),
       );
     } catch (e) {
       scaffoldMessengerKey.currentState?.showSnackBar(
@@ -367,7 +391,7 @@ class _CheckInScreenState extends State<CheckInScreen> {
   }
 
   Future<void> _checkCircleActivity() async {
-    final has = await hasUnseenCircleActivity(_supabase);
+    final has = await hasUnseenFriendActivity(_supabase);
     if (mounted) setState(() => _hasCircleActivity = has);
   }
 
@@ -1076,13 +1100,13 @@ class _CheckInScreenState extends State<CheckInScreen> {
                             onPressed: () async {
                               await Navigator.of(context).push(
                                 MaterialPageRoute(
-                                  builder: (_) => const CirclesScreen(),
+                                  builder: (_) => const FriendsScreen(),
                                 ),
                               );
                               _checkCircleActivity();
                             },
                             icon: const Icon(Icons.people_outline, size: 20),
-                            tooltip: l10n.circles,
+                            tooltip: l10n.friends,
                           ),
                           if (_hasCircleActivity)
                             const Positioned(

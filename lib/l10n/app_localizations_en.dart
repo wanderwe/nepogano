@@ -71,11 +71,11 @@ class AppLocalizationsEn extends AppLocalizations {
       'Three plain ratings, no hype. No pressure to say \"amazing\" when it was really just okay.';
 
   @override
-  String get onboarding4Headline => 'Circles of close friends';
+  String get onboarding4Headline => 'Close ones, close by';
 
   @override
   String get onboarding4Body =>
-      'Start a circle with friends or family, see how they\'re doing, and try to guess how their day went.';
+      'Add friends, see how they\'re doing, and try to guess how their day went.';
 
   @override
   String get onboarding5Headline => 'A look back at your month';
@@ -105,15 +105,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get repositionPhotoTooltip => 'Reposition photo';
-
-  @override
-  String get circle => 'Circle';
-
-  @override
-  String get circles => 'Circles';
-
-  @override
-  String get members => 'Members';
 
   @override
   String get history => 'History';
@@ -253,22 +244,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get myDayInNepogano => 'My day with Nepogano';
 
   @override
-  String get couldNotLoadCircles => 'Couldn\'t load circles.';
+  String get friends => 'Friends';
+
+  @override
+  String get addFriend => 'Add friend';
+
+  @override
+  String get couldNotLoadFriends => 'Couldn\'t load friends.';
 
   @override
   String get couldNotAcceptInvite => 'Couldn\'t accept the invite.';
-
-  @override
-  String get newCircle => 'New circle';
-
-  @override
-  String get circleNameHint => 'e.g. Family';
-
-  @override
-  String get create => 'Create';
-
-  @override
-  String get couldNotCreateCircle => 'Couldn\'t create the circle.';
 
   @override
   String get invitations => 'Invitations';
@@ -277,72 +262,67 @@ class AppLocalizationsEn extends AppLocalizations {
   String get accept => 'Accept';
 
   @override
-  String get myCircles => 'My circles';
+  String get noFriendsYet =>
+      'No friends yet. Add someone with the button above.';
 
   @override
-  String get noCirclesYet =>
-      'No circles yet. Create one with the \"+\" button above.';
+  String get removeFriend => 'Remove friend';
 
   @override
-  String get pending => 'Pending';
+  String get removeFriendConfirmTitle => 'Remove this friend?';
 
   @override
-  String get notJoinedYet => 'hasn\'t joined yet';
+  String get removeFriendConfirmBody =>
+      'You\'ll no longer see each other\'s check-ins.';
 
   @override
-  String get cancelInviteTooltip => 'Cancel invite';
-
-  @override
-  String get nobodyHereYet =>
-      'Nobody\'s here yet.\nInvite someone to this circle.';
+  String get couldNotRemoveFriend => 'Couldn\'t remove the friend.';
 
   @override
   String get invite => 'Invite';
 
   @override
-  String get inviteToCircle => 'Invite to circle';
-
-  @override
   String get personEmailHint => 'Person\'s email';
 
   @override
-  String get inviteAdded =>
-      'Added. They\'ll see the invite when they open \"Circle\" in the app.';
+  String get inviteFriendByEmail => 'Invite a friend by email';
 
   @override
-  String get couldNotInvite => 'Couldn\'t invite. They may already be invited.';
+  String get friendInviteSent =>
+      'Sent. They\'ll see the invite when they open \"Friends\" in the app.';
 
   @override
-  String get couldNotCancelInvite => 'Couldn\'t cancel the invite.';
+  String get couldNotInviteFriend =>
+      'Couldn\'t invite. They may already be invited.';
 
   @override
-  String get shareInviteLink => 'Share invite';
+  String get shareMyLink => 'Share my link';
 
   @override
-  String inviteShareText(String circleName, String code) {
-    return 'Join my circle \"$circleName\" on Nepogano!\n\nInstall the app and enter this invite code: $code';
+  String friendInviteShareText(String code) {
+    return 'Add me as a friend on Nepogano!\n\nInstall the app and enter my code: $code';
   }
 
   @override
-  String get joinCircle => 'Join circle';
+  String get haveCode => 'I have a code';
 
   @override
-  String get joinCircleHint => 'Invite code';
+  String get enterFriendCode => 'Enter a friend\'s code';
 
   @override
-  String get join => 'Join';
+  String get friendCodeHint => 'Friend code';
+
+  @override
+  String get join => 'Add';
 
   @override
   String get invalidInviteCode => 'Invalid invite code.';
 
   @override
-  String get joinedCircleSuccess => 'Done! You\'ve joined the circle.';
+  String get friendRequestTitle => 'Someone wants to add you as a friend';
 
   @override
-  String get haveInviteCode => 'I have an invite code';
-
-  @override
-  String get inviteByEmail => 'Invite by email';
+  String get friendAdded => 'Done! You\'re friends now.';
 
   @override
   String get notCheckedInToday => 'No news in a while';
@@ -360,10 +340,28 @@ class AppLocalizationsEn extends AppLocalizations {
   String get couldNotSaveGuess => 'Couldn\'t save the guess.';
 
   @override
-  String get language => 'Language';
+  String get allFriends => 'All';
 
   @override
-  String get recentActivity => 'Recent activity';
+  String get newFolder => 'New folder';
+
+  @override
+  String get folderNameHint => 'e.g. Family';
+
+  @override
+  String get create => 'Create';
+
+  @override
+  String get couldNotCreateFolder => 'Couldn\'t create the folder.';
+
+  @override
+  String get addToFolder => 'Add to folder';
+
+  @override
+  String get noFoldersYet => 'No folders yet.';
+
+  @override
+  String get language => 'Language';
 
   @override
   String get today => 'today';
