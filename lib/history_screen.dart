@@ -15,6 +15,7 @@ class CheckinEntry {
   final String? note;
   final String? photoPath;
   final double photoAlignY;
+  final int updateCount;
 
   CheckinEntry({
     required this.createdAt,
@@ -22,6 +23,7 @@ class CheckinEntry {
     this.note,
     this.photoPath,
     this.photoAlignY = 0,
+    this.updateCount = 0,
   });
 }
 
@@ -69,7 +71,9 @@ class _HistoryScreenState extends State<HistoryScreen> {
     try {
       final rows = await _supabase
           .from(_table)
-          .select('mood, note, created_at, photo_path, photo_align_y')
+          .select(
+            'mood, note, created_at, photo_path, photo_align_y, update_count',
+          )
           .eq(_idColumn, _idValue)
           .order('created_at');
 
@@ -80,6 +84,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
           note: row['note'] as String?,
           photoPath: row['photo_path'] as String?,
           photoAlignY: (row['photo_align_y'] as num?)?.toDouble() ?? 0,
+          updateCount: (row['update_count'] as num?)?.toInt() ?? 0,
         );
       }).toList();
 

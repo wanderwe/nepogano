@@ -46,7 +46,7 @@
   "no": "Ні",
   "yesDelete": "Так, видалити",
   "howAreThingsToday": "Як справи сьогодні?",
-  "alreadySavedToday": "Вже зберіг о {time}",
+  "alreadySavedToday": "Вже збережено о {time}",
   "@alreadySavedToday": {
     "placeholders": { "time": { "type": "String" } }
   },
@@ -161,6 +161,13 @@
   },
   "removeSubjectConfirmBody": "Усі записи буде видалено назавжди.",
   "couldNotRemoveSubject": "Не вдалось видалити.",
+
+  "updatedCount": "Оновлено {count, plural, one{{count} раз} few{{count} рази} many{{count} разів} other{{count} разів}}",
+  "@updatedCount": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
 
   "language": "Мова",
 

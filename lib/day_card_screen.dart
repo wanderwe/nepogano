@@ -471,6 +471,15 @@ class _DayCard extends StatelessWidget {
                   }),
                 ),
                 const SizedBox(height: 20),
+                if (entry.updateCount > 0) ...[
+                  Text(
+                    AppLocalizations.of(
+                      context,
+                    ).updatedCount(entry.updateCount),
+                    style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                  ),
+                  const SizedBox(height: 4),
+                ],
                 Text(
                   'nepogano.app',
                   style: TextStyle(fontSize: 12, color: Colors.grey.shade600),

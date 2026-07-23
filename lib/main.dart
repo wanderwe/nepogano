@@ -474,6 +474,12 @@ class _CheckInScreenState extends State<CheckInScreen> {
   bool _loadingToday = true;
   bool _todayLoadFailed = false;
 
+  // Скільки разів сьогоднішній запис уже редагували (перший save не
+  // рахується — тільки повторні "Оновити"). Сам інкремент — тригер у БД,
+  // тут просто відображаємо те, що прийшло, і бампаємо локально одразу
+  // після успішного _save(), щоб не чекати повторного запиту.
+  int _updateCount = 0;
+
   // Сутності (дитина/улюбленець/інше) — той самий екран/ритуал, просто
   // перемкнутий на іншого адресата. null = веду власний чек-ін.
   List<Subject> _subjects = [];
@@ -535,6 +541,7 @@ class _CheckInScreenState extends State<CheckInScreen> {
       _pickedPhotoFile = null;
       _removePhoto = false;
       _photoAlignY = 0;
+      _updateCount = 0;
       _editing = false;
     });
     _loadTodayEntry();
@@ -714,7 +721,9 @@ class _CheckInScreenState extends State<CheckInScreen> {
     try {
       final rows = await _supabase
           .from(_table)
-          .select('id, mood, note, created_at, photo_path, photo_align_y')
+          .select(
+            'id, mood, note, created_at, photo_path, photo_align_y, update_count',
+          )
           .eq(_idColumn, _idValue)
           .gte('created_at', startOfDay)
           .lt('created_at', startOfNextDay)
@@ -738,6 +747,7 @@ class _CheckInScreenState extends State<CheckInScreen> {
         ).toLocal();
         _existingPhotoPath = row['photo_path'] as String?;
         _photoAlignY = (row['photo_align_y'] as num?)?.toDouble() ?? 0;
+        _updateCount = (row['update_count'] as num?)?.toInt() ?? 0;
         _pickedPhotoFile = null;
         _removePhoto = false;
         _editing = false;
@@ -912,6 +922,7 @@ class _CheckInScreenState extends State<CheckInScreen> {
             : _noteController.text.trim(),
         photoPath: _existingPhotoPath,
         photoAlignY: _photoAlignY,
+        updateCount: _updateCount,
       ),
     );
   }
@@ -1205,6 +1216,9 @@ class _CheckInScreenState extends State<CheckInScreen> {
             'Update affected 0 rows — check RLS UPDATE policy on $_table.',
           );
         }
+        // Сам інкремент рахує тригер у БД (checkin-update-count-migration.sql);
+        // тут просто відображаємо очікуваний результат одразу, без повторного запиту.
+        _updateCount++;
       } else {
         final inserted = await _supabase
             .from(_table)
@@ -1486,10 +1500,14 @@ class _CheckInScreenState extends State<CheckInScreen> {
                               if (_todayEntrySavedAt != null) ...[
                                 const SizedBox(height: 6),
                                 Text(
-                                  l10n.alreadySavedToday(
-                                    '${_todayEntrySavedAt!.hour.toString().padLeft(2, '0')}:'
-                                    '${_todayEntrySavedAt!.minute.toString().padLeft(2, '0')}',
-                                  ),
+                                  _updateCount > 0
+                                      ? '${l10n.alreadySavedToday('${_todayEntrySavedAt!.hour.toString().padLeft(2, '0')}:'
+                                            '${_todayEntrySavedAt!.minute.toString().padLeft(2, '0')}')} '
+                                            '· ${l10n.updatedCount(_updateCount)}'
+                                      : l10n.alreadySavedToday(
+                                          '${_todayEntrySavedAt!.hour.toString().padLeft(2, '0')}:'
+                                          '${_todayEntrySavedAt!.minute.toString().padLeft(2, '0')}',
+                                        ),
                                   style: const TextStyle(
                                     fontSize: 13,
                                     color: AppColors.inkMuted,

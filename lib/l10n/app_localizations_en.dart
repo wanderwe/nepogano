@@ -411,6 +411,17 @@ class AppLocalizationsEn extends AppLocalizations {
   String get couldNotRemoveSubject => 'Couldn\'t delete it.';
 
   @override
+  String updatedCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count times',
+      one: '$count time',
+    );
+    return 'Updated $_temp0';
+  }
+
+  @override
   String get language => 'Language';
 
   @override

@@ -139,7 +139,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String alreadySavedToday(String time) {
-    return 'Вже зберіг о $time';
+    return 'Вже збережено о $time';
   }
 
   @override
@@ -408,6 +408,19 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get couldNotRemoveSubject => 'Не вдалось видалити.';
+
+  @override
+  String updatedCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count разів',
+      many: '$count разів',
+      few: '$count рази',
+      one: '$count раз',
+    );
+    return 'Оновлено $_temp0';
+  }
 
   @override
   String get language => 'Мова';

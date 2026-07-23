@@ -153,6 +153,13 @@
   "removeSubjectConfirmBody": "All entries will be deleted permanently.",
   "couldNotRemoveSubject": "Couldn't delete it.",
 
+  "updatedCount": "Updated {count, plural, one{{count} time} other{{count} times}}",
+  "@updatedCount": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+
   "language": "Language",
 
   "today": "today",

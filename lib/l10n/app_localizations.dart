@@ -347,7 +347,7 @@ abstract class AppLocalizations {
   /// No description provided for @alreadySavedToday.
   ///
   /// In uk, this message translates to:
-  /// **'Вже зберіг о {time}'**
+  /// **'Вже збережено о {time}'**
   String alreadySavedToday(String time);
 
   /// No description provided for @notePlaceholder.
@@ -847,6 +847,12 @@ abstract class AppLocalizations {
   /// In uk, this message translates to:
   /// **'Не вдалось видалити.'**
   String get couldNotRemoveSubject;
+
+  /// No description provided for @updatedCount.
+  ///
+  /// In uk, this message translates to:
+  /// **'Оновлено {count, plural, one{{count} раз} few{{count} рази} many{{count} разів} other{{count} разів}}'**
+  String updatedCount(int count);
 
   /// No description provided for @language.
   ///
