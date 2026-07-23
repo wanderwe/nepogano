@@ -59,6 +59,13 @@ kotlin {
     }
 }
 
+dependencies {
+    // Play Install Referrer API: дозволяє прочитати параметр, з яким людину
+    // направили в Play Маркет (join_code=...), одразу після встановлення —
+    // це і є механізм deferred deep linking для "додати друга" без застосунку.
+    implementation("com.android.installreferrer:installreferrer:2.2")
+}
+
 flutter {
     source = "../.."
 }

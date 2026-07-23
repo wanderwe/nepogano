@@ -25,9 +25,11 @@
     "Друзі" → "Маю код".
   </p>
   <div class="join-code" id="join-code">— — — — — —</div>
+  <a id="install-link" class="btn-primary" href="https://play.google.com/store/apps/details?id=com.nepogano.app">Завантажити застосунок</a>
   <p class="join-note">
-    Ще немає застосунку? Nepogano поки в закритому тестуванні — зверніся
-    до того, хто тебе запросив, щоб отримати доступ.
+    Nepogano поки в закритому тестуванні — посилання встановить застосунок,
+    якщо в тебе вже є доступ до тестування. Якщо ще немає — зверніся до
+    того, хто тебе запросив.
   </p>
 </main>
 
@@ -43,6 +45,15 @@
   var code = parts[parts.length - 1];
   if (code && code.toLowerCase() !== 'join') {
     document.getElementById('join-code').textContent = code;
+    // Play Маркет передає цей referrer застосунку одразу після встановлення
+    // (Play Install Referrer API) — так код доходить до застосунку, навіть
+    // якщо його не було на пристрої в момент переходу по лінку.
+    var link = document.getElementById('install-link');
+    var base = link.getAttribute('href');
+    link.setAttribute(
+      'href',
+      base + '&referrer=' + encodeURIComponent('join_code=' + code)
+    );
   }
 </script>
 </body>

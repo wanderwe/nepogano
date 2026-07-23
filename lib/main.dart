@@ -14,6 +14,7 @@ import 'auth_screen.dart';
 import 'day_card_screen.dart';
 import 'friends_screen.dart';
 import 'history_screen.dart';
+import 'install_referrer.dart';
 import 'l10n/app_localizations.dart';
 import 'locale_provider.dart';
 import 'onboarding_screen.dart';
@@ -126,6 +127,7 @@ class AuthGate extends StatefulWidget {
 }
 
 const _onboardingSeenKey = 'onboarding_seen';
+const _installReferrerCheckedKey = 'install_referrer_checked';
 
 class _AuthGateState extends State<AuthGate> {
   late final Stream<AuthState> _authStateStream;
@@ -143,6 +145,23 @@ class _AuthGateState extends State<AuthGate> {
     // відкладаємо першу перевірку на момент після першого кадру.
     WidgetsBinding.instance.addPostFrameCallback((_) => _tryPendingJoin());
     _loadOnboardingSeen();
+    _checkInstallReferrer();
+  }
+
+  /// Перевіряє (лише раз за весь час життя застосунку на пристрої) Play
+  /// Install Referrer — якщо застосунок щойно встановили за посиланням
+  /// nepogano.app/join/<code>, коли його ще не було, код прийде саме звідси
+  /// (deferred deep link). Чергу в pendingJoinCode підхоплює вже наявний
+  /// _tryPendingJoin, коли юзер залогіниться.
+  Future<void> _checkInstallReferrer() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (prefs.getBool(_installReferrerCheckedKey) == true) return;
+    await prefs.setBool(_installReferrerCheckedKey, true);
+
+    final code = await fetchInstallReferrerJoinCode();
+    if (code != null && code.isNotEmpty) {
+      pendingJoinCode.value = code;
+    }
   }
 
   Future<void> _loadOnboardingSeen() async {

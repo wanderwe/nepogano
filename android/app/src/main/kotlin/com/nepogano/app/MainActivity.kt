@@ -3,17 +3,20 @@ package com.nepogano.app
 import android.content.Intent
 import android.net.Uri
 import androidx.core.content.FileProvider
+import com.android.installreferrer.api.InstallReferrerClient
+import com.android.installreferrer.api.InstallReferrerStateListener
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
 import java.io.File
 
 class MainActivity : FlutterActivity() {
-    private val channelName = "nepogano/social_share"
+    private val shareChannelName = "nepogano/social_share"
+    private val referrerChannelName = "nepogano/install_referrer"
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
-        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, channelName).setMethodCallHandler { call, result ->
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, shareChannelName).setMethodCallHandler { call, result ->
             val filePath = call.argument<String>("filePath")
             when (call.method) {
                 "shareInstagramStory" -> result.success(shareInstagramStory(filePath!!))
@@ -24,6 +27,56 @@ class MainActivity : FlutterActivity() {
                 else -> result.notImplemented()
             }
         }
+
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, referrerChannelName).setMethodCallHandler { call, result ->
+            when (call.method) {
+                "getJoinCode" -> fetchInstallReferrerJoinCode(result)
+                else -> result.notImplemented()
+            }
+        }
+    }
+
+    /**
+     * Читає Play Install Referrer — рядок, з яким людину направили в Play
+     * Маркет (join_code=<code>, дописаний на сторінці nepogano.app/join),
+     * і дістає звідти код запрошення. Дозволяє показати підтвердження
+     * "X хоче додати тебе другом" одразу після першого запуску, навіть якщо
+     * застосунку не було на момент переходу по лінку (deferred deep link).
+     */
+    private fun fetchInstallReferrerJoinCode(result: MethodChannel.Result) {
+        var finished = false
+        val referrerClient = InstallReferrerClient.newBuilder(applicationContext).build()
+        referrerClient.startConnection(object : InstallReferrerStateListener {
+            override fun onInstallReferrerSetupFinished(responseCode: Int) {
+                if (finished) return
+                finished = true
+                val code = if (responseCode == InstallReferrerClient.InstallReferrerResponse.OK) {
+                    try {
+                        val referrerUrl = referrerClient.installReferrer.installReferrer
+                        referrerUrl
+                            .split("&")
+                            .map { it.split("=") }
+                            .firstOrNull { it.size == 2 && it[0] == "join_code" }
+                            ?.get(1)
+                    } catch (e: Exception) {
+                        null
+                    }
+                } else {
+                    null
+                }
+                result.success(code)
+                try {
+                    referrerClient.endConnection()
+                } catch (e: Exception) {
+                }
+            }
+
+            override fun onInstallReferrerServiceDisconnected() {
+                if (finished) return
+                finished = true
+                result.success(null)
+            }
+        })
     }
 
     /** Копіює файл у кеш-теку, зареєстровану FileProvider'ом share_plus, і повертає content:// URI. */
