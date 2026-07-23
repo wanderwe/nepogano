@@ -108,7 +108,7 @@
   "friendInviteSent": "Запрошення надіслано. Людина побачить його, коли відкриє \"Друзі\" в застосунку.",
   "couldNotInviteFriend": "Не вдалось запросити. Можливо, вже запрошений.",
   "shareMyLink": "Поділитися посиланням",
-  "friendInviteShareText": "{name} хоче додати тебе другом у Nepogano!\n\nio.supabase.nepogano://join/{code}\n\nЯкщо застосунок ще не встановлений — встанови і введи код: {code}",
+  "friendInviteShareText": "{name} хоче додати тебе другом у Nepogano!\n\nhttps://nepogano.app/join/{code}",
   "@friendInviteShareText": {
     "placeholders": {
       "name": { "type": "String" },
@@ -139,12 +139,12 @@
   "couldNotSaveGuess": "Не вдалось зберегти здогадку.",
 
   "allFriends": "Усі",
-  "newFolder": "Нова папка",
+  "newFolder": "Нове коло",
   "folderNameHint": "Наприклад, Родина",
   "create": "Створити",
-  "couldNotCreateFolder": "Не вдалось створити папку.",
-  "addToFolder": "Додати в папку",
-  "noFoldersYet": "Ще немає папок.",
+  "couldNotCreateFolder": "Не вдалось створити коло.",
+  "addToFolder": "Додати в коло",
+  "noFoldersYet": "Ще немає кіл.",
 
   "language": "Мова",
 

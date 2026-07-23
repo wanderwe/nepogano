@@ -300,7 +300,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String friendInviteShareText(String name, String code) {
-    return '$name хоче додати тебе другом у Nepogano!\n\nio.supabase.nepogano://join/$code\n\nЯкщо застосунок ще не встановлений — встанови і введи код: $code';
+    return '$name хоче додати тебе другом у Nepogano!\n\nhttps://nepogano.app/join/$code';
   }
 
   @override
@@ -360,7 +360,7 @@ class AppLocalizationsUk extends AppLocalizations {
   String get allFriends => 'Усі';
 
   @override
-  String get newFolder => 'Нова папка';
+  String get newFolder => 'Нове коло';
 
   @override
   String get folderNameHint => 'Наприклад, Родина';
@@ -369,13 +369,13 @@ class AppLocalizationsUk extends AppLocalizations {
   String get create => 'Створити';
 
   @override
-  String get couldNotCreateFolder => 'Не вдалось створити папку.';
+  String get couldNotCreateFolder => 'Не вдалось створити коло.';
 
   @override
-  String get addToFolder => 'Додати в папку';
+  String get addToFolder => 'Додати в коло';
 
   @override
-  String get noFoldersYet => 'Ще немає папок.';
+  String get noFoldersYet => 'Ще немає кіл.';
 
   @override
   String get language => 'Мова';

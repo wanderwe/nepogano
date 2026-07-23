@@ -641,7 +641,7 @@ abstract class AppLocalizations {
   /// No description provided for @friendInviteShareText.
   ///
   /// In uk, this message translates to:
-  /// **'{name} хоче додати тебе другом у Nepogano!\n\nio.supabase.nepogano://join/{code}\n\nЯкщо застосунок ще не встановлений — встанови і введи код: {code}'**
+  /// **'{name} хоче додати тебе другом у Nepogano!\n\nhttps://nepogano.app/join/{code}'**
   String friendInviteShareText(String name, String code);
 
   /// No description provided for @haveCode.
@@ -755,7 +755,7 @@ abstract class AppLocalizations {
   /// No description provided for @newFolder.
   ///
   /// In uk, this message translates to:
-  /// **'Нова папка'**
+  /// **'Нове коло'**
   String get newFolder;
 
   /// No description provided for @folderNameHint.
@@ -773,19 +773,19 @@ abstract class AppLocalizations {
   /// No description provided for @couldNotCreateFolder.
   ///
   /// In uk, this message translates to:
-  /// **'Не вдалось створити папку.'**
+  /// **'Не вдалось створити коло.'**
   String get couldNotCreateFolder;
 
   /// No description provided for @addToFolder.
   ///
   /// In uk, this message translates to:
-  /// **'Додати в папку'**
+  /// **'Додати в коло'**
   String get addToFolder;
 
   /// No description provided for @noFoldersYet.
   ///
   /// In uk, this message translates to:
-  /// **'Ще немає папок.'**
+  /// **'Ще немає кіл.'**
   String get noFoldersYet;
 
   /// No description provided for @language.
