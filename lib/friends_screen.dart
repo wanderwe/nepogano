@@ -908,32 +908,42 @@ class _FriendsScreenState extends State<FriendsScreen> {
                         ),
                       ),
                       const SizedBox(height: 4),
-                      if (_folders.isNotEmpty) ...[
-                        SizedBox(
-                          height: 36,
-                          child: ListView(
-                            scrollDirection: Axis.horizontal,
-                            children: [
+                      SizedBox(
+                        height: 36,
+                        child: ListView(
+                          scrollDirection: Axis.horizontal,
+                          children: [
+                            if (_folders.isNotEmpty)
                               _FolderChip(
                                 label: l10n.allFriends,
                                 selected: _selectedFolderId == null,
                                 onTap: () =>
                                     setState(() => _selectedFolderId = null),
                               ),
-                              ..._folders.map(
-                                (folder) => _FolderChip(
-                                  label: folder.name,
-                                  selected: _selectedFolderId == folder.id,
-                                  onTap: () => setState(
-                                    () => _selectedFolderId = folder.id,
-                                  ),
+                            ..._folders.map(
+                              (folder) => _FolderChip(
+                                label: folder.name,
+                                selected: _selectedFolderId == folder.id,
+                                onTap: () => setState(
+                                  () => _selectedFolderId = folder.id,
                                 ),
                               ),
-                            ],
-                          ),
+                            ),
+                            ActionChip(
+                              avatar: const Icon(Icons.add, size: 16),
+                              label: Text(l10n.newFolder),
+                              onPressed: _createFolder,
+                              backgroundColor: AppColors.surface,
+                              labelStyle: const TextStyle(
+                                fontSize: 13,
+                                color: AppColors.inkMuted,
+                              ),
+                              side: BorderSide.none,
+                            ),
+                          ],
                         ),
-                        const SizedBox(height: 16),
-                      ],
+                      ),
+                      const SizedBox(height: 16),
                       if (_pendingInvites.isNotEmpty) ...[
                         Text(
                           l10n.invitations,

@@ -300,7 +300,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String friendInviteShareText(String name, String code) {
-    return '$name хоче додати тебе другом у Nepogano!\n\nВстанови застосунок і введи код: $code';
+    return '$name хоче додати тебе другом у Nepogano!\n\nio.supabase.nepogano://join/$code\n\nЯкщо застосунок ще не встановлений — встанови і введи код: $code';
   }
 
   @override

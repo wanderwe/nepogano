@@ -99,7 +99,7 @@
   "friendInviteSent": "Sent. They'll see the invite when they open \"Friends\" in the app.",
   "couldNotInviteFriend": "Couldn't invite. They may already be invited.",
   "shareMyLink": "Share my link",
-  "friendInviteShareText": "{name} wants to add you as a friend on Nepogano!\n\nInstall the app and enter this code: {code}",
+  "friendInviteShareText": "{name} wants to add you as a friend on Nepogano!\n\nio.supabase.nepogano://join/{code}\n\nIf the app isn't installed yet — install it and enter this code: {code}",
   "@friendInviteShareText": {
     "placeholders": {
       "name": { "type": "String" },

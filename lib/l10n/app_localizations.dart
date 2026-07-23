@@ -641,7 +641,7 @@ abstract class AppLocalizations {
   /// No description provided for @friendInviteShareText.
   ///
   /// In uk, this message translates to:
-  /// **'{name} хоче додати тебе другом у Nepogano!\n\nВстанови застосунок і введи код: {code}'**
+  /// **'{name} хоче додати тебе другом у Nepogano!\n\nio.supabase.nepogano://join/{code}\n\nЯкщо застосунок ще не встановлений — встанови і введи код: {code}'**
   String friendInviteShareText(String name, String code);
 
   /// No description provided for @haveCode.
