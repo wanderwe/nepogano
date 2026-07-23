@@ -378,6 +378,39 @@ class AppLocalizationsEn extends AppLocalizations {
   String get noFoldersYet => 'No circles yet.';
 
   @override
+  String get me => 'Me';
+
+  @override
+  String get newSubject => 'New diary';
+
+  @override
+  String get subjectNameHint => 'Name (e.g. Emma)';
+
+  @override
+  String get subjectKindChild => 'Child';
+
+  @override
+  String get subjectKindPet => 'Pet';
+
+  @override
+  String get subjectKindOther => 'Other';
+
+  @override
+  String get couldNotCreateSubject => 'Couldn\'t create it.';
+
+  @override
+  String removeSubjectConfirmTitle(String name) {
+    return 'Delete $name\'s diary?';
+  }
+
+  @override
+  String get removeSubjectConfirmBody =>
+      'All entries will be deleted permanently.';
+
+  @override
+  String get couldNotRemoveSubject => 'Couldn\'t delete it.';
+
+  @override
   String get language => 'Language';
 
   @override

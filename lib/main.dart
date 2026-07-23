@@ -388,6 +388,55 @@ class _MoodTileState extends State<_MoodTile> {
   }
 }
 
+class _SubjectChip extends StatelessWidget {
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+  final VoidCallback? onLongPress;
+
+  const _SubjectChip({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+    this.onLongPress,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(right: 8),
+      child: GestureDetector(
+        onLongPress: onLongPress,
+        child: ChoiceChip(
+          label: Text(label),
+          selected: selected,
+          onSelected: (_) => onTap(),
+          backgroundColor: AppColors.surface,
+          selectedColor: AppColors.surfaceRaised,
+          side: BorderSide(
+            color: selected ? const Color(0xFFE0A458) : Colors.transparent,
+          ),
+          labelStyle: TextStyle(
+            fontSize: 13,
+            color: selected ? AppColors.ink : AppColors.inkMuted,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Сутність (дитина/улюбленець/інше), яку веде власник акаунту тим самим
+/// ритуалом чек-іну, що й для себе — повністю приватний щоденник, без
+/// видимості друзям чи колам.
+class Subject {
+  final String id;
+  final String kind;
+  final String name;
+
+  Subject({required this.id, required this.kind, required this.name});
+}
+
 class CheckInScreen extends StatefulWidget {
   const CheckInScreen({super.key});
 
@@ -425,6 +474,16 @@ class _CheckInScreenState extends State<CheckInScreen> {
   bool _loadingToday = true;
   bool _todayLoadFailed = false;
 
+  // Сутності (дитина/улюбленець/інше) — той самий екран/ритуал, просто
+  // перемкнутий на іншого адресата. null = веду власний чек-ін.
+  List<Subject> _subjects = [];
+  String? _activeSubjectId;
+
+  String get _table =>
+      _activeSubjectId == null ? 'checkins' : 'subject_checkins';
+  String get _idColumn => _activeSubjectId == null ? 'user_id' : 'subject_id';
+  String get _idValue => _activeSubjectId ?? _supabase.auth.currentUser!.id;
+
   final _supabase = Supabase.instance.client;
 
   static DateTime _mondayOf(DateTime date) {
@@ -439,11 +498,179 @@ class _CheckInScreenState extends State<CheckInScreen> {
     _loadTodayEntry();
     _loadWeek();
     _checkCircleActivity();
+    _loadSubjects();
+  }
+
+  Future<void> _loadSubjects() async {
+    final rows = await _supabase
+        .from('subjects')
+        .select('id, kind, name')
+        .eq('owner_id', _supabase.auth.currentUser!.id)
+        .order('created_at');
+
+    if (!mounted) return;
+    setState(() {
+      _subjects = (rows as List)
+          .map((r) => Subject(id: r['id'], kind: r['kind'], name: r['name']))
+          .toList();
+    });
   }
 
   Future<void> _checkCircleActivity() async {
     final has = await hasUnseenFriendActivity(_supabase);
     if (mounted) setState(() => _hasCircleActivity = has);
+  }
+
+  /// Перемикає, за кого зараз ведеться чек-ін (null = я сам) — той самий
+  /// екран, скидається тільки локальний стан форми, тоді підвантажується
+  /// сьогоднішній запис і тиждень для нового адресата.
+  void _switchSubject(String? id) {
+    setState(() {
+      _activeSubjectId = id;
+      _selected = null;
+      _noteController.text = '';
+      _todayEntryId = null;
+      _todayEntrySavedAt = null;
+      _existingPhotoPath = null;
+      _pickedPhotoFile = null;
+      _removePhoto = false;
+      _photoAlignY = 0;
+      _editing = false;
+    });
+    _loadTodayEntry();
+    _loadWeek();
+  }
+
+  Future<void> _createSubject() async {
+    final l10n = AppLocalizations.of(context);
+    final controller = TextEditingController();
+    final result = await showDialog<Map<String, String>>(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) {
+          var kind = 'child';
+          return AlertDialog(
+            backgroundColor: AppColors.surfaceRaised,
+            title: Text(l10n.newSubject),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                TextField(
+                  controller: controller,
+                  autofocus: true,
+                  decoration: InputDecoration(hintText: l10n.subjectNameHint),
+                  onChanged: (_) => setState(() {}),
+                ),
+                const SizedBox(height: 16),
+                Wrap(
+                  spacing: 8,
+                  children: [
+                    ChoiceChip(
+                      label: Text(l10n.subjectKindChild),
+                      selected: kind == 'child',
+                      onSelected: (_) => setState(() => kind = 'child'),
+                    ),
+                    ChoiceChip(
+                      label: Text(l10n.subjectKindPet),
+                      selected: kind == 'pet',
+                      onSelected: (_) => setState(() => kind = 'pet'),
+                    ),
+                    ChoiceChip(
+                      label: Text(l10n.subjectKindOther),
+                      selected: kind == 'other',
+                      onSelected: (_) => setState(() => kind = 'other'),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            actionsAlignment: MainAxisAlignment.center,
+            actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: Text(l10n.cancel),
+              ),
+              TextButton(
+                onPressed: controller.text.trim().isEmpty
+                    ? null
+                    : () => Navigator.of(
+                        context,
+                      ).pop({'name': controller.text.trim(), 'kind': kind}),
+                child: Text(l10n.create),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+
+    if (result == null) return;
+
+    try {
+      final inserted = await _supabase
+          .from('subjects')
+          .insert({
+            'owner_id': _supabase.auth.currentUser!.id,
+            'name': result['name'],
+            'kind': result['kind'],
+          })
+          .select('id')
+          .single();
+      await _loadSubjects();
+      _switchSubject(inserted['id'] as String);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(AppLocalizations.of(context).couldNotCreateSubject),
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _removeSubject(Subject subject) async {
+    final l10n = AppLocalizations.of(context);
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppColors.surfaceRaised,
+        title: Text(l10n.removeSubjectConfirmTitle(subject.name)),
+        content: Text(l10n.removeSubjectConfirmBody),
+        actionsAlignment: MainAxisAlignment.center,
+        actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(l10n.cancel),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: Text(
+              l10n.delete,
+              style: const TextStyle(color: Colors.redAccent),
+            ),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+
+    try {
+      await _supabase.from('subjects').delete().eq('id', subject.id);
+      if (_activeSubjectId == subject.id) _switchSubject(null);
+      await _loadSubjects();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(AppLocalizations.of(context).couldNotRemoveSubject),
+          ),
+        );
+      }
+    }
   }
 
   @override
@@ -486,9 +713,9 @@ class _CheckInScreenState extends State<CheckInScreen> {
 
     try {
       final rows = await _supabase
-          .from('checkins')
+          .from(_table)
           .select('id, mood, note, created_at, photo_path, photo_align_y')
-          .eq('user_id', _supabase.auth.currentUser!.id)
+          .eq(_idColumn, _idValue)
           .gte('created_at', startOfDay)
           .lt('created_at', startOfNextDay)
           .order('created_at', ascending: false)
@@ -915,9 +1142,9 @@ class _CheckInScreenState extends State<CheckInScreen> {
         .toIso8601String();
 
     final rows = await _supabase
-        .from('checkins')
+        .from(_table)
         .select('mood, note, created_at')
-        .eq('user_id', _supabase.auth.currentUser!.id)
+        .eq(_idColumn, _idValue)
         .gte('created_at', start)
         .lt('created_at', end)
         .order('created_at');
@@ -961,22 +1188,26 @@ class _CheckInScreenState extends State<CheckInScreen> {
             : _noteController.text.trim(),
         'photo_path': photoPath,
         'photo_align_y': photoPath == null ? 0 : _photoAlignY,
+        // 'user_id' у checkins має дефолт auth.uid(), тому передавати не
+        // треба — а от subject_id у subject_checkins нема звідки взяти
+        // самостійно, вказуємо явно тільки коли ведемо чек-ін сутності.
+        if (_activeSubjectId != null) 'subject_id': _activeSubjectId,
       };
 
       if (_todayEntryId != null) {
         final updated = await _supabase
-            .from('checkins')
+            .from(_table)
             .update(payload)
             .eq('id', _todayEntryId as Object)
             .select('id');
         if ((updated as List).isEmpty) {
           throw Exception(
-            'Update affected 0 rows — check RLS UPDATE policy on checkins.',
+            'Update affected 0 rows — check RLS UPDATE policy on $_table.',
           );
         }
       } else {
         final inserted = await _supabase
-            .from('checkins')
+            .from(_table)
             .insert(payload)
             .select('id, created_at')
             .single();
@@ -1174,11 +1405,21 @@ class _CheckInScreenState extends State<CheckInScreen> {
                         ],
                       ),
                       IconButton(
-                        onPressed: () => Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) => const HistoryScreen(),
-                          ),
-                        ),
+                        onPressed: () {
+                          final activeName = _activeSubjectId == null
+                              ? null
+                              : _subjects
+                                    .firstWhere((s) => s.id == _activeSubjectId)
+                                    .name;
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => HistoryScreen(
+                                subjectId: _activeSubjectId,
+                                subjectName: activeName,
+                              ),
+                            ),
+                          );
+                        },
                         icon: const Icon(
                           Icons.calendar_month_outlined,
                           size: 20,
@@ -1193,6 +1434,39 @@ class _CheckInScreenState extends State<CheckInScreen> {
                     ],
                   ),
                 ],
+              ),
+              const SizedBox(height: 12),
+              SizedBox(
+                height: 36,
+                child: ListView(
+                  scrollDirection: Axis.horizontal,
+                  children: [
+                    _SubjectChip(
+                      label: l10n.me,
+                      selected: _activeSubjectId == null,
+                      onTap: () => _switchSubject(null),
+                    ),
+                    ..._subjects.map(
+                      (s) => _SubjectChip(
+                        label: s.name,
+                        selected: _activeSubjectId == s.id,
+                        onTap: () => _switchSubject(s.id),
+                        onLongPress: () => _removeSubject(s),
+                      ),
+                    ),
+                    ActionChip(
+                      avatar: const Icon(Icons.add, size: 16),
+                      label: Text(l10n.newSubject),
+                      onPressed: _createSubject,
+                      backgroundColor: AppColors.surface,
+                      labelStyle: const TextStyle(
+                        fontSize: 13,
+                        color: AppColors.inkMuted,
+                      ),
+                      side: BorderSide.none,
+                    ),
+                  ],
+                ),
               ),
               Expanded(
                 child: Center(

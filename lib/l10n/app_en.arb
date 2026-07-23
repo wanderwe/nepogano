@@ -137,6 +137,22 @@
   "addToFolder": "Add to circle",
   "noFoldersYet": "No circles yet.",
 
+  "me": "Me",
+  "newSubject": "New diary",
+  "subjectNameHint": "Name (e.g. Emma)",
+  "subjectKindChild": "Child",
+  "subjectKindPet": "Pet",
+  "subjectKindOther": "Other",
+  "couldNotCreateSubject": "Couldn't create it.",
+  "removeSubjectConfirmTitle": "Delete {name}'s diary?",
+  "@removeSubjectConfirmTitle": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+  "removeSubjectConfirmBody": "All entries will be deleted permanently.",
+  "couldNotRemoveSubject": "Couldn't delete it.",
+
   "language": "Language",
 
   "today": "today",

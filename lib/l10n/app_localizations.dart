@@ -788,6 +788,66 @@ abstract class AppLocalizations {
   /// **'Ще немає кіл.'**
   String get noFoldersYet;
 
+  /// No description provided for @me.
+  ///
+  /// In uk, this message translates to:
+  /// **'Я'**
+  String get me;
+
+  /// No description provided for @newSubject.
+  ///
+  /// In uk, this message translates to:
+  /// **'Новий щоденник'**
+  String get newSubject;
+
+  /// No description provided for @subjectNameHint.
+  ///
+  /// In uk, this message translates to:
+  /// **'Ім\'я (наприклад, Тьома)'**
+  String get subjectNameHint;
+
+  /// No description provided for @subjectKindChild.
+  ///
+  /// In uk, this message translates to:
+  /// **'Дитина'**
+  String get subjectKindChild;
+
+  /// No description provided for @subjectKindPet.
+  ///
+  /// In uk, this message translates to:
+  /// **'Улюбленець'**
+  String get subjectKindPet;
+
+  /// No description provided for @subjectKindOther.
+  ///
+  /// In uk, this message translates to:
+  /// **'Інше'**
+  String get subjectKindOther;
+
+  /// No description provided for @couldNotCreateSubject.
+  ///
+  /// In uk, this message translates to:
+  /// **'Не вдалось створити.'**
+  String get couldNotCreateSubject;
+
+  /// No description provided for @removeSubjectConfirmTitle.
+  ///
+  /// In uk, this message translates to:
+  /// **'Видалити щоденник {name}?'**
+  String removeSubjectConfirmTitle(String name);
+
+  /// No description provided for @removeSubjectConfirmBody.
+  ///
+  /// In uk, this message translates to:
+  /// **'Усі записи буде видалено назавжди.'**
+  String get removeSubjectConfirmBody;
+
+  /// No description provided for @couldNotRemoveSubject.
+  ///
+  /// In uk, this message translates to:
+  /// **'Не вдалось видалити.'**
+  String get couldNotRemoveSubject;
+
   /// No description provided for @language.
   ///
   /// In uk, this message translates to:

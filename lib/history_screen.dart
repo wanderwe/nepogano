@@ -26,7 +26,10 @@ class CheckinEntry {
 }
 
 class HistoryScreen extends StatefulWidget {
-  const HistoryScreen({super.key});
+  final String? subjectId;
+  final String? subjectName;
+
+  const HistoryScreen({super.key, this.subjectId, this.subjectName});
 
   @override
   State<HistoryScreen> createState() => _HistoryScreenState();
@@ -34,6 +37,11 @@ class HistoryScreen extends StatefulWidget {
 
 class _HistoryScreenState extends State<HistoryScreen> {
   final _supabase = Supabase.instance.client;
+
+  String get _table =>
+      widget.subjectId == null ? 'checkins' : 'subject_checkins';
+  String get _idColumn => widget.subjectId == null ? 'user_id' : 'subject_id';
+  String get _idValue => widget.subjectId ?? _supabase.auth.currentUser!.id;
 
   bool _loading = true;
   String? _error;
@@ -60,9 +68,9 @@ class _HistoryScreenState extends State<HistoryScreen> {
 
     try {
       final rows = await _supabase
-          .from('checkins')
+          .from(_table)
           .select('mood, note, created_at, photo_path, photo_align_y')
-          .eq('user_id', _supabase.auth.currentUser!.id)
+          .eq(_idColumn, _idValue)
           .order('created_at');
 
       final entries = (rows as List).map((row) {
@@ -165,7 +173,12 @@ class _HistoryScreenState extends State<HistoryScreen> {
                     tooltip: l10n.back,
                   ),
                   const SizedBox(width: 4),
-                  Text(l10n.history, style: appSerif(fontSize: 22)),
+                  Text(
+                    widget.subjectName == null
+                        ? l10n.history
+                        : '${l10n.history} — ${widget.subjectName}',
+                    style: appSerif(fontSize: 22),
+                  ),
                 ],
               ),
               const SizedBox(height: 8),

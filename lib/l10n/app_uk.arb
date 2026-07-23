@@ -146,6 +146,22 @@
   "addToFolder": "Додати в коло",
   "noFoldersYet": "Ще немає кіл.",
 
+  "me": "Я",
+  "newSubject": "Новий щоденник",
+  "subjectNameHint": "Ім'я (наприклад, Тьома)",
+  "subjectKindChild": "Дитина",
+  "subjectKindPet": "Улюбленець",
+  "subjectKindOther": "Інше",
+  "couldNotCreateSubject": "Не вдалось створити.",
+  "removeSubjectConfirmTitle": "Видалити щоденник {name}?",
+  "@removeSubjectConfirmTitle": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+  "removeSubjectConfirmBody": "Усі записи буде видалено назавжди.",
+  "couldNotRemoveSubject": "Не вдалось видалити.",
+
   "language": "Мова",
 
   "today": "сьогодні",

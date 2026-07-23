@@ -378,6 +378,38 @@ class AppLocalizationsUk extends AppLocalizations {
   String get noFoldersYet => 'Ще немає кіл.';
 
   @override
+  String get me => 'Я';
+
+  @override
+  String get newSubject => 'Новий щоденник';
+
+  @override
+  String get subjectNameHint => 'Ім\'я (наприклад, Тьома)';
+
+  @override
+  String get subjectKindChild => 'Дитина';
+
+  @override
+  String get subjectKindPet => 'Улюбленець';
+
+  @override
+  String get subjectKindOther => 'Інше';
+
+  @override
+  String get couldNotCreateSubject => 'Не вдалось створити.';
+
+  @override
+  String removeSubjectConfirmTitle(String name) {
+    return 'Видалити щоденник $name?';
+  }
+
+  @override
+  String get removeSubjectConfirmBody => 'Усі записи буде видалено назавжди.';
+
+  @override
+  String get couldNotRemoveSubject => 'Не вдалось видалити.';
+
+  @override
   String get language => 'Мова';
 
   @override
