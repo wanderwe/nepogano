@@ -34,14 +34,26 @@
                 <category android:name="android.intent.category.BROWSABLE"/>
                 <data android:scheme="io.supabase.nepogano" android:host="login-callback"/>
             </intent-filter>
-            <!-- Запрошення в коло: io.supabase.nepogano://join/<code> — одразу
-                 приєднує до кола без ручного введення коду, якщо застосунок уже
-                 встановлений. -->
+            <!-- Запрошення в друзі: io.supabase.nepogano://join/<code> — одразу
+                 показує запит на дружбу без ручного введення коду, якщо
+                 застосунок уже встановлений. -->
             <intent-filter>
                 <action android:name="android.intent.action.VIEW"/>
                 <category android:name="android.intent.category.DEFAULT"/>
                 <category android:name="android.intent.category.BROWSABLE"/>
                 <data android:scheme="io.supabase.nepogano" android:host="join"/>
+            </intent-filter>
+            <!-- Те саме, але справжнє https-посилання (https://nepogano.app/join/<code>) —
+                 на відміну від кастомної схеми вище, месенджери роблять його
+                 клікабельним. autoVerify вимагає файл
+                 https://nepogano.app/.well-known/assetlinks.json з відбитком
+                 релізного ключа, інакше Android не довірить домен застосунку
+                 і відкриє звичайний браузер замість застосунку. -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="https" android:host="nepogano.app" android:pathPrefix="/join"/>
             </intent-filter>
             <!-- Вимикає вбудований авто-роутинг Flutter для диплінків: застосунок не
                  використовує named routes, а OAuth-редірект (io.supabase.nepogano://...)

@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Приєднатися — Nepogano</title>
+<link rel="icon" href="assets/icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Lora:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="wrap topbar-inner">
+    <img src="assets/icon.png" alt="" class="logo-dot" width="28" height="28">
+    <span class="wordmark">Nepogano</span>
+  </div>
+</header>
+
+<main class="join-card">
+  <h1 id="join-title">Хтось хоче додати тебе другом</h1>
+  <p class="join-note">
+    Якщо застосунок Nepogano вже встановлений, це посилання мало відкрити
+    його автоматично. Якщо ти тут — введи код нижче вручну на екрані
+    "Друзі" → "Маю код".
+  </p>
+  <div class="join-code" id="join-code">— — — — — —</div>
+  <p class="join-note">
+    Ще немає застосунку? Nepogano поки в закритому тестуванні — зверніся
+    до того, хто тебе запросив, щоб отримати доступ.
+  </p>
+</main>
+
+<footer class="footer">
+  <div class="wrap footer-inner">
+    <a href="index.html">На головну</a>
+    <a href="https://github.com/wanderwe/nepogano/wiki/Privacy-Policy">Політика конфіденційності</a>
+  </div>
+</footer>
+
+<script>
+  var parts = window.location.pathname.split('/').filter(Boolean);
+  var code = parts[parts.length - 1];
+  if (code && code.toLowerCase() !== 'join') {
+    document.getElementById('join-code').textContent = code;
+  }
+</script>
+</body>
+</html>

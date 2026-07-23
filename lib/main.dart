@@ -29,14 +29,27 @@ const supabaseAnonKey = 'sb_publishable_H5DIUfH_i4_Mm5VKSoAoNA__tT60BUI';
 /// потрібно, щоб підтвердити додавання в друзі за диплінком.
 final scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
 
-/// Особистий код друга з диплінку (io.supabase.nepogano://join/<code>), що
-/// чекає на автора, поки той не залогіниться (диплінк може прийти ще до
-/// входу в застосунок).
+/// Особистий код друга з диплінку, що чекає на автора, поки той не
+/// залогіниться (диплінк може прийти ще до входу в застосунок). Приймає два
+/// формати: кастомна схема io.supabase.nepogano://join/<code> (працює завжди,
+/// але месенджери рідко роблять її клікабельною) і справжній
+/// https://nepogano.app/join/<code> (клікабельний скрізь, відкриває
+/// застосунок напряму через Android App Links після верифікації домену).
 final ValueNotifier<String?> pendingJoinCode = ValueNotifier<String?>(null);
 
 void _handleJoinLink(Uri? uri) {
-  if (uri == null || uri.host != 'join' || uri.pathSegments.isEmpty) return;
-  pendingJoinCode.value = uri.pathSegments.first;
+  if (uri == null) return;
+
+  String? code;
+  if (uri.host == 'join' && uri.pathSegments.isNotEmpty) {
+    code = uri.pathSegments.first;
+  } else if (uri.host == 'nepogano.app' &&
+      uri.pathSegments.length >= 2 &&
+      uri.pathSegments.first == 'join') {
+    code = uri.pathSegments[1];
+  }
+
+  if (code != null) pendingJoinCode.value = code;
 }
 
 Future<void> main() async {
