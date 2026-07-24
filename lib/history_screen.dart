@@ -206,11 +206,17 @@ class _HistoryScreenState extends State<HistoryScreen> {
                     tooltip: l10n.back,
                   ),
                   const SizedBox(width: 4),
-                  Text(
-                    widget.subjectName == null
-                        ? l10n.history
-                        : '${l10n.history} — ${widget.subjectName}',
-                    style: appSerif(fontSize: 22, fontWeight: FontWeight.w500),
+                  Expanded(
+                    child: Text(
+                      widget.subjectName == null
+                          ? l10n.history
+                          : '${l10n.history} — ${widget.subjectName}',
+                      overflow: TextOverflow.ellipsis,
+                      style: appSerif(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -538,7 +544,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                         entry.note!,
                         style: const TextStyle(
                           fontSize: 13,
-                          color: AppColors.inkMuted,
+                          color: AppColors.ink,
                         ),
                       ),
                     ],

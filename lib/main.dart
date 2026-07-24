@@ -1234,9 +1234,12 @@ class _CheckInScreenState extends State<CheckInScreen> {
               const SizedBox(height: 10),
               Text(
                 _noteController.text.trim(),
+                // Це власний текст юзера, не метадані (як-от "Оновлено N
+                // разів" нижче) — має виділятись, а не зливатись з
+                // приглушеними підписами навколо.
                 style: const TextStyle(
                   fontSize: 14,
-                  color: AppColors.inkMuted,
+                  color: AppColors.ink,
                   height: 1.4,
                 ),
               ),

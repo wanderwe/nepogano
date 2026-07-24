@@ -437,9 +437,9 @@ class _DayCard extends StatelessWidget {
                   const SizedBox(height: 12),
                   Text(
                     entry.note!,
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontSize: 15,
-                      color: Colors.grey.shade300,
+                      color: AppColors.ink,
                       height: 1.4,
                     ),
                   ),

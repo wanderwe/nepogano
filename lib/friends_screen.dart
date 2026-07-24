@@ -1413,9 +1413,15 @@ class _PersonDetailScreenState extends State<PersonDetailScreen> {
                     tooltip: l10n.back,
                   ),
                   const SizedBox(width: 4),
-                  Text(
-                    displayName,
-                    style: appSerif(fontSize: 22, fontWeight: FontWeight.w500),
+                  Expanded(
+                    child: Text(
+                      displayName,
+                      overflow: TextOverflow.ellipsis,
+                      style: appSerif(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -1504,7 +1510,7 @@ class _PersonDetailScreenState extends State<PersonDetailScreen> {
                 entry.note!,
                 style: const TextStyle(
                   fontSize: 13,
-                  color: AppColors.inkMuted,
+                  color: AppColors.ink,
                   height: 1.4,
                 ),
               ),
