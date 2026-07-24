@@ -248,6 +248,12 @@ class AppLocalizationsUk extends AppLocalizations {
   String get friends => 'Друзі';
 
   @override
+  String get profile => 'Профіль';
+
+  @override
+  String get myFriendCode => 'Мій код';
+
+  @override
   String get addFriend => 'Додати друга';
 
   @override
@@ -424,6 +430,12 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get couldNotRemoveSubject => 'Не вдалось видалити.';
+
+  @override
+  String get renameDiary => 'Перейменувати';
+
+  @override
+  String get couldNotRenameSubject => 'Не вдалось перейменувати.';
 
   @override
   String get shareWithCircle => 'Поділитись з колом';

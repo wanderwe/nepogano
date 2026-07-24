@@ -213,25 +213,14 @@ class _AuthGateState extends State<AuthGate> {
     // відчуватись як прийняття запиту в друзі, а не виконання коду.
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: AppColors.surfaceRaised,
-        title: Text(
-          requesterName != null
-              ? l10n.friendRequestTitleNamed(requesterName)
-              : l10n.friendRequestTitle,
-        ),
-        actionsAlignment: MainAxisAlignment.center,
-        actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: Text(l10n.no),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: Text(l10n.accept),
-          ),
-        ],
+      builder: (context) => AppDialog(
+        title: requesterName != null
+            ? l10n.friendRequestTitleNamed(requesterName)
+            : l10n.friendRequestTitle,
+        primaryLabel: l10n.accept,
+        onPrimary: () => Navigator.of(context).pop(true),
+        secondaryLabel: l10n.no,
+        onSecondary: () => Navigator.of(context).pop(false),
       ),
     );
     if (confirmed != true || !mounted) return;
@@ -401,33 +390,15 @@ class _SubjectChip extends StatelessWidget {
     this.onLongPress,
   });
 
-  // Кастомний чіп замість Material ChoiceChip — той навіть з showCheckmark:
-  // false іноді все одно резервує місце під анімацію галочки й стискає
-  // однобуквені мітки (напр. "Я"). Тут повний контроль над layout.
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(right: 8),
-      child: GestureDetector(
+      child: AppChip(
+        label: label,
+        selected: selected,
         onTap: onTap,
         onLongPress: onLongPress,
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-          decoration: BoxDecoration(
-            color: selected ? AppColors.surfaceRaised : AppColors.surface,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: selected ? const Color(0xFFE0A458) : Colors.transparent,
-            ),
-          ),
-          child: Text(
-            label,
-            style: TextStyle(
-              fontSize: 13,
-              color: selected ? AppColors.ink : AppColors.inkMuted,
-            ),
-          ),
-        ),
       ),
     );
   }
@@ -565,9 +536,8 @@ class _CheckInScreenState extends State<CheckInScreen> {
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setState) {
-          return AlertDialog(
-            backgroundColor: AppColors.surfaceRaised,
-            title: Text(l10n.newSubject),
+          return AppDialog(
+            title: l10n.newSubject,
             content: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -575,48 +545,41 @@ class _CheckInScreenState extends State<CheckInScreen> {
                 TextField(
                   controller: controller,
                   autofocus: true,
-                  decoration: InputDecoration(hintText: l10n.subjectNameHint),
+                  decoration: appFieldDecoration(l10n.subjectNameHint),
                   onChanged: (_) => setState(() {}),
                 ),
                 const SizedBox(height: 16),
                 Wrap(
                   spacing: 8,
+                  runSpacing: 8,
                   children: [
-                    ChoiceChip(
-                      label: Text(l10n.subjectKindChild),
+                    AppChip(
+                      label: l10n.subjectKindChild,
                       selected: kind == 'child',
-                      onSelected: (_) => setState(() => kind = 'child'),
+                      onTap: () => setState(() => kind = 'child'),
                     ),
-                    ChoiceChip(
-                      label: Text(l10n.subjectKindPet),
+                    AppChip(
+                      label: l10n.subjectKindPet,
                       selected: kind == 'pet',
-                      onSelected: (_) => setState(() => kind = 'pet'),
+                      onTap: () => setState(() => kind = 'pet'),
                     ),
-                    ChoiceChip(
-                      label: Text(l10n.subjectKindOther),
+                    AppChip(
+                      label: l10n.subjectKindOther,
                       selected: kind == 'other',
-                      onSelected: (_) => setState(() => kind = 'other'),
+                      onTap: () => setState(() => kind = 'other'),
                     ),
                   ],
                 ),
               ],
             ),
-            actionsAlignment: MainAxisAlignment.center,
-            actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: Text(l10n.cancel),
-              ),
-              TextButton(
-                onPressed: controller.text.trim().isEmpty
-                    ? null
-                    : () => Navigator.of(
-                        context,
-                      ).pop({'name': controller.text.trim(), 'kind': kind}),
-                child: Text(l10n.create),
-              ),
-            ],
+            primaryLabel: l10n.create,
+            onPrimary: controller.text.trim().isEmpty
+                ? null
+                : () => Navigator.of(
+                    context,
+                  ).pop({'name': controller.text.trim(), 'kind': kind}),
+            secondaryLabel: l10n.cancel,
+            onSecondary: () => Navigator.of(context).pop(),
           );
         },
       ),
@@ -651,25 +614,17 @@ class _CheckInScreenState extends State<CheckInScreen> {
     final l10n = AppLocalizations.of(context);
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: AppColors.surfaceRaised,
-        title: Text(l10n.removeSubjectConfirmTitle(subject.name)),
-        content: Text(l10n.removeSubjectConfirmBody),
-        actionsAlignment: MainAxisAlignment.center,
-        actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: Text(l10n.cancel),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: Text(
-              l10n.delete,
-              style: const TextStyle(color: Colors.redAccent),
-            ),
-          ),
-        ],
+      builder: (context) => AppDialog(
+        title: l10n.removeSubjectConfirmTitle(subject.name),
+        content: Text(
+          l10n.removeSubjectConfirmBody,
+          style: const TextStyle(color: AppColors.inkMuted),
+        ),
+        primaryLabel: l10n.cancel,
+        onPrimary: () => Navigator.of(context).pop(false),
+        secondaryLabel: l10n.delete,
+        secondaryColor: Colors.redAccent,
+        onSecondary: () => Navigator.of(context).pop(true),
       ),
     );
     if (confirmed != true) return;
@@ -701,6 +656,11 @@ class _CheckInScreenState extends State<CheckInScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               _MenuRow(
+                icon: Icons.edit_outlined,
+                label: l10n.renameDiary,
+                onTap: () => Navigator.of(context).pop('rename'),
+              ),
+              _MenuRow(
                 icon: Icons.workspaces_outline,
                 label: l10n.shareWithCircle,
                 onTap: () => Navigator.of(context).pop('share'),
@@ -717,10 +677,55 @@ class _CheckInScreenState extends State<CheckInScreen> {
       ),
     );
 
-    if (choice == 'share') {
+    if (choice == 'rename') {
+      await _renameSubject(subject);
+    } else if (choice == 'share') {
       await _shareSubjectWithFolders(subject);
     } else if (choice == 'delete') {
       await _removeSubject(subject);
+    }
+  }
+
+  Future<void> _renameSubject(Subject subject) async {
+    final l10n = AppLocalizations.of(context);
+    final controller = TextEditingController(text: subject.name);
+    final name = await showDialog<String>(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => AppDialog(
+          title: l10n.renameDiary,
+          content: TextField(
+            controller: controller,
+            autofocus: true,
+            decoration: appFieldDecoration(l10n.subjectNameHint),
+            onChanged: (_) => setState(() {}),
+          ),
+          primaryLabel: l10n.save,
+          onPrimary: controller.text.trim().isEmpty
+              ? null
+              : () => Navigator.of(context).pop(controller.text.trim()),
+          secondaryLabel: l10n.cancel,
+          onSecondary: () => Navigator.of(context).pop(),
+        ),
+      ),
+    );
+
+    if (name == null || name.isEmpty || name == subject.name) return;
+
+    try {
+      await _supabase
+          .from('subjects')
+          .update({'name': name})
+          .eq('id', subject.id);
+      await _loadSubjects();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(AppLocalizations.of(context).couldNotRenameSubject),
+          ),
+        );
+      }
     }
   }
 
@@ -1423,25 +1428,17 @@ class _CheckInScreenState extends State<CheckInScreen> {
     final l10n = AppLocalizations.of(context);
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: AppColors.surfaceRaised,
-        title: Text(l10n.deleteAccountConfirmTitle),
-        content: Text(l10n.deleteAccountConfirmBody),
-        actionsAlignment: MainAxisAlignment.center,
-        actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: Text(l10n.cancel),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: Text(
-              l10n.delete,
-              style: const TextStyle(color: Colors.redAccent),
-            ),
-          ),
-        ],
+      builder: (context) => AppDialog(
+        title: l10n.deleteAccountConfirmTitle,
+        content: Text(
+          l10n.deleteAccountConfirmBody,
+          style: const TextStyle(color: AppColors.inkMuted),
+        ),
+        primaryLabel: l10n.cancel,
+        onPrimary: () => Navigator.of(context).pop(false),
+        secondaryLabel: l10n.delete,
+        secondaryColor: Colors.redAccent,
+        onSecondary: () => Navigator.of(context).pop(true),
       ),
     );
 
@@ -1450,24 +1447,13 @@ class _CheckInScreenState extends State<CheckInScreen> {
 
     final finalConfirmed = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: AppColors.surfaceRaised,
-        title: Text(l10n.deleteAccountFinalConfirmTitle),
-        actionsAlignment: MainAxisAlignment.center,
-        actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: Text(l10n.no),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: Text(
-              l10n.yesDelete,
-              style: const TextStyle(color: Colors.redAccent),
-            ),
-          ),
-        ],
+      builder: (context) => AppDialog(
+        title: l10n.deleteAccountFinalConfirmTitle,
+        primaryLabel: l10n.no,
+        onPrimary: () => Navigator.of(context).pop(false),
+        secondaryLabel: l10n.yesDelete,
+        secondaryColor: Colors.redAccent,
+        onSecondary: () => Navigator.of(context).pop(true),
       ),
     );
 

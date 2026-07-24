@@ -542,6 +542,18 @@ abstract class AppLocalizations {
   /// **'Друзі'**
   String get friends;
 
+  /// No description provided for @profile.
+  ///
+  /// In uk, this message translates to:
+  /// **'Профіль'**
+  String get profile;
+
+  /// No description provided for @myFriendCode.
+  ///
+  /// In uk, this message translates to:
+  /// **'Мій код'**
+  String get myFriendCode;
+
   /// No description provided for @addFriend.
   ///
   /// In uk, this message translates to:
@@ -871,6 +883,18 @@ abstract class AppLocalizations {
   /// In uk, this message translates to:
   /// **'Не вдалось видалити.'**
   String get couldNotRemoveSubject;
+
+  /// No description provided for @renameDiary.
+  ///
+  /// In uk, this message translates to:
+  /// **'Перейменувати'**
+  String get renameDiary;
+
+  /// No description provided for @couldNotRenameSubject.
+  ///
+  /// In uk, this message translates to:
+  /// **'Не вдалось перейменувати.'**
+  String get couldNotRenameSubject;
 
   /// No description provided for @shareWithCircle.
   ///

@@ -9,6 +9,7 @@ import 'history_screen.dart';
 import 'l10n/app_localizations.dart';
 import 'main.dart';
 import 'photo_storage.dart';
+import 'profile_screen.dart';
 import 'style.dart';
 
 /// Скільки днів назад можна побачити й здогадати чек-іни друга.
@@ -526,25 +527,17 @@ class _FriendsScreenState extends State<FriendsScreen> {
     final l10n = AppLocalizations.of(context);
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: AppColors.surfaceRaised,
-        title: Text(l10n.removeFriendConfirmTitle),
-        content: Text(l10n.removeFriendConfirmBody),
-        actionsAlignment: MainAxisAlignment.center,
-        actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: Text(l10n.cancel),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: Text(
-              l10n.delete,
-              style: const TextStyle(color: Colors.redAccent),
-            ),
-          ),
-        ],
+      builder: (context) => AppDialog(
+        title: l10n.removeFriendConfirmTitle,
+        content: Text(
+          l10n.removeFriendConfirmBody,
+          style: const TextStyle(color: AppColors.inkMuted),
+        ),
+        primaryLabel: l10n.cancel,
+        onPrimary: () => Navigator.of(context).pop(false),
+        secondaryLabel: l10n.delete,
+        secondaryColor: Colors.redAccent,
+        onSecondary: () => Navigator.of(context).pop(true),
       ),
     );
     if (confirmed != true) return;
@@ -618,55 +611,17 @@ class _FriendsScreenState extends State<FriendsScreen> {
     await SharePlus.instance.share(ShareParams(text: text));
   }
 
-  Future<void> _editDisplayName() async {
-    final l10n = AppLocalizations.of(context);
-    final controller = TextEditingController(text: _myDisplayName ?? '');
-    final name = await showDialog<String>(
-      context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setState) => AlertDialog(
-          backgroundColor: AppColors.surfaceRaised,
-          title: Text(l10n.editDisplayName),
-          content: TextField(
-            controller: controller,
-            autofocus: true,
-            decoration: InputDecoration(hintText: l10n.displayNameHint),
-            onChanged: (_) => setState(() {}),
-          ),
-          actionsAlignment: MainAxisAlignment.center,
-          actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text(l10n.cancel),
-            ),
-            TextButton(
-              onPressed: controller.text.trim().isEmpty
-                  ? null
-                  : () => Navigator.of(context).pop(controller.text.trim()),
-              child: Text(l10n.save),
-            ),
-          ],
+  Future<void> _openProfile() async {
+    final updated = await Navigator.of(context).push<String>(
+      MaterialPageRoute(
+        builder: (_) => ProfileScreen(
+          displayName: _myDisplayName,
+          friendCode: _myFriendCode,
         ),
       ),
     );
-
-    if (name == null || name.isEmpty) return;
-
-    try {
-      await _supabase
-          .from('profiles')
-          .update({'display_name': name})
-          .eq('user_id', _supabase.auth.currentUser!.id);
-      if (mounted) setState(() => _myDisplayName = name);
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(AppLocalizations.of(context).couldNotSaveDisplayName),
-          ),
-        );
-      }
+    if (updated != null && mounted) {
+      setState(() => _myDisplayName = updated);
     }
   }
 
@@ -676,30 +631,21 @@ class _FriendsScreenState extends State<FriendsScreen> {
     final code = await showDialog<String>(
       context: context,
       builder: (context) => StatefulBuilder(
-        builder: (context, setState) => AlertDialog(
-          backgroundColor: AppColors.surfaceRaised,
-          title: Text(l10n.enterFriendCode),
+        builder: (context, setState) => AppDialog(
+          title: l10n.enterFriendCode,
           content: TextField(
             controller: controller,
             autofocus: true,
             textCapitalization: TextCapitalization.none,
-            decoration: InputDecoration(hintText: l10n.friendCodeHint),
+            decoration: appFieldDecoration(l10n.friendCodeHint),
             onChanged: (_) => setState(() {}),
           ),
-          actionsAlignment: MainAxisAlignment.center,
-          actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text(l10n.cancel),
-            ),
-            TextButton(
-              onPressed: controller.text.trim().isEmpty
-                  ? null
-                  : () => Navigator.of(context).pop(controller.text.trim()),
-              child: Text(l10n.join),
-            ),
-          ],
+          primaryLabel: l10n.join,
+          onPrimary: controller.text.trim().isEmpty
+              ? null
+              : () => Navigator.of(context).pop(controller.text.trim()),
+          secondaryLabel: l10n.cancel,
+          onSecondary: () => Navigator.of(context).pop(),
         ),
       ),
     );
@@ -729,30 +675,21 @@ class _FriendsScreenState extends State<FriendsScreen> {
     final email = await showDialog<String>(
       context: context,
       builder: (context) => StatefulBuilder(
-        builder: (context, setState) => AlertDialog(
-          backgroundColor: AppColors.surfaceRaised,
-          title: Text(l10n.inviteFriendByEmail),
+        builder: (context, setState) => AppDialog(
+          title: l10n.inviteFriendByEmail,
           content: TextField(
             controller: controller,
             autofocus: true,
             keyboardType: TextInputType.emailAddress,
-            decoration: InputDecoration(hintText: l10n.personEmailHint),
+            decoration: appFieldDecoration(l10n.personEmailHint),
             onChanged: (_) => setState(() {}),
           ),
-          actionsAlignment: MainAxisAlignment.center,
-          actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text(l10n.cancel),
-            ),
-            TextButton(
-              onPressed: controller.text.trim().isEmpty
-                  ? null
-                  : () => Navigator.of(context).pop(controller.text.trim()),
-              child: Text(l10n.invite),
-            ),
-          ],
+          primaryLabel: l10n.invite,
+          onPrimary: controller.text.trim().isEmpty
+              ? null
+              : () => Navigator.of(context).pop(controller.text.trim()),
+          secondaryLabel: l10n.cancel,
+          onSecondary: () => Navigator.of(context).pop(),
         ),
       ),
     );
@@ -789,29 +726,20 @@ class _FriendsScreenState extends State<FriendsScreen> {
     final name = await showDialog<String>(
       context: context,
       builder: (context) => StatefulBuilder(
-        builder: (context, setState) => AlertDialog(
-          backgroundColor: AppColors.surfaceRaised,
-          title: Text(l10n.newFolder),
+        builder: (context, setState) => AppDialog(
+          title: l10n.newFolder,
           content: TextField(
             controller: controller,
             autofocus: true,
-            decoration: InputDecoration(hintText: l10n.folderNameHint),
+            decoration: appFieldDecoration(l10n.folderNameHint),
             onChanged: (_) => setState(() {}),
           ),
-          actionsAlignment: MainAxisAlignment.center,
-          actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text(l10n.cancel),
-            ),
-            TextButton(
-              onPressed: controller.text.trim().isEmpty
-                  ? null
-                  : () => Navigator.of(context).pop(controller.text.trim()),
-              child: Text(l10n.create),
-            ),
-          ],
+          primaryLabel: l10n.create,
+          onPrimary: controller.text.trim().isEmpty
+              ? null
+              : () => Navigator.of(context).pop(controller.text.trim()),
+          secondaryLabel: l10n.cancel,
+          onSecondary: () => Navigator.of(context).pop(),
         ),
       ),
     );
@@ -839,24 +767,13 @@ class _FriendsScreenState extends State<FriendsScreen> {
     final l10n = AppLocalizations.of(context);
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: AppColors.surfaceRaised,
-        title: Text(l10n.removeFolderConfirmTitle(folder.name)),
-        actionsAlignment: MainAxisAlignment.center,
-        actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: Text(l10n.cancel),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: Text(
-              l10n.delete,
-              style: const TextStyle(color: Colors.redAccent),
-            ),
-          ),
-        ],
+      builder: (context) => AppDialog(
+        title: l10n.removeFolderConfirmTitle(folder.name),
+        primaryLabel: l10n.cancel,
+        onPrimary: () => Navigator.of(context).pop(false),
+        secondaryLabel: l10n.delete,
+        secondaryColor: Colors.redAccent,
+        onSecondary: () => Navigator.of(context).pop(true),
       ),
     );
     if (confirmed != true) return;
@@ -1024,6 +941,11 @@ class _FriendsScreenState extends State<FriendsScreen> {
                     child: Text(l10n.friends, style: appSerif(fontSize: 22)),
                   ),
                   IconButton(
+                    onPressed: _openProfile,
+                    icon: const Icon(Icons.account_circle_outlined, size: 20),
+                    tooltip: l10n.profile,
+                  ),
+                  IconButton(
                     onPressed: _openAddFriendSheet,
                     icon: const Icon(Icons.person_add_alt, size: 20),
                     tooltip: l10n.addFriend,
@@ -1048,38 +970,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
                 Expanded(
                   child: ListView(
                     children: [
-                      InkWell(
-                        borderRadius: BorderRadius.circular(12),
-                        onTap: _editDisplayName,
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 8),
-                          child: Row(
-                            children: [
-                              Icon(
-                                Icons.badge_outlined,
-                                size: 16,
-                                color: AppColors.inkMuted,
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                _myDisplayName ?? l10n.setDisplayName,
-                                style: const TextStyle(
-                                  fontSize: 13,
-                                  color: AppColors.inkMuted,
-                                ),
-                              ),
-                              const SizedBox(width: 6),
-                              const Icon(
-                                Icons.edit,
-                                size: 14,
-                                color: AppColors.inkMuted,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
                       if ((_guessesTotal ?? 0) > 0) ...[
-                        const SizedBox(height: 4),
                         Text(
                           l10n.guessStats(
                             _guessesCorrect!,
@@ -1354,33 +1245,15 @@ class _FolderChip extends StatelessWidget {
     this.onLongPress,
   });
 
-  // Кастомний чіп замість Material ChoiceChip — той навіть з showCheckmark:
-  // false іноді все одно резервує місце під анімацію галочки й стискає
-  // короткі мітки (напр. "Усі"). Тут повний контроль над layout.
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(right: 8),
-      child: GestureDetector(
+      child: AppChip(
+        label: label,
+        selected: selected,
         onTap: onTap,
         onLongPress: onLongPress,
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-          decoration: BoxDecoration(
-            color: selected ? AppColors.surfaceRaised : AppColors.surface,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: selected ? const Color(0xFFE0A458) : Colors.transparent,
-            ),
-          ),
-          child: Text(
-            label,
-            style: TextStyle(
-              fontSize: 13,
-              color: selected ? AppColors.ink : AppColors.inkMuted,
-            ),
-          ),
-        ),
       ),
     );
   }

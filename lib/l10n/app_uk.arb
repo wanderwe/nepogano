@@ -92,6 +92,8 @@
   "myDayInNepogano": "Мій день з Nepogano",
 
   "friends": "Друзі",
+  "profile": "Профіль",
+  "myFriendCode": "Мій код",
   "addFriend": "Додати друга",
   "couldNotLoadFriends": "Не вдалось завантажити друзів.",
   "couldNotAcceptInvite": "Не вдалось прийняти запрошення.",
@@ -177,6 +179,8 @@
   },
   "removeSubjectConfirmBody": "Усі записи буде видалено назавжди.",
   "couldNotRemoveSubject": "Не вдалось видалити.",
+  "renameDiary": "Перейменувати",
+  "couldNotRenameSubject": "Не вдалось перейменувати.",
   "shareWithCircle": "Поділитись з колом",
   "deleteDiary": "Видалити щоденник",
   "noFoldersYetForSharing": "Спершу створи коло на екрані \"Друзі\".",

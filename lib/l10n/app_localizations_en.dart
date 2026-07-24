@@ -247,6 +247,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get friends => 'Friends';
 
   @override
+  String get profile => 'Profile';
+
+  @override
+  String get myFriendCode => 'My code';
+
+  @override
   String get addFriend => 'Add friend';
 
   @override
@@ -425,6 +431,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get couldNotRemoveSubject => 'Couldn\'t delete it.';
+
+  @override
+  String get renameDiary => 'Rename';
+
+  @override
+  String get couldNotRenameSubject => 'Couldn\'t rename it.';
 
   @override
   String get shareWithCircle => 'Share with circle';
