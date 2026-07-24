@@ -21,6 +21,9 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
+        // flutter_local_notifications вимагає ввімкненого core library
+        // desugaring (використовує java.time-подібні API під капотом).
+        isCoreLibraryDesugaringEnabled = true
     }
 
     defaultConfig {
@@ -64,6 +67,8 @@ dependencies {
     // направили в Play Маркет (join_code=...), одразу після встановлення —
     // це і є механізм deferred deep linking для "додати друга" без застосунку.
     implementation("com.android.installreferrer:installreferrer:2.2")
+    // Потрібно для isCoreLibraryDesugaringEnabled вище.
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")
 }
 
 flutter {
