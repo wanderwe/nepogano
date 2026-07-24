@@ -110,6 +110,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get history => 'History';
 
   @override
+  String get scrollToTop => 'Scroll to top';
+
+  @override
   String get moreTooltip => 'More';
 
   @override

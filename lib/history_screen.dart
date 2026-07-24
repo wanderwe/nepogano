@@ -54,12 +54,39 @@ class _HistoryScreenState extends State<HistoryScreen> {
   /// проскролити до потрібного запису кліком по дню в календарі.
   final Map<int, GlobalKey> _entryKeys = {};
 
+  final _scrollController = ScrollController();
+  // Клік по дню в календарі скролить вниз до запису — якщо він далеко,
+  // повертатись нагору гортанням незручно, тож показуємо кнопку швидкого
+  // повернення, як тільки прокрутка відходить від самого верху.
+  bool _showScrollTop = false;
+
   @override
   void initState() {
     super.initState();
     final now = DateTime.now();
     _visibleMonth = DateTime(now.year, now.month);
+    _scrollController.addListener(_handleScroll);
     _load();
+  }
+
+  @override
+  void dispose() {
+    _scrollController.removeListener(_handleScroll);
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _handleScroll() {
+    final show = _scrollController.offset > 300;
+    if (show != _showScrollTop) setState(() => _showScrollTop = show);
+  }
+
+  void _scrollToTop() {
+    _scrollController.animateTo(
+      0,
+      duration: const Duration(milliseconds: 400),
+      curve: Curves.easeInOut,
+    );
   }
 
   Future<void> _load() async {
@@ -208,7 +235,38 @@ class _HistoryScreenState extends State<HistoryScreen> {
                   ),
                 )
               else
-                Expanded(child: _buildContent()),
+                Expanded(
+                  child: Stack(
+                    children: [
+                      _buildContent(),
+                      Positioned(
+                        right: 0,
+                        bottom: 12,
+                        child: AnimatedSlide(
+                          duration: const Duration(milliseconds: 200),
+                          offset: _showScrollTop
+                              ? Offset.zero
+                              : const Offset(0, 2),
+                          child: AnimatedOpacity(
+                            duration: const Duration(milliseconds: 200),
+                            opacity: _showScrollTop ? 1 : 0,
+                            child: IgnorePointer(
+                              ignoring: !_showScrollTop,
+                              child: FloatingActionButton.small(
+                                heroTag: 'scrollTop',
+                                onPressed: _scrollToTop,
+                                backgroundColor: AppColors.surfaceRaised,
+                                foregroundColor: AppColors.ink,
+                                tooltip: l10n.scrollToTop,
+                                child: const Icon(Icons.arrow_upward),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
             ],
           ),
         ),
@@ -229,6 +287,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
     final today = DateTime.now();
 
     return ListView(
+      controller: _scrollController,
       children: [
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,

@@ -110,6 +110,9 @@ class AppLocalizationsUk extends AppLocalizations {
   String get history => 'Історія';
 
   @override
+  String get scrollToTop => 'Прогорнути нагору';
+
+  @override
   String get moreTooltip => 'Ще';
 
   @override

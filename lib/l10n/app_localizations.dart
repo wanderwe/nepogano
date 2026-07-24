@@ -290,6 +290,12 @@ abstract class AppLocalizations {
   /// **'Історія'**
   String get history;
 
+  /// No description provided for @scrollToTop.
+  ///
+  /// In uk, this message translates to:
+  /// **'Прогорнути нагору'**
+  String get scrollToTop;
+
   /// No description provided for @moreTooltip.
   ///
   /// In uk, this message translates to:
