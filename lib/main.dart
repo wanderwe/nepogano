@@ -12,6 +12,7 @@ import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'auth_screen.dart';
+import 'date_labels.dart';
 import 'day_card_screen.dart';
 import 'friends_screen.dart';
 import 'history_screen.dart';
@@ -1479,8 +1480,12 @@ class _CheckInScreenState extends State<CheckInScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final locale = Localizations.localeOf(context);
     final today = DateTime.now();
-    final dateLabel = '${today.day}.${today.month}.${today.year}';
+    final weekday = weekdayNameFull(today.weekday, locale);
+    final dateLabel =
+        '${weekday[0].toUpperCase()}${weekday.substring(1)}, '
+        '${today.day} ${monthNameGenitive(today.month, locale)}';
 
     return Scaffold(
       body: SafeArea(
