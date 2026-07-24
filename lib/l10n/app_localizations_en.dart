@@ -271,7 +271,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get invitations => 'Invitations';
 
   @override
-  String get sharedDiaries => 'Shared diaries';
+  String get sharedDiaries => 'Open for viewing';
 
   @override
   String get accept => 'Accept';
@@ -377,6 +377,11 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String friendGuessStats(int correct, int total, int percent) {
+    return 'Guesses you: $correct out of $total ($percent%)';
+  }
+
+  @override
   String get allFriends => 'All';
 
   @override
@@ -419,6 +424,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get subjectKindPet => 'Pet';
+
+  @override
+  String get subjectKindPartner => 'Partner';
 
   @override
   String get subjectKindOther => 'Other';

@@ -626,6 +626,11 @@ class _CheckInScreenState extends State<CheckInScreen> {
                       onTap: () => setState(() => kind = 'pet'),
                     ),
                     AppChip(
+                      label: l10n.subjectKindPartner,
+                      selected: kind == 'partner',
+                      onTap: () => setState(() => kind = 'partner'),
+                    ),
+                    AppChip(
                       label: l10n.subjectKindOther,
                       selected: kind == 'other',
                       onTap: () => setState(() => kind = 'other'),

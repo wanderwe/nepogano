@@ -272,7 +272,7 @@ class AppLocalizationsUk extends AppLocalizations {
   String get invitations => 'Запрошення';
 
   @override
-  String get sharedDiaries => 'Спільні щоденники';
+  String get sharedDiaries => 'Відкрито для перегляду';
 
   @override
   String get accept => 'Прийняти';
@@ -377,6 +377,11 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
+  String friendGuessStats(int correct, int total, int percent) {
+    return 'Вгадує тебе: $correct із $total ($percent%)';
+  }
+
+  @override
   String get allFriends => 'Усі';
 
   @override
@@ -419,6 +424,9 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get subjectKindPet => 'Улюбленець';
+
+  @override
+  String get subjectKindPartner => 'Партнер';
 
   @override
   String get subjectKindOther => 'Інше';

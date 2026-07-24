@@ -100,7 +100,7 @@
   "couldNotLoadFriends": "Не вдалось завантажити друзів.",
   "couldNotAcceptInvite": "Не вдалось прийняти запрошення.",
   "invitations": "Запрошення",
-  "sharedDiaries": "Спільні щоденники",
+  "sharedDiaries": "Відкрито для перегляду",
   "accept": "Прийняти",
   "noFriendsYet": "Ще немає друзів. Додай когось кнопкою вгорі.",
   "removeFriend": "Видалити з друзів",
@@ -150,6 +150,14 @@
       "percent": { "type": "int" }
     }
   },
+  "friendGuessStats": "Вгадує тебе: {correct} із {total} ({percent}%)",
+  "@friendGuessStats": {
+    "placeholders": {
+      "correct": { "type": "int" },
+      "total": { "type": "int" },
+      "percent": { "type": "int" }
+    }
+  },
 
   "allFriends": "Усі",
   "newFolder": "Нове коло",
@@ -171,6 +179,7 @@
   "subjectNameHint": "Ім'я (наприклад, Тьома)",
   "subjectKindChild": "Дитина",
   "subjectKindPet": "Улюбленець",
+  "subjectKindPartner": "Партнер",
   "subjectKindOther": "Інше",
   "couldNotCreateSubject": "Не вдалось створити.",
   "removeSubjectConfirmTitle": "Видалити щоденник {name}?",

@@ -593,7 +593,7 @@ abstract class AppLocalizations {
   /// No description provided for @sharedDiaries.
   ///
   /// In uk, this message translates to:
-  /// **'Спільні щоденники'**
+  /// **'Відкрито для перегляду'**
   String get sharedDiaries;
 
   /// No description provided for @accept.
@@ -782,6 +782,12 @@ abstract class AppLocalizations {
   /// **'Друзі вгадали твій настрій {correct} із {total} ({percent}%)'**
   String guessStats(int correct, int total, int percent);
 
+  /// No description provided for @friendGuessStats.
+  ///
+  /// In uk, this message translates to:
+  /// **'Вгадує тебе: {correct} із {total} ({percent}%)'**
+  String friendGuessStats(int correct, int total, int percent);
+
   /// No description provided for @allFriends.
   ///
   /// In uk, this message translates to:
@@ -865,6 +871,12 @@ abstract class AppLocalizations {
   /// In uk, this message translates to:
   /// **'Улюбленець'**
   String get subjectKindPet;
+
+  /// No description provided for @subjectKindPartner.
+  ///
+  /// In uk, this message translates to:
+  /// **'Партнер'**
+  String get subjectKindPartner;
 
   /// No description provided for @subjectKindOther.
   ///

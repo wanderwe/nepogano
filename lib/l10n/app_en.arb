@@ -91,7 +91,7 @@
   "couldNotLoadFriends": "Couldn't load friends.",
   "couldNotAcceptInvite": "Couldn't accept the invite.",
   "invitations": "Invitations",
-  "sharedDiaries": "Shared diaries",
+  "sharedDiaries": "Open for viewing",
   "accept": "Accept",
   "noFriendsYet": "No friends yet. Add someone with the button above.",
   "removeFriend": "Remove friend",
@@ -141,6 +141,14 @@
       "percent": { "type": "int" }
     }
   },
+  "friendGuessStats": "Guesses you: {correct} out of {total} ({percent}%)",
+  "@friendGuessStats": {
+    "placeholders": {
+      "correct": { "type": "int" },
+      "total": { "type": "int" },
+      "percent": { "type": "int" }
+    }
+  },
 
   "allFriends": "All",
   "newFolder": "New circle",
@@ -162,6 +170,7 @@
   "subjectNameHint": "Name (e.g. Emma)",
   "subjectKindChild": "Child",
   "subjectKindPet": "Pet",
+  "subjectKindPartner": "Partner",
   "subjectKindOther": "Other",
   "couldNotCreateSubject": "Couldn't create it.",
   "removeSubjectConfirmTitle": "Delete {name}'s diary?",

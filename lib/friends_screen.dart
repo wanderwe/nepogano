@@ -55,6 +55,11 @@ class Friend {
   final MoodLevel? latestMood;
   final DateTime? latestDate;
   final bool hasUnguessed;
+  // Скільки разів саме цей друг намагався вгадати мій настрій і скільки з
+  // цих спроб — вірно (на відміну від _guessesTotal/_guessesCorrect на рівні
+  // екрану, які сумують усіх друзів разом). null, якщо ще жодної спроби.
+  final int? guessesTotal;
+  final int? guessesCorrect;
 
   Friend({
     required this.friendshipId,
@@ -64,6 +69,8 @@ class Friend {
     required this.latestMood,
     required this.latestDate,
     required this.hasUnguessed,
+    this.guessesTotal,
+    this.guessesCorrect,
   });
 
   String get name => displayName ?? displayEmail.split('@').first;
@@ -82,11 +89,13 @@ class SharedSubject {
   final String subjectId;
   final String subjectName;
   final String? ownerName;
+  final String ownerId;
 
   SharedSubject({
     required this.subjectId,
     required this.subjectName,
     required this.ownerName,
+    required this.ownerId,
   });
 }
 
@@ -261,12 +270,26 @@ class _FriendsScreenState extends State<FriendsScreen> {
       // не ті, що про мене (guess-stats-migration.sql).
       final myGuessRows = await _supabase
           .from('circle_guesses')
-          .select('correct')
+          .select('correct, guesser_id')
           .eq('target_user_id', myId);
       final guessesTotal = (myGuessRows as List).length;
       final guessesCorrect = myGuessRows
           .where((r) => r['correct'] == true)
           .length;
+
+      // Той самий підрахунок, але окремо на кожного друга — щоб порівняти,
+      // хто вгадує краще (не тільки загальну суму).
+      final guessesTotalByFriend = <String, int>{};
+      final guessesCorrectByFriend = <String, int>{};
+      for (final row in myGuessRows) {
+        final guesserId = row['guesser_id'] as String;
+        guessesTotalByFriend[guesserId] =
+            (guessesTotalByFriend[guesserId] ?? 0) + 1;
+        if (row['correct'] == true) {
+          guessesCorrectByFriend[guesserId] =
+              (guessesCorrectByFriend[guesserId] ?? 0) + 1;
+        }
+      }
 
       // Щоденники сутностей, які чиїсь власники відкрили колам, де я є
       // учасником — суто перегляд, без вгадування.
@@ -313,6 +336,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
                 subjectId: subjectRow['id'] as String,
                 subjectName: subjectRow['name'] as String,
                 ownerName: ownerNameById[ownerId],
+                ownerId: ownerId,
               ),
             );
           }
@@ -455,6 +479,8 @@ class _FriendsScreenState extends State<FriendsScreen> {
               latestMood: latestMoodByUser[friendUserId],
               latestDate: latestDateByUser[friendUserId],
               hasUnguessed: hasUnguessed,
+              guessesTotal: guessesTotalByFriend[friendUserId],
+              guessesCorrect: guessesCorrectByFriend[friendUserId],
             ),
           );
         }
@@ -1030,65 +1056,6 @@ class _FriendsScreenState extends State<FriendsScreen> {
                         ],
                       ),
                       const SizedBox(height: 16),
-                      if (_sharedSubjects.isNotEmpty) ...[
-                        Text(
-                          l10n.sharedDiaries,
-                          style: const TextStyle(
-                            fontSize: 13,
-                            color: AppColors.inkMuted,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        ..._sharedSubjects.map((shared) {
-                          final title = shared.ownerName == null
-                              ? shared.subjectName
-                              : '${shared.subjectName} · ${shared.ownerName}';
-                          return InkWell(
-                            borderRadius: BorderRadius.circular(16),
-                            onTap: () => Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (_) => HistoryScreen(
-                                  subjectId: shared.subjectId,
-                                  subjectName: title,
-                                ),
-                              ),
-                            ),
-                            child: Container(
-                              margin: const EdgeInsets.only(bottom: 10),
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 12,
-                              ),
-                              decoration: BoxDecoration(
-                                color: AppColors.surface,
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                              child: Row(
-                                children: [
-                                  const Icon(
-                                    PhosphorIconsLight.bookOpen,
-                                    size: 18,
-                                    color: AppColors.inkMuted,
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Expanded(
-                                    child: Text(
-                                      title,
-                                      style: const TextStyle(fontSize: 14),
-                                    ),
-                                  ),
-                                  const Icon(
-                                    PhosphorIconsLight.caretRight,
-                                    size: 18,
-                                    color: AppColors.inkMuted,
-                                  ),
-                                ],
-                              ),
-                            ),
-                          );
-                        }),
-                        const SizedBox(height: 20),
-                      ],
                       if (_pendingInvites.isNotEmpty) ...[
                         Text(
                           l10n.invitations,
@@ -1161,6 +1128,9 @@ class _FriendsScreenState extends State<FriendsScreen> {
             userId: friend.userId,
             displayEmail: friend.displayEmail,
             displayName: friend.displayName,
+            sharedSubjects: _sharedSubjects
+                .where((s) => s.ownerId == friend.userId)
+                .toList(),
           ),
         ),
       ),
@@ -1220,6 +1190,21 @@ class _FriendsScreenState extends State<FriendsScreen> {
                       color: AppColors.inkMuted,
                     ),
                   ),
+                  if ((friend.guessesTotal ?? 0) > 0) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      l10n.friendGuessStats(
+                        friend.guessesCorrect!,
+                        friend.guessesTotal!,
+                        ((friend.guessesCorrect! / friend.guessesTotal!) * 100)
+                            .round(),
+                      ),
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: AppColors.accent,
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -1272,12 +1257,14 @@ class PersonDetailScreen extends StatefulWidget {
   final String userId;
   final String displayEmail;
   final String? displayName;
+  final List<SharedSubject> sharedSubjects;
 
   const PersonDetailScreen({
     super.key,
     required this.userId,
     required this.displayEmail,
     this.displayName,
+    this.sharedSubjects = const [],
   });
 
   @override
@@ -1425,6 +1412,62 @@ class _PersonDetailScreenState extends State<PersonDetailScreen> {
                   ),
                 ],
               ),
+              if (widget.sharedSubjects.isNotEmpty) ...[
+                const SizedBox(height: 16),
+                Text(
+                  l10n.sharedDiaries,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    color: AppColors.inkMuted,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                ...widget.sharedSubjects.map(
+                  (shared) => InkWell(
+                    borderRadius: BorderRadius.circular(16),
+                    onTap: () => Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => HistoryScreen(
+                          subjectId: shared.subjectId,
+                          subjectName: shared.subjectName,
+                        ),
+                      ),
+                    ),
+                    child: Container(
+                      margin: const EdgeInsets.only(bottom: 10),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.surface,
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(
+                            PhosphorIconsLight.bookOpen,
+                            size: 18,
+                            color: AppColors.inkMuted,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              shared.subjectName,
+                              style: const TextStyle(fontSize: 14),
+                            ),
+                          ),
+                          const Icon(
+                            PhosphorIconsLight.caretRight,
+                            size: 18,
+                            color: AppColors.inkMuted,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
               const SizedBox(height: 16),
               if (_loading)
                 const Expanded(
