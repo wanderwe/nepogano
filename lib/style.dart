@@ -201,6 +201,7 @@ class AppDialog extends StatelessWidget {
                 ),
               ),
             ),
+            const SizedBox(height: 8),
             SizedBox(
               width: double.infinity,
               height: 44,
