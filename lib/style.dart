@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:phosphor_flutter/phosphor_flutter.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 
 /// Спільна дизайн-система застосунку: темна тема (у стилі картки дня),
 /// два шрифти (serif для "голосу" бренду, sans для функціонального UI).
