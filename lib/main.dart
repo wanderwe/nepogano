@@ -401,25 +401,31 @@ class _SubjectChip extends StatelessWidget {
     this.onLongPress,
   });
 
+  // Кастомний чіп замість Material ChoiceChip — той навіть з showCheckmark:
+  // false іноді все одно резервує місце під анімацію галочки й стискає
+  // однобуквені мітки (напр. "Я"). Тут повний контроль над layout.
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(right: 8),
       child: GestureDetector(
+        onTap: onTap,
         onLongPress: onLongPress,
-        child: ChoiceChip(
-          label: Text(label),
-          selected: selected,
-          showCheckmark: false,
-          onSelected: (_) => onTap(),
-          backgroundColor: AppColors.surface,
-          selectedColor: AppColors.surfaceRaised,
-          side: BorderSide(
-            color: selected ? const Color(0xFFE0A458) : Colors.transparent,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          decoration: BoxDecoration(
+            color: selected ? AppColors.surfaceRaised : AppColors.surface,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: selected ? const Color(0xFFE0A458) : Colors.transparent,
+            ),
           ),
-          labelStyle: TextStyle(
-            fontSize: 13,
-            color: selected ? AppColors.ink : AppColors.inkMuted,
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 13,
+              color: selected ? AppColors.ink : AppColors.inkMuted,
+            ),
           ),
         ),
       ),

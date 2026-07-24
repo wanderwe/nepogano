@@ -13,30 +13,71 @@ create table if not exists public.subject_folder_shares (
 
 alter table public.subject_folder_shares enable row level security;
 
+-- security definer helpers: обходять RLS зсередини, щоб політики
+-- subjects/subject_folder_shares/friend_folder_members не запитували одна
+-- одну напряму — інакше Postgres кидає "infinite recursion detected in
+-- policy" (42P17), той самий гачок, що вже був із circles/circle_members.
+create or replace function public.owns_subject(target_subject_id uuid)
+returns boolean
+language sql
+security definer
+set search_path = public
+as $$
+  select exists (
+    select 1 from public.subjects s
+    where s.id = target_subject_id and s.owner_id = auth.uid()
+  );
+$$;
+
+create or replace function public.owns_folder(target_folder_id uuid)
+returns boolean
+language sql
+security definer
+set search_path = public
+as $$
+  select exists (
+    select 1 from public.friend_folders f
+    where f.id = target_folder_id and f.owner_id = auth.uid()
+  );
+$$;
+
+create or replace function public.is_folder_member(target_folder_id uuid)
+returns boolean
+language sql
+security definer
+set search_path = public
+as $$
+  select exists (
+    select 1 from public.friend_folder_members ffm
+    where ffm.folder_id = target_folder_id and ffm.friend_user_id = auth.uid()
+  );
+$$;
+
+create or replace function public.subject_shared_with_me(target_subject_id uuid)
+returns boolean
+language sql
+security definer
+set search_path = public
+as $$
+  select exists (
+    select 1 from public.subject_folder_shares sfs
+    where sfs.subject_id = target_subject_id
+      and public.is_folder_member(sfs.folder_id)
+  );
+$$;
+
 -- керує лише власник (і сутність, і коло мають належати йому)
 drop policy if exists "subject_folder_shares_owner_all" on public.subject_folder_shares;
 create policy "subject_folder_shares_owner_all"
 on public.subject_folder_shares for all
-using (
-  exists (select 1 from public.subjects s where s.id = subject_id and s.owner_id = auth.uid())
-  and exists (select 1 from public.friend_folders f where f.id = folder_id and f.owner_id = auth.uid())
-)
-with check (
-  exists (select 1 from public.subjects s where s.id = subject_id and s.owner_id = auth.uid())
-  and exists (select 1 from public.friend_folders f where f.id = folder_id and f.owner_id = auth.uid())
-);
+using (public.owns_subject(subject_id) and public.owns_folder(folder_id))
+with check (public.owns_subject(subject_id) and public.owns_folder(folder_id));
 
 -- учасник кола має бачити, що йому щось відкрили
 drop policy if exists "subject_folder_shares_select_member" on public.subject_folder_shares;
 create policy "subject_folder_shares_select_member"
 on public.subject_folder_shares for select
-using (
-  exists (
-    select 1 from public.friend_folder_members ffm
-    where ffm.folder_id = subject_folder_shares.folder_id
-      and ffm.friend_user_id = auth.uid()
-  )
-);
+using (public.is_folder_member(folder_id));
 
 -- прогалина, яку це виявило: учасник кола досі не міг побачити навіть факт
 -- свого членства (єдина наявна політика на friend_folder_members пускала
@@ -53,21 +94,9 @@ using (friend_user_id = auth.uid());
 drop policy if exists "subjects_select_shared" on public.subjects;
 create policy "subjects_select_shared"
 on public.subjects for select
-using (
-  exists (
-    select 1 from public.subject_folder_shares sfs
-    join public.friend_folder_members ffm on ffm.folder_id = sfs.folder_id
-    where sfs.subject_id = subjects.id and ffm.friend_user_id = auth.uid()
-  )
-);
+using (public.subject_shared_with_me(subjects.id));
 
 drop policy if exists "subject_checkins_select_shared" on public.subject_checkins;
 create policy "subject_checkins_select_shared"
 on public.subject_checkins for select
-using (
-  exists (
-    select 1 from public.subject_folder_shares sfs
-    join public.friend_folder_members ffm on ffm.folder_id = sfs.folder_id
-    where sfs.subject_id = subject_checkins.subject_id and ffm.friend_user_id = auth.uid()
-  )
-);
+using (public.subject_shared_with_me(subject_checkins.subject_id));
