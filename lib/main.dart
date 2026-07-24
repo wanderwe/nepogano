@@ -108,6 +108,14 @@ class NepoganoApp extends StatelessWidget {
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
       ),
+      // Без цього дефолтний колір іконки в Material 3 — colorScheme.onSurfaceVariant,
+      // похідний від бурштинового colorSchemeSeed (тому іконки виходили теплуватими/
+      // бежевими), тоді як текст типу дати навмисно use AppColors.inkMuted (чистий
+      // сірий) — розбіжність тону. Один нейтральний сірий для всіх іконок за замовчуванням.
+      iconTheme: const IconThemeData(color: AppColors.inkMuted),
+      iconButtonTheme: IconButtonThemeData(
+        style: IconButton.styleFrom(foregroundColor: AppColors.inkMuted),
+      ),
     );
 
     return ValueListenableBuilder<Locale>(
@@ -1492,10 +1500,7 @@ class _CheckInScreenState extends State<CheckInScreen> {
     final l10n = AppLocalizations.of(context);
     final locale = Localizations.localeOf(context);
     final today = DateTime.now();
-    final weekday = weekdayNameFull(today.weekday, locale);
-    final dateLabel =
-        '${weekday[0].toUpperCase()}${weekday.substring(1)}, '
-        '${today.day} ${monthNameGenitive(today.month, locale)}';
+    final dateLabel = '${today.day} ${monthNameGenitive(today.month, locale)}';
 
     return Scaffold(
       body: SafeArea(
