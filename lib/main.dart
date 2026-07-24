@@ -13,6 +13,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'auth_screen.dart';
 import 'comments_section.dart';
+import 'daily_reminder.dart';
 import 'date_labels.dart';
 import 'day_card_screen.dart';
 import 'friends_screen.dart';
@@ -60,6 +61,7 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle.light);
   await loadSavedLocale();
+  await initDailyReminder();
 
   await Supabase.initialize(
     url: supabaseUrl,
@@ -191,6 +193,7 @@ class AuthGate extends StatefulWidget {
 
 const _onboardingSeenKey = 'onboarding_seen';
 const _installReferrerCheckedKey = 'install_referrer_checked';
+const _dailyReminderScheduledKey = 'daily_reminder_scheduled';
 
 class _AuthGateState extends State<AuthGate> {
   late final Stream<AuthState> _authStateStream;
@@ -202,13 +205,39 @@ class _AuthGateState extends State<AuthGate> {
   void initState() {
     super.initState();
     _authStateStream = Supabase.instance.client.auth.onAuthStateChange;
-    _authSub = _authStateStream.listen((_) => _tryPendingJoin());
+    _authSub = _authStateStream.listen((_) {
+      _tryPendingJoin();
+      _setupDailyReminder();
+    });
     pendingJoinCode.addListener(_tryPendingJoin);
     // AppLocalizations.of(context) не можна викликати всередині initState —
     // відкладаємо першу перевірку на момент після першого кадру.
-    WidgetsBinding.instance.addPostFrameCallback((_) => _tryPendingJoin());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _tryPendingJoin();
+      _setupDailyReminder();
+    });
     _loadOnboardingSeen();
     _checkInstallReferrer();
+  }
+
+  /// Питає дозвіл і планує щоденне нагадування о 20:00 рівно один раз за час
+  /// життя застосунку на пристрої — і тільки коли вже є активна сесія
+  /// (питати дозвіл на сповіщення ще до логіну зарано, юзер ще навіть не
+  /// бачив застосунок).
+  Future<void> _setupDailyReminder() async {
+    final session = Supabase.instance.client.auth.currentSession;
+    if (session == null || !mounted) return;
+
+    final prefs = await SharedPreferences.getInstance();
+    if (prefs.getBool(_dailyReminderScheduledKey) == true) return;
+    await prefs.setBool(_dailyReminderScheduledKey, true);
+
+    if (!mounted) return;
+    final l10n = AppLocalizations.of(context);
+    await scheduleDailyReminder(
+      title: l10n.dailyReminderTitle,
+      body: l10n.dailyReminderBody,
+    );
   }
 
   /// Перевіряє (лише раз за весь час життя застосунку на пристрої) Play

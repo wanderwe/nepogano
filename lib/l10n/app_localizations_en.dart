@@ -141,6 +141,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get howAreThingsToday => 'How\'s it going today?';
 
   @override
+  String get dailyReminderTitle => 'Nepogano';
+
+  @override
+  String get dailyReminderBody =>
+      'How was your day? Jot it down before you forget.';
+
+  @override
   String alreadySavedToday(String time) {
     return 'Already saved at $time';
   }

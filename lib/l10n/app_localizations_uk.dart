@@ -141,6 +141,12 @@ class AppLocalizationsUk extends AppLocalizations {
   String get howAreThingsToday => 'Як справи сьогодні?';
 
   @override
+  String get dailyReminderTitle => 'Непогано';
+
+  @override
+  String get dailyReminderBody => 'Як пройшов день? Занотуй, поки не забув.';
+
+  @override
   String alreadySavedToday(String time) {
     return 'Вже збережено о $time';
   }

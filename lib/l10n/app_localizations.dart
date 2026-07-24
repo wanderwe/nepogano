@@ -350,6 +350,18 @@ abstract class AppLocalizations {
   /// **'Як справи сьогодні?'**
   String get howAreThingsToday;
 
+  /// No description provided for @dailyReminderTitle.
+  ///
+  /// In uk, this message translates to:
+  /// **'Непогано'**
+  String get dailyReminderTitle;
+
+  /// No description provided for @dailyReminderBody.
+  ///
+  /// In uk, this message translates to:
+  /// **'Як пройшов день? Занотуй, поки не забув.'**
+  String get dailyReminderBody;
+
   /// No description provided for @alreadySavedToday.
   ///
   /// In uk, this message translates to:

@@ -47,6 +47,8 @@
   "no": "Ні",
   "yesDelete": "Так, видалити",
   "howAreThingsToday": "Як справи сьогодні?",
+  "dailyReminderTitle": "Непогано",
+  "dailyReminderBody": "Як пройшов день? Занотуй, поки не забув.",
   "alreadySavedToday": "Вже збережено о {time}",
   "@alreadySavedToday": {
     "placeholders": { "time": { "type": "String" } }

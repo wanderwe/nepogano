@@ -47,6 +47,8 @@
   "no": "No",
   "yesDelete": "Yes, delete",
   "howAreThingsToday": "How's it going today?",
+  "dailyReminderTitle": "Nepogano",
+  "dailyReminderBody": "How was your day? Jot it down before you forget.",
   "alreadySavedToday": "Already saved at {time}",
   "notePlaceholder": "A few words about your day (optional)",
   "dayCard": "Day card",

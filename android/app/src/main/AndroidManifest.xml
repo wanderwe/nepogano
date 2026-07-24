@@ -1,6 +1,14 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="android.permission.CAMERA"/>
     <uses-feature android:name="android.hardware.camera" android:required="false"/>
+    <!-- Щоденне нагадування о 20:00 зберегти день (lib/daily_reminder.dart) —
+         Android 13+ вимагає явний runtime-дозвіл на будь-які сповіщення. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <!-- Точний час будильника не критичний для щоденного нагадування (кілька
+         хвилин різниці не має значення) — навмисно НЕ запитуємо
+         SCHEDULE_EXACT_ALARM/USE_EXACT_ALARM, щоб не тягнути додатковий
+         "чутливий" дозвіл і Play-політику, яка його супроводжує. -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
     <application
         android:label="Nepogano"
         android:name="${applicationName}"
