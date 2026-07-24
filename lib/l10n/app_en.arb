@@ -87,6 +87,7 @@
   "couldNotLoadFriends": "Couldn't load friends.",
   "couldNotAcceptInvite": "Couldn't accept the invite.",
   "invitations": "Invitations",
+  "sharedDiaries": "Shared diaries",
   "accept": "Accept",
   "noFriendsYet": "No friends yet. Add someone with the button above.",
   "removeFriend": "Remove friend",
@@ -167,6 +168,15 @@
   },
   "removeSubjectConfirmBody": "All entries will be deleted permanently.",
   "couldNotRemoveSubject": "Couldn't delete it.",
+  "shareWithCircle": "Share with circle",
+  "deleteDiary": "Delete diary",
+  "noFoldersYetForSharing": "Create a circle on the \"Friends\" screen first.",
+  "shareSubjectTitle": "Who can see {name}'s diary",
+  "@shareSubjectTitle": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
 
   "updatedCount": "Updated {count, plural, one{{count} time} other{{count} times}}",
   "@updatedCount": {

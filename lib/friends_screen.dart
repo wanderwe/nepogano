@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'history_screen.dart';
 import 'l10n/app_localizations.dart';
 import 'main.dart';
 import 'photo_storage.dart';
@@ -71,6 +72,20 @@ class FriendFolder {
   final String name;
 
   FriendFolder({required this.id, required this.name});
+}
+
+/// Щоденник сутності (дитина/улюбленець) чужого власника, відкритий на
+/// перегляд колу, в якому я є учасником — лише читання, без вгадування.
+class SharedSubject {
+  final String subjectId;
+  final String subjectName;
+  final String? ownerName;
+
+  SharedSubject({
+    required this.subjectId,
+    required this.subjectName,
+    required this.ownerName,
+  });
 }
 
 String _relativeDay(DateTime dateTime, AppLocalizations l10n) {
@@ -214,6 +229,8 @@ class _FriendsScreenState extends State<FriendsScreen> {
   int? _guessesTotal;
   int? _guessesCorrect;
 
+  List<SharedSubject> _sharedSubjects = [];
+
   @override
   void initState() {
     super.initState();
@@ -248,6 +265,57 @@ class _FriendsScreenState extends State<FriendsScreen> {
       final guessesCorrect = myGuessRows
           .where((r) => r['correct'] == true)
           .length;
+
+      // Щоденники сутностей, які чиїсь власники відкрили колам, де я є
+      // учасником — суто перегляд, без вгадування.
+      final myMembershipRows = await _supabase
+          .from('friend_folder_members')
+          .select('folder_id')
+          .eq('friend_user_id', myId);
+      final myFolderIds = (myMembershipRows as List)
+          .map((r) => r['folder_id'] as String)
+          .toList();
+
+      final sharedSubjects = <SharedSubject>[];
+      if (myFolderIds.isNotEmpty) {
+        final shareRows = await _supabase
+            .from('subject_folder_shares')
+            .select('subject_id, subjects(id, name, owner_id)')
+            .inFilter('folder_id', myFolderIds);
+
+        final byId = <String, Map<String, dynamic>>{};
+        for (final row in shareRows as List) {
+          final subjectRow = row['subjects'] as Map<String, dynamic>?;
+          if (subjectRow == null) continue;
+          byId[subjectRow['id'] as String] = subjectRow;
+        }
+
+        if (byId.isNotEmpty) {
+          final ownerIds = byId.values
+              .map((s) => s['owner_id'] as String)
+              .toSet()
+              .toList();
+          final ownerRows = await _supabase
+              .from('profiles')
+              .select('user_id, display_name')
+              .inFilter('user_id', ownerIds);
+          final ownerNameById = <String, String?>{
+            for (final row in ownerRows as List)
+              row['user_id'] as String: row['display_name'] as String?,
+          };
+
+          for (final subjectRow in byId.values) {
+            final ownerId = subjectRow['owner_id'] as String;
+            sharedSubjects.add(
+              SharedSubject(
+                subjectId: subjectRow['id'] as String,
+                subjectName: subjectRow['name'] as String,
+                ownerName: ownerNameById[ownerId],
+              ),
+            );
+          }
+        }
+      }
 
       final friendshipRows = await _supabase
           .from('friendships')
@@ -405,6 +473,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
           _folderMembership = membership;
           _guessesTotal = guessesTotal;
           _guessesCorrect = guessesCorrect;
+          _sharedSubjects = sharedSubjects;
           _loading = false;
         });
       } else {
@@ -418,6 +487,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
           _folderMembership = membership;
           _guessesTotal = guessesTotal;
           _guessesCorrect = guessesCorrect;
+          _sharedSubjects = sharedSubjects;
           _loading = false;
         });
       }
@@ -1065,6 +1135,65 @@ class _FriendsScreenState extends State<FriendsScreen> {
                         ],
                       ),
                       const SizedBox(height: 16),
+                      if (_sharedSubjects.isNotEmpty) ...[
+                        Text(
+                          l10n.sharedDiaries,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: AppColors.inkMuted,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        ..._sharedSubjects.map((shared) {
+                          final title = shared.ownerName == null
+                              ? shared.subjectName
+                              : '${shared.subjectName} · ${shared.ownerName}';
+                          return InkWell(
+                            borderRadius: BorderRadius.circular(16),
+                            onTap: () => Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => HistoryScreen(
+                                  subjectId: shared.subjectId,
+                                  subjectName: title,
+                                ),
+                              ),
+                            ),
+                            child: Container(
+                              margin: const EdgeInsets.only(bottom: 10),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 12,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppColors.surface,
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              child: Row(
+                                children: [
+                                  const Icon(
+                                    Icons.menu_book_outlined,
+                                    size: 18,
+                                    color: AppColors.inkMuted,
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Text(
+                                      title,
+                                      style: const TextStyle(fontSize: 14),
+                                    ),
+                                  ),
+                                  const Icon(
+                                    Icons.chevron_right,
+                                    size: 18,
+                                    color: AppColors.inkMuted,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        }),
+                        const SizedBox(height: 20),
+                      ],
                       if (_pendingInvites.isNotEmpty) ...[
                         Text(
                           l10n.invitations,

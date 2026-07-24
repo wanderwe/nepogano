@@ -566,6 +566,12 @@ abstract class AppLocalizations {
   /// **'Запрошення'**
   String get invitations;
 
+  /// No description provided for @sharedDiaries.
+  ///
+  /// In uk, this message translates to:
+  /// **'Спільні щоденники'**
+  String get sharedDiaries;
+
   /// No description provided for @accept.
   ///
   /// In uk, this message translates to:
@@ -865,6 +871,30 @@ abstract class AppLocalizations {
   /// In uk, this message translates to:
   /// **'Не вдалось видалити.'**
   String get couldNotRemoveSubject;
+
+  /// No description provided for @shareWithCircle.
+  ///
+  /// In uk, this message translates to:
+  /// **'Поділитись з колом'**
+  String get shareWithCircle;
+
+  /// No description provided for @deleteDiary.
+  ///
+  /// In uk, this message translates to:
+  /// **'Видалити щоденник'**
+  String get deleteDiary;
+
+  /// No description provided for @noFoldersYetForSharing.
+  ///
+  /// In uk, this message translates to:
+  /// **'Спершу створи коло на екрані \"Друзі\".'**
+  String get noFoldersYetForSharing;
+
+  /// No description provided for @shareSubjectTitle.
+  ///
+  /// In uk, this message translates to:
+  /// **'Кому видно щоденник {name}'**
+  String shareSubjectTitle(String name);
 
   /// No description provided for @updatedCount.
   ///

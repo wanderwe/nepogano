@@ -683,6 +683,123 @@ class _CheckInScreenState extends State<CheckInScreen> {
     }
   }
 
+  Future<void> _openSubjectMenu(Subject subject) async {
+    final l10n = AppLocalizations.of(context);
+    final choice = await showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: AppColors.surfaceRaised,
+      builder: (context) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(8, 12, 8, 8),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _MenuRow(
+                icon: Icons.workspaces_outline,
+                label: l10n.shareWithCircle,
+                onTap: () => Navigator.of(context).pop('share'),
+              ),
+              _MenuRow(
+                icon: Icons.delete_outline,
+                label: l10n.deleteDiary,
+                color: Colors.redAccent,
+                onTap: () => Navigator.of(context).pop('delete'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    if (choice == 'share') {
+      await _shareSubjectWithFolders(subject);
+    } else if (choice == 'delete') {
+      await _removeSubject(subject);
+    }
+  }
+
+  Future<void> _shareSubjectWithFolders(Subject subject) async {
+    final l10n = AppLocalizations.of(context);
+    final myId = _supabase.auth.currentUser!.id;
+
+    final folderRows = await _supabase
+        .from('friend_folders')
+        .select('id, name')
+        .eq('owner_id', myId)
+        .order('created_at');
+    final folders = (folderRows as List)
+        .map((r) => (id: r['id'] as String, name: r['name'] as String))
+        .toList();
+
+    if (!mounted) return;
+
+    if (folders.isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.noFoldersYetForSharing)));
+      return;
+    }
+
+    final shareRows = await _supabase
+        .from('subject_folder_shares')
+        .select('folder_id')
+        .eq('subject_id', subject.id);
+    final selected = (shareRows as List)
+        .map((r) => r['folder_id'] as String)
+        .toSet();
+
+    if (!mounted) return;
+
+    await showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: AppColors.surfaceRaised,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setSheetState) => SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  l10n.shareSubjectTitle(subject.name),
+                  style: appSerif(fontSize: 18),
+                ),
+                const SizedBox(height: 12),
+                ...folders.map((folder) {
+                  final checked = selected.contains(folder.id);
+                  return CheckboxListTile(
+                    value: checked,
+                    onChanged: (value) async {
+                      if (value == true) {
+                        selected.add(folder.id);
+                        await _supabase.from('subject_folder_shares').insert({
+                          'subject_id': subject.id,
+                          'folder_id': folder.id,
+                        });
+                      } else {
+                        selected.remove(folder.id);
+                        await _supabase
+                            .from('subject_folder_shares')
+                            .delete()
+                            .eq('subject_id', subject.id)
+                            .eq('folder_id', folder.id);
+                      }
+                      setSheetState(() {});
+                    },
+                    title: Text(folder.name),
+                    contentPadding: EdgeInsets.zero,
+                    controlAffinity: ListTileControlAffinity.leading,
+                  );
+                }),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   void dispose() {
     _noteController.dispose();
@@ -1471,7 +1588,7 @@ class _CheckInScreenState extends State<CheckInScreen> {
                               label: s.name,
                               selected: _activeSubjectId == s.id,
                               onTap: () => _switchSubject(s.id),
-                              onLongPress: () => _removeSubject(s),
+                              onLongPress: () => _openSubjectMenu(s),
                             ),
                           ),
                         ],

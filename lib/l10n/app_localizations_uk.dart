@@ -260,6 +260,9 @@ class AppLocalizationsUk extends AppLocalizations {
   String get invitations => 'Запрошення';
 
   @override
+  String get sharedDiaries => 'Спільні щоденники';
+
+  @override
   String get accept => 'Прийняти';
 
   @override
@@ -421,6 +424,21 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get couldNotRemoveSubject => 'Не вдалось видалити.';
+
+  @override
+  String get shareWithCircle => 'Поділитись з колом';
+
+  @override
+  String get deleteDiary => 'Видалити щоденник';
+
+  @override
+  String get noFoldersYetForSharing =>
+      'Спершу створи коло на екрані \"Друзі\".';
+
+  @override
+  String shareSubjectTitle(String name) {
+    return 'Кому видно щоденник $name';
+  }
 
   @override
   String updatedCount(int count) {

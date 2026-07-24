@@ -259,6 +259,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get invitations => 'Invitations';
 
   @override
+  String get sharedDiaries => 'Shared diaries';
+
+  @override
   String get accept => 'Accept';
 
   @override
@@ -422,6 +425,21 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get couldNotRemoveSubject => 'Couldn\'t delete it.';
+
+  @override
+  String get shareWithCircle => 'Share with circle';
+
+  @override
+  String get deleteDiary => 'Delete diary';
+
+  @override
+  String get noFoldersYetForSharing =>
+      'Create a circle on the \"Friends\" screen first.';
+
+  @override
+  String shareSubjectTitle(String name) {
+    return 'Who can see $name\'s diary';
+  }
 
   @override
   String updatedCount(int count) {

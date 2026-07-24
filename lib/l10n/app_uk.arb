@@ -96,6 +96,7 @@
   "couldNotLoadFriends": "Не вдалось завантажити друзів.",
   "couldNotAcceptInvite": "Не вдалось прийняти запрошення.",
   "invitations": "Запрошення",
+  "sharedDiaries": "Спільні щоденники",
   "accept": "Прийняти",
   "noFriendsYet": "Ще немає друзів. Додай когось кнопкою вгорі.",
   "removeFriend": "Видалити з друзів",
@@ -176,6 +177,15 @@
   },
   "removeSubjectConfirmBody": "Усі записи буде видалено назавжди.",
   "couldNotRemoveSubject": "Не вдалось видалити.",
+  "shareWithCircle": "Поділитись з колом",
+  "deleteDiary": "Видалити щоденник",
+  "noFoldersYetForSharing": "Спершу створи коло на екрані \"Друзі\".",
+  "shareSubjectTitle": "Кому видно щоденник {name}",
+  "@shareSubjectTitle": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
 
   "updatedCount": "Оновлено {count, plural, one{{count} раз} few{{count} рази} many{{count} разів} other{{count} разів}}",
   "@updatedCount": {
