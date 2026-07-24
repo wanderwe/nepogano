@@ -1,3 +1,5 @@
+import 'dart:io' show Platform;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
@@ -70,7 +72,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final code = widget.friendCode;
     if (code == null) return;
     await Clipboard.setData(ClipboardData(text: code));
-    if (mounted) {
+    // Android сам показує системне повідомлення про копіювання з 13 версії —
+    // власне поверх нього було б дублюванням. На інших платформах такого
+    // системного фідбеку нема, тож лишаємо свій.
+    if (mounted && !Platform.isAndroid) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(AppLocalizations.of(context).codeCopied)),
       );

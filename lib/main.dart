@@ -98,6 +98,16 @@ class NepoganoApp extends StatelessWidget {
       splashFactory: NoSplash.splashFactory,
       splashColor: Colors.transparent,
       highlightColor: Colors.white.withValues(alpha: 0.06),
+      // Material 3 малює стандартний SnackBar кольором inverseSurface — на
+      // темній темі це світлий бар, який випадає з решти дизайну. Один
+      // спільний стиль тут покриває всі виклики SnackBar по застосунку.
+      snackBarTheme: SnackBarThemeData(
+        backgroundColor: AppColors.surfaceRaised,
+        contentTextStyle: const TextStyle(color: AppColors.ink, fontSize: 14),
+        actionTextColor: AppColors.accent,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      ),
     );
 
     return ValueListenableBuilder<Locale>(
