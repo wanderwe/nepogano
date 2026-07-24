@@ -210,7 +210,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                     widget.subjectName == null
                         ? l10n.history
                         : '${l10n.history} — ${widget.subjectName}',
-                    style: appSerif(fontSize: 22),
+                    style: appSerif(fontSize: 22, fontWeight: FontWeight.w500),
                   ),
                 ],
               ),

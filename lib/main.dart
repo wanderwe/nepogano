@@ -146,6 +146,18 @@ class NepoganoApp extends StatelessWidget {
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(foregroundColor: AppColors.inkMuted),
       ),
+      // Жодна з ~8 модальних шторок застосунку не мала "ручки" зверху —
+      // сучасний сигнал "це можна закрити свайпом", який зараз є стандартом
+      // (iOS action sheets, Material 3). Один параметр тут — і вона з'являється
+      // всюди, без правок у кожному виклику showModalBottomSheet окремо.
+      bottomSheetTheme: BottomSheetThemeData(
+        backgroundColor: AppColors.surfaceRaised,
+        showDragHandle: true,
+        dragHandleColor: AppColors.inkMuted,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+      ),
     );
 
     return ValueListenableBuilder<Locale>(
@@ -1127,6 +1139,10 @@ class _CheckInScreenState extends State<CheckInScreen> {
                   TextField(
                     controller: _noteController,
                     maxLines: 3,
+                    // Той самий розмір і міжрядковий інтервал, що й у збереженому
+                    // вигляді нижче (_buildSummaryContent) — щоб перехід
+                    // "пишу" → "збережено" не виглядав як зовсім інший текст.
+                    style: const TextStyle(fontSize: 14, height: 1.4),
                     decoration: InputDecoration(
                       hintText: l10n.notePlaceholder,
                       filled: true,

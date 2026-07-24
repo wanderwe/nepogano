@@ -103,7 +103,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                   const SizedBox(width: 4),
                   Expanded(
-                    child: Text(l10n.profile, style: appSerif(fontSize: 22)),
+                    child: Text(
+                      l10n.profile,
+                      style: appSerif(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
                   ),
                 ],
               ),

@@ -939,7 +939,13 @@ class _FriendsScreenState extends State<FriendsScreen> {
                   ),
                   const SizedBox(width: 4),
                   Expanded(
-                    child: Text(l10n.friends, style: appSerif(fontSize: 22)),
+                    child: Text(
+                      l10n.friends,
+                      style: appSerif(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
                   ),
                   IconButton(
                     onPressed: _openProfile,
@@ -1410,7 +1416,10 @@ class _PersonDetailScreenState extends State<PersonDetailScreen> {
                     tooltip: l10n.back,
                   ),
                   const SizedBox(width: 4),
-                  Text(displayName, style: appSerif(fontSize: 22)),
+                  Text(
+                    displayName,
+                    style: appSerif(fontSize: 22, fontWeight: FontWeight.w500),
+                  ),
                 ],
               ),
               const SizedBox(height: 16),
