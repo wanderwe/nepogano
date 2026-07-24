@@ -253,6 +253,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get myFriendCode => 'My code';
 
   @override
+  String get codeCopied => 'Code copied';
+
+  @override
   String get addFriend => 'Add friend';
 
   @override

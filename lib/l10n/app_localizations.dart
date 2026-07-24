@@ -554,6 +554,12 @@ abstract class AppLocalizations {
   /// **'Мій код'**
   String get myFriendCode;
 
+  /// No description provided for @codeCopied.
+  ///
+  /// In uk, this message translates to:
+  /// **'Код скопійовано'**
+  String get codeCopied;
+
   /// No description provided for @addFriend.
   ///
   /// In uk, this message translates to:

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'l10n/app_localizations.dart';
@@ -61,6 +62,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
         );
       }
+    }
+  }
+
+  Future<void> _copyFriendCode() async {
+    final code = widget.friendCode;
+    if (code == null) return;
+    await Clipboard.setData(ClipboardData(text: code));
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppLocalizations.of(context).codeCopied)),
+      );
     }
   }
 
@@ -140,43 +152,52 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               if (widget.friendCode != null) ...[
                 const SizedBox(height: 12),
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: AppColors.surface,
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(
-                        Icons.vpn_key_outlined,
-                        size: 18,
-                        color: AppColors.inkMuted,
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              l10n.myFriendCode,
-                              style: const TextStyle(
-                                fontSize: 12,
-                                color: AppColors.inkMuted,
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              widget.friendCode!,
-                              style: const TextStyle(
-                                fontSize: 16,
-                                color: AppColors.ink,
-                              ),
-                            ),
-                          ],
+                InkWell(
+                  borderRadius: BorderRadius.circular(14),
+                  onTap: _copyFriendCode,
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: AppColors.surface,
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(
+                          Icons.vpn_key_outlined,
+                          size: 18,
+                          color: AppColors.inkMuted,
                         ),
-                      ),
-                    ],
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                l10n.myFriendCode,
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: AppColors.inkMuted,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                widget.friendCode!,
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  color: AppColors.ink,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const Icon(
+                          Icons.copy_outlined,
+                          size: 18,
+                          color: AppColors.inkMuted,
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ],

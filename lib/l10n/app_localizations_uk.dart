@@ -254,6 +254,9 @@ class AppLocalizationsUk extends AppLocalizations {
   String get myFriendCode => 'Мій код';
 
   @override
+  String get codeCopied => 'Код скопійовано';
+
+  @override
   String get addFriend => 'Додати друга';
 
   @override

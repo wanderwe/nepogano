@@ -85,6 +85,7 @@
   "friends": "Friends",
   "profile": "Profile",
   "myFriendCode": "My code",
+  "codeCopied": "Code copied",
   "addFriend": "Add friend",
   "couldNotLoadFriends": "Couldn't load friends.",
   "couldNotAcceptInvite": "Couldn't accept the invite.",
