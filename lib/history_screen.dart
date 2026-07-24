@@ -572,7 +572,11 @@ class _HistoryScreenState extends State<HistoryScreen> {
                       ),
                     ],
                     if (widget.subjectId == null)
-                      CommentsSection(checkinId: entry.id, canComment: true),
+                      CommentsSection(
+                        checkinId: entry.id,
+                        canComment: true,
+                        showWhenEmpty: false,
+                      ),
                   ],
                 ),
               ),

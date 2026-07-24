@@ -794,6 +794,18 @@ abstract class AppLocalizations {
   /// **'Напиши коментар...'**
   String get commentHint;
 
+  /// No description provided for @addComment.
+  ///
+  /// In uk, this message translates to:
+  /// **'Додати коментар'**
+  String get addComment;
+
+  /// No description provided for @commentsCount.
+  ///
+  /// In uk, this message translates to:
+  /// **'Коментарі ({count})'**
+  String commentsCount(int count);
+
   /// No description provided for @postComment.
   ///
   /// In uk, this message translates to:

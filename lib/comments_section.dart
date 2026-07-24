@@ -35,14 +35,22 @@ class CheckinComment {
 /// що ховає настрій до вгадування). Коли false, віджет узагалі нічого не
 /// показує й не запитує — RLS і так заблокує читання, тут просто не
 /// витрачаємо запит на порожній результат.
+///
+/// [showWhenEmpty] — чи показувати "Додати коментар" узагалі без жодного
+/// коментаря. На чужому дні (друг щойно вгадав) це запрошення до розмови —
+/// доречно. На власному щойно збереженому пості пропозиція одразу
+/// прокоментувати саму себе — ні, тож там false: секція з'являється лише
+/// коли хтось інший уже щось написав.
 class CommentsSection extends StatefulWidget {
   final String checkinId;
   final bool canComment;
+  final bool showWhenEmpty;
 
   const CommentsSection({
     super.key,
     required this.checkinId,
     required this.canComment,
+    this.showWhenEmpty = true,
   });
 
   @override
@@ -57,6 +65,10 @@ class _CommentsSectionState extends State<CommentsSection> {
   String? _replyToId;
   String? _replyToName;
   bool _sending = false;
+  // Згорнуто за замовчуванням — інакше довгий тред роздуває кожен запис у
+  // списку днів, і важко просто пробігти очима по статусах. Кількість все
+  // одно вантажимо одразу, щоб показати "Коментарі (3)" ще до розгортання.
+  bool _expanded = false;
 
   @override
   void initState() {
@@ -274,19 +286,11 @@ class _CommentsSectionState extends State<CommentsSection> {
 
   @override
   Widget build(BuildContext context) {
-    if (!widget.canComment) return const SizedBox.shrink();
-    final l10n = AppLocalizations.of(context);
-
-    if (_loading) {
-      return const Padding(
-        padding: EdgeInsets.symmetric(vertical: 12),
-        child: SizedBox(
-          width: 16,
-          height: 16,
-          child: CircularProgressIndicator(strokeWidth: 2),
-        ),
-      );
+    if (!widget.canComment || _loading) return const SizedBox.shrink();
+    if (_comments.isEmpty && !widget.showWhenEmpty) {
+      return const SizedBox.shrink();
     }
+    final l10n = AppLocalizations.of(context);
 
     final byParent = _byParent;
     final topLevel = byParent[null] ?? [];
@@ -296,53 +300,84 @@ class _CommentsSectionState extends State<CommentsSection> {
       children: [
         const SizedBox(height: 12),
         const Divider(color: AppColors.divider, height: 1),
-        const SizedBox(height: 12),
-        ...topLevel.map((c) => _buildCommentTile(c, byParent, 0)),
-        if (_replyToId != null)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 6),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    l10n.replyingTo(_replyToName ?? ''),
-                    style: const TextStyle(
-                      fontSize: 12,
+        const SizedBox(height: 10),
+        GestureDetector(
+          onTap: () => setState(() => _expanded = !_expanded),
+          behavior: HitTestBehavior.opaque,
+          child: Row(
+            children: [
+              Icon(
+                PhosphorIconsLight.chatCircle,
+                size: 14,
+                color: AppColors.inkMuted,
+              ),
+              const SizedBox(width: 6),
+              Text(
+                _comments.isEmpty
+                    ? l10n.addComment
+                    : l10n.commentsCount(_comments.length),
+                style: const TextStyle(fontSize: 13, color: AppColors.inkMuted),
+              ),
+              const Spacer(),
+              Icon(
+                _expanded
+                    ? PhosphorIconsLight.caretUp
+                    : PhosphorIconsLight.caretDown,
+                size: 14,
+                color: AppColors.inkMuted,
+              ),
+            ],
+          ),
+        ),
+        if (_expanded) ...[
+          const SizedBox(height: 10),
+          ...topLevel.map((c) => _buildCommentTile(c, byParent, 0)),
+          if (_replyToId != null)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 6),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      l10n.replyingTo(_replyToName ?? ''),
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: AppColors.inkMuted,
+                      ),
+                    ),
+                  ),
+                  GestureDetector(
+                    onTap: _cancelReply,
+                    child: const Icon(
+                      PhosphorIconsLight.x,
+                      size: 14,
                       color: AppColors.inkMuted,
                     ),
                   ),
-                ),
-                GestureDetector(
-                  onTap: _cancelReply,
-                  child: const Icon(
-                    PhosphorIconsLight.x,
-                    size: 14,
-                    color: AppColors.inkMuted,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            Expanded(
-              child: TextField(
-                controller: _inputController,
-                minLines: 1,
-                maxLines: 4,
-                style: const TextStyle(fontSize: 14),
-                decoration: appFieldDecoration(l10n.commentHint),
+                ],
               ),
             ),
-            const SizedBox(width: 8),
-            IconButton(
-              onPressed: _sending ? null : _post,
-              icon: const Icon(PhosphorIconsLight.paperPlaneRight),
-              tooltip: l10n.postComment,
-            ),
-          ],
-        ),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _inputController,
+                  minLines: 1,
+                  maxLines: 4,
+                  style: const TextStyle(fontSize: 14),
+                  decoration: appFieldDecoration(l10n.commentHint),
+                ),
+              ),
+              const SizedBox(width: 8),
+              IconButton(
+                onPressed: _sending ? null : _post,
+                icon: const Icon(PhosphorIconsLight.paperPlaneRight),
+                tooltip: l10n.postComment,
+              ),
+            ],
+          ),
+        ],
       ],
     );
   }

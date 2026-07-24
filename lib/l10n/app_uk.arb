@@ -160,6 +160,13 @@
   },
 
   "commentHint": "Напиши коментар...",
+  "addComment": "Додати коментар",
+  "commentsCount": "Коментарі ({count})",
+  "@commentsCount": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
   "postComment": "Надіслати",
   "reply": "Відповісти",
   "replyingTo": "Відповідаєш {name}",

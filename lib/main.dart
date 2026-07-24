@@ -1274,6 +1274,7 @@ class _CheckInScreenState extends State<CheckInScreen> {
               CommentsSection(
                 checkinId: _todayEntryId as String,
                 canComment: true,
+                showWhenEmpty: false,
               ),
           ],
         ),

@@ -151,6 +151,13 @@
   },
 
   "commentHint": "Write a comment...",
+  "addComment": "Add a comment",
+  "commentsCount": "Comments ({count})",
+  "@commentsCount": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
   "postComment": "Send",
   "reply": "Reply",
   "replyingTo": "Replying to {name}",
