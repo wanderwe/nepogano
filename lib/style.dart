@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 /// Спільна дизайн-система застосунку: темна тема (у стилі картки дня),
 /// два шрифти (serif для "голосу" бренду, sans для функціонального UI).
@@ -117,7 +118,11 @@ class AppChip extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             if (selected) ...[
-              const Icon(Icons.check, size: 14, color: AppColors.accent),
+              const Icon(
+                PhosphorIconsLight.check,
+                size: 14,
+                color: AppColors.accent,
+              ),
               const SizedBox(width: 6),
             ],
             Text(

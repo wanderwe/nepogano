@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'date_labels.dart';
 import 'day_card_screen.dart';
@@ -201,7 +202,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                 children: [
                   IconButton(
                     onPressed: () => Navigator.of(context).pop(),
-                    icon: const Icon(Icons.arrow_back, size: 20),
+                    icon: const Icon(PhosphorIconsLight.arrowLeft, size: 20),
                     tooltip: l10n.back,
                   ),
                   const SizedBox(width: 4),
@@ -258,7 +259,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                                 backgroundColor: AppColors.surfaceRaised,
                                 foregroundColor: AppColors.ink,
                                 tooltip: l10n.scrollToTop,
-                                child: const Icon(Icons.arrow_upward),
+                                child: const Icon(PhosphorIconsLight.arrowUp),
                               ),
                             ),
                           ),
@@ -294,7 +295,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
           children: [
             IconButton(
               onPressed: () => _changeMonth(-1),
-              icon: const Icon(Icons.chevron_left),
+              icon: const Icon(PhosphorIconsLight.caretLeft),
             ),
             Text(
               '${monthName(_visibleMonth.month, locale)} ${_visibleMonth.year}',
@@ -302,7 +303,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
             ),
             IconButton(
               onPressed: _isCurrentMonth ? null : () => _changeMonth(1),
-              icon: const Icon(Icons.chevron_right),
+              icon: const Icon(PhosphorIconsLight.caretRight),
             ),
           ],
         ),
@@ -569,7 +570,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                     builder: (_) => DayCardScreen(entry: entry),
                   ),
                 ),
-                icon: const Icon(Icons.ios_share, size: 18),
+                icon: const Icon(PhosphorIconsLight.export, size: 18),
                 tooltip: AppLocalizations.of(context).dayCard,
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints(),

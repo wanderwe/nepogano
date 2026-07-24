@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'l10n/app_localizations.dart';
 import 'style.dart';
 
@@ -38,7 +39,7 @@ class _PhotoRepositionScreenState extends State<PhotoRepositionScreen> {
                 children: [
                   IconButton(
                     onPressed: () => Navigator.of(context).pop(),
-                    icon: const Icon(Icons.close, size: 20),
+                    icon: const Icon(PhosphorIconsLight.x, size: 20),
                     tooltip: l10n.cancel,
                   ),
                   Expanded(

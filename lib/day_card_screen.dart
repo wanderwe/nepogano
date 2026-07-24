@@ -5,6 +5,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:share_plus/share_plus.dart';
 
 import 'date_labels.dart';
@@ -124,7 +125,7 @@ class _DayCardScreenState extends State<DayCardScreen> {
                   children: [
                     IconButton(
                       onPressed: () => Navigator.of(context).pop(),
-                      icon: const Icon(Icons.arrow_back, size: 20),
+                      icon: const Icon(PhosphorIconsLight.arrowLeft, size: 20),
                       tooltip: l10n.back,
                     ),
                     const SizedBox(width: 4),
@@ -175,7 +176,7 @@ class _DayCardScreenState extends State<DayCardScreen> {
                               color: AppColors.background,
                             ),
                           )
-                        : const Icon(Icons.ios_share, size: 18),
+                        : const Icon(PhosphorIconsLight.export, size: 18),
                     label: Text(
                       l10n.share,
                       style: const TextStyle(fontSize: 16),
@@ -350,7 +351,9 @@ class _ShareRow extends StatelessWidget {
               ),
             ),
             Icon(
-              done ? Icons.check_circle : Icons.chevron_right,
+              done
+                  ? PhosphorIconsFill.checkCircle
+                  : PhosphorIconsLight.caretRight,
               size: 20,
               color: done ? MoodLevel.zbs.color : AppColors.inkMuted,
             ),
@@ -471,18 +474,28 @@ class _DayCard extends StatelessWidget {
                   }),
                 ),
                 const SizedBox(height: 20),
-                if (entry.updateCount > 0) ...[
-                  Text(
-                    AppLocalizations.of(
-                      context,
-                    ).updatedCount(entry.updateCount),
-                    style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
-                  ),
-                  const SizedBox(height: 4),
-                ],
-                Text(
-                  'nepogano.app',
-                  style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      entry.updateCount > 0
+                          ? AppLocalizations.of(
+                              context,
+                            ).updatedCount(entry.updateCount)
+                          : '',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey.shade600,
+                      ),
+                    ),
+                    Text(
+                      'nepogano.app',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey.shade600,
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -571,17 +572,17 @@ class _FriendsScreenState extends State<FriendsScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               _MenuRow(
-                icon: Icons.ios_share,
+                icon: PhosphorIconsLight.export,
                 label: l10n.shareMyLink,
                 onTap: () => Navigator.of(context).pop('link'),
               ),
               _MenuRow(
-                icon: Icons.email_outlined,
+                icon: PhosphorIconsLight.envelopeSimple,
                 label: l10n.inviteFriendByEmail,
                 onTap: () => Navigator.of(context).pop('email'),
               ),
               _MenuRow(
-                icon: Icons.vpn_key_outlined,
+                icon: PhosphorIconsLight.key,
                 label: l10n.haveCode,
                 onTap: () => Navigator.of(context).pop('code'),
               ),
@@ -807,12 +808,12 @@ class _FriendsScreenState extends State<FriendsScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               _MenuRow(
-                icon: Icons.workspaces_outline,
+                icon: PhosphorIconsLight.circlesThreePlus,
                 label: l10n.addToFolder,
                 onTap: () => Navigator.of(context).pop('folder'),
               ),
               _MenuRow(
-                icon: Icons.person_remove_outlined,
+                icon: PhosphorIconsLight.userMinus,
                 label: l10n.removeFriend,
                 color: Colors.redAccent,
                 onTap: () => Navigator.of(context).pop('remove'),
@@ -896,7 +897,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
                     Navigator.of(context).pop();
                     await _createFolder();
                   },
-                  icon: const Icon(Icons.add, size: 18),
+                  icon: const Icon(PhosphorIconsLight.plus, size: 18),
                   label: Text(l10n.newFolder),
                 ),
               ],
@@ -933,7 +934,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
                 children: [
                   IconButton(
                     onPressed: () => Navigator.of(context).pop(),
-                    icon: const Icon(Icons.arrow_back, size: 20),
+                    icon: const Icon(PhosphorIconsLight.arrowLeft, size: 20),
                     tooltip: l10n.back,
                   ),
                   const SizedBox(width: 4),
@@ -942,12 +943,12 @@ class _FriendsScreenState extends State<FriendsScreen> {
                   ),
                   IconButton(
                     onPressed: _openProfile,
-                    icon: const Icon(Icons.account_circle_outlined, size: 20),
+                    icon: const Icon(PhosphorIconsLight.userCircle, size: 20),
                     tooltip: l10n.profile,
                   ),
                   IconButton(
                     onPressed: _openAddFriendSheet,
-                    icon: const Icon(Icons.person_add_alt, size: 20),
+                    icon: const Icon(PhosphorIconsLight.userPlus, size: 20),
                     tooltip: l10n.addFriend,
                   ),
                 ],
@@ -1017,7 +1018,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
                           IconButton(
                             onPressed: _createFolder,
                             icon: const Icon(
-                              Icons.workspaces_outline,
+                              PhosphorIconsLight.circlesThreePlus,
                               size: 22,
                             ),
                             tooltip: l10n.newFolder,
@@ -1062,7 +1063,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
                               child: Row(
                                 children: [
                                   const Icon(
-                                    Icons.menu_book_outlined,
+                                    PhosphorIconsLight.bookOpen,
                                     size: 18,
                                     color: AppColors.inkMuted,
                                   ),
@@ -1074,7 +1075,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
                                     ),
                                   ),
                                   const Icon(
-                                    Icons.chevron_right,
+                                    PhosphorIconsLight.caretRight,
                                     size: 18,
                                     color: AppColors.inkMuted,
                                   ),
@@ -1221,7 +1222,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
             ),
             IconButton(
               onPressed: () => _openFriendMenu(friend),
-              icon: const Icon(Icons.more_vert, size: 18),
+              icon: const Icon(PhosphorIconsLight.dotsThreeVertical, size: 18),
               tooltip: l10n.moreTooltip,
               color: AppColors.inkMuted,
             ),
@@ -1405,7 +1406,7 @@ class _PersonDetailScreenState extends State<PersonDetailScreen> {
                 children: [
                   IconButton(
                     onPressed: () => Navigator.of(context).pop(),
-                    icon: const Icon(Icons.arrow_back, size: 20),
+                    icon: const Icon(PhosphorIconsLight.arrowLeft, size: 20),
                     tooltip: l10n.back,
                   ),
                   const SizedBox(width: 4),

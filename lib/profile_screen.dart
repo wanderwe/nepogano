@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'l10n/app_localizations.dart';
@@ -92,7 +93,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 children: [
                   IconButton(
                     onPressed: () => Navigator.of(context).pop(_displayName),
-                    icon: const Icon(Icons.arrow_back, size: 20),
+                    icon: const Icon(PhosphorIconsLight.arrowLeft, size: 20),
                     tooltip: l10n.back,
                   ),
                   const SizedBox(width: 4),
@@ -114,7 +115,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   child: Row(
                     children: [
                       const Icon(
-                        Icons.badge_outlined,
+                        PhosphorIconsLight.identificationBadge,
                         size: 18,
                         color: AppColors.inkMuted,
                       ),
@@ -142,7 +143,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                       ),
                       const Icon(
-                        Icons.chevron_right,
+                        PhosphorIconsLight.caretRight,
                         size: 18,
                         color: AppColors.inkMuted,
                       ),
@@ -164,7 +165,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     child: Row(
                       children: [
                         const Icon(
-                          Icons.vpn_key_outlined,
+                          PhosphorIconsLight.key,
                           size: 18,
                           color: AppColors.inkMuted,
                         ),
@@ -192,7 +193,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           ),
                         ),
                         const Icon(
-                          Icons.copy_outlined,
+                          PhosphorIconsLight.copy,
                           size: 18,
                           color: AppColors.inkMuted,
                         ),

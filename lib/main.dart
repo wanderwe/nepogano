@@ -8,6 +8,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/retry.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'auth_screen.dart';
@@ -656,17 +657,17 @@ class _CheckInScreenState extends State<CheckInScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               _MenuRow(
-                icon: Icons.edit_outlined,
+                icon: PhosphorIconsLight.pencilSimple,
                 label: l10n.renameDiary,
                 onTap: () => Navigator.of(context).pop('rename'),
               ),
               _MenuRow(
-                icon: Icons.workspaces_outline,
+                icon: PhosphorIconsLight.circlesThreePlus,
                 label: l10n.shareWithCircle,
                 onTap: () => Navigator.of(context).pop('share'),
               ),
               _MenuRow(
-                icon: Icons.delete_outline,
+                icon: PhosphorIconsLight.trash,
                 label: l10n.deleteDiary,
                 color: Colors.redAccent,
                 onTap: () => Navigator.of(context).pop('delete'),
@@ -948,12 +949,12 @@ class _CheckInScreenState extends State<CheckInScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               _MenuRow(
-                icon: Icons.photo_camera_outlined,
+                icon: PhosphorIconsLight.camera,
                 label: l10n.takePhoto,
                 onTap: () => Navigator.of(context).pop(ImageSource.camera),
               ),
               _MenuRow(
-                icon: Icons.photo_library_outlined,
+                icon: PhosphorIconsLight.images,
                 label: l10n.chooseFromGallery,
                 onTap: () => Navigator.of(context).pop(ImageSource.gallery),
               ),
@@ -1029,7 +1030,7 @@ class _CheckInScreenState extends State<CheckInScreen> {
       width: double.infinity,
       child: OutlinedButton.icon(
         onPressed: _choosePhotoSource,
-        icon: const Icon(Icons.photo_camera_outlined, size: 18),
+        icon: const Icon(PhosphorIconsLight.camera, size: 18),
         label: Text(l10n.addPhoto),
         style: OutlinedButton.styleFrom(
           foregroundColor: AppColors.inkMuted,
@@ -1144,7 +1145,7 @@ class _CheckInScreenState extends State<CheckInScreen> {
                             builder: (_) => _buildDayCardScreen(),
                           ),
                         ),
-                        icon: const Icon(Icons.ios_share, size: 18),
+                        icon: const Icon(PhosphorIconsLight.export, size: 18),
                         label: Text(l10n.dayCard),
                       ),
                     ),
@@ -1233,7 +1234,7 @@ class _CheckInScreenState extends State<CheckInScreen> {
         width: double.infinity,
         child: OutlinedButton.icon(
           onPressed: _startEditing,
-          icon: const Icon(Icons.edit_outlined, size: 18),
+          icon: const Icon(PhosphorIconsLight.pencilSimple, size: 18),
           label: Text(l10n.edit),
           style: OutlinedButton.styleFrom(
             padding: const EdgeInsets.symmetric(vertical: 14),
@@ -1252,7 +1253,7 @@ class _CheckInScreenState extends State<CheckInScreen> {
           onPressed: () => Navigator.of(
             context,
           ).push(MaterialPageRoute(builder: (_) => _buildDayCardScreen())),
-          icon: const Icon(Icons.ios_share, size: 18),
+          icon: const Icon(PhosphorIconsLight.export, size: 18),
           label: Text(l10n.dayCard),
         ),
       ),
@@ -1513,7 +1514,10 @@ class _CheckInScreenState extends State<CheckInScreen> {
                               );
                               _checkCircleActivity();
                             },
-                            icon: const Icon(Icons.people_outline, size: 20),
+                            icon: const Icon(
+                              PhosphorIconsLight.users,
+                              size: 20,
+                            ),
                             tooltip: l10n.friends,
                           ),
                           if (_hasCircleActivity)
@@ -1547,14 +1551,17 @@ class _CheckInScreenState extends State<CheckInScreen> {
                           );
                         },
                         icon: const Icon(
-                          Icons.calendar_month_outlined,
+                          PhosphorIconsLight.calendarBlank,
                           size: 20,
                         ),
                         tooltip: l10n.history,
                       ),
                       IconButton(
                         onPressed: _openMoreMenu,
-                        icon: const Icon(Icons.more_vert, size: 20),
+                        icon: const Icon(
+                          PhosphorIconsLight.dotsThreeVertical,
+                          size: 20,
+                        ),
                         tooltip: l10n.moreTooltip,
                       ),
                     ],
@@ -1589,7 +1596,7 @@ class _CheckInScreenState extends State<CheckInScreen> {
                   ),
                   IconButton(
                     onPressed: _createSubject,
-                    icon: const Icon(Icons.add_circle_outline, size: 22),
+                    icon: const Icon(PhosphorIconsLight.plusCircle, size: 22),
                     tooltip: l10n.newSubject,
                     color: AppColors.inkMuted,
                   ),
@@ -1684,7 +1691,7 @@ class _CheckInScreenState extends State<CheckInScreen> {
             children: [
               IconButton(
                 onPressed: _isPreviousWeek ? null : () => _changeWeek(-1),
-                icon: const Icon(Icons.chevron_left, size: 18),
+                icon: const Icon(PhosphorIconsLight.caretLeft, size: 18),
                 visualDensity: VisualDensity.compact,
                 color: AppColors.inkMuted,
               ),
@@ -1694,7 +1701,7 @@ class _CheckInScreenState extends State<CheckInScreen> {
               ),
               IconButton(
                 onPressed: _isCurrentWeek ? null : () => _changeWeek(1),
-                icon: const Icon(Icons.chevron_right, size: 18),
+                icon: const Icon(PhosphorIconsLight.caretRight, size: 18),
                 visualDensity: VisualDensity.compact,
                 color: AppColors.inkMuted,
               ),
@@ -1755,18 +1762,22 @@ class _MoreMenuSheet extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             _MenuRow(
-              icon: Icons.language,
+              icon: PhosphorIconsLight.globe,
               label:
                   '${l10n.language}: ${appLocale.value.languageCode == 'uk' ? 'UK' : 'EN'}',
               onTap: onLanguage,
             ),
-            _MenuRow(icon: Icons.logout, label: l10n.signOut, onTap: onSignOut),
+            _MenuRow(
+              icon: PhosphorIconsLight.signOut,
+              label: l10n.signOut,
+              onTap: onSignOut,
+            ),
             const Padding(
               padding: EdgeInsets.symmetric(vertical: 8),
               child: Divider(color: AppColors.divider, height: 1),
             ),
             _MenuRow(
-              icon: Icons.delete_outline,
+              icon: PhosphorIconsLight.trash,
               label: l10n.deleteAccount,
               color: Colors.redAccent,
               onTap: onDeleteAccount,
@@ -1846,7 +1857,11 @@ class _PhotoPreview extends StatelessWidget {
             shape: const CircleBorder(),
             child: IconButton(
               onPressed: onReposition,
-              icon: const Icon(Icons.open_with, size: 16, color: Colors.white),
+              icon: const Icon(
+                PhosphorIconsLight.arrowsOutCardinal,
+                size: 16,
+                color: Colors.white,
+              ),
               tooltip: repositionTooltip,
               padding: const EdgeInsets.all(6),
               constraints: const BoxConstraints(),
@@ -1862,7 +1877,11 @@ class _PhotoPreview extends StatelessWidget {
             shape: const CircleBorder(),
             child: IconButton(
               onPressed: onRemove,
-              icon: const Icon(Icons.close, size: 16, color: Colors.white),
+              icon: const Icon(
+                PhosphorIconsLight.x,
+                size: 16,
+                color: Colors.white,
+              ),
               tooltip: removeTooltip,
               padding: const EdgeInsets.all(6),
               constraints: const BoxConstraints(),
