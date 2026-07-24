@@ -160,15 +160,18 @@ class _MenuRow extends StatelessWidget {
   final IconData icon;
   final String label;
   final VoidCallback onTap;
+  final Color? color;
 
   const _MenuRow({
     required this.icon,
     required this.label,
     required this.onTap,
+    this.color,
   });
 
   @override
   Widget build(BuildContext context) {
+    final rowColor = color ?? AppColors.ink;
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(14),
@@ -176,12 +179,9 @@ class _MenuRow extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
         child: Row(
           children: [
-            Icon(icon, size: 20, color: AppColors.ink),
+            Icon(icon, size: 20, color: rowColor),
             const SizedBox(width: 16),
-            Text(
-              label,
-              style: const TextStyle(fontSize: 16, color: AppColors.ink),
-            ),
+            Text(label, style: TextStyle(fontSize: 16, color: rowColor)),
           ],
         ),
       ),
@@ -785,6 +785,41 @@ class _FriendsScreenState extends State<FriendsScreen> {
     }
   }
 
+  Future<void> _openFriendMenu(Friend friend) async {
+    final l10n = AppLocalizations.of(context);
+    final choice = await showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: AppColors.surfaceRaised,
+      builder: (context) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(8, 12, 8, 8),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _MenuRow(
+                icon: Icons.workspaces_outline,
+                label: l10n.addToFolder,
+                onTap: () => Navigator.of(context).pop('folder'),
+              ),
+              _MenuRow(
+                icon: Icons.person_remove_outlined,
+                label: l10n.removeFriend,
+                color: Colors.redAccent,
+                onTap: () => Navigator.of(context).pop('remove'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    if (choice == 'folder') {
+      await _assignToFolders(friend);
+    } else if (choice == 'remove') {
+      await _removeFriend(friend);
+    }
+  }
+
   Future<void> _assignToFolders(Friend friend) async {
     final l10n = AppLocalizations.of(context);
     final selected = <String>{
@@ -984,7 +1019,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
                           IconButton(
                             onPressed: _createFolder,
                             icon: const Icon(
-                              Icons.add_circle_outline,
+                              Icons.workspaces_outline,
                               size: 22,
                             ),
                             tooltip: l10n.newFolder,
@@ -1128,9 +1163,9 @@ class _FriendsScreenState extends State<FriendsScreen> {
               ),
             ),
             IconButton(
-              onPressed: () => _removeFriend(friend),
-              icon: const Icon(Icons.close, size: 18),
-              tooltip: l10n.removeFriend,
+              onPressed: () => _openFriendMenu(friend),
+              icon: const Icon(Icons.more_vert, size: 18),
+              tooltip: l10n.moreTooltip,
               color: AppColors.inkMuted,
             ),
           ],
