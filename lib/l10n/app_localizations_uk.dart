@@ -378,6 +378,14 @@ class AppLocalizationsUk extends AppLocalizations {
   String get noFoldersYet => 'Ще немає кіл.';
 
   @override
+  String removeFolderConfirmTitle(String name) {
+    return 'Видалити коло $name?';
+  }
+
+  @override
+  String get couldNotRemoveFolder => 'Не вдалось видалити коло.';
+
+  @override
   String get me => 'Я';
 
   @override

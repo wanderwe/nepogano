@@ -742,6 +742,49 @@ class _FriendsScreenState extends State<FriendsScreen> {
     }
   }
 
+  Future<void> _removeFolder(FriendFolder folder) async {
+    final l10n = AppLocalizations.of(context);
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppColors.surfaceRaised,
+        title: Text(l10n.removeFolderConfirmTitle(folder.name)),
+        actionsAlignment: MainAxisAlignment.center,
+        actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(l10n.cancel),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: Text(
+              l10n.delete,
+              style: const TextStyle(color: Colors.redAccent),
+            ),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+
+    try {
+      await _supabase.from('friend_folders').delete().eq('id', folder.id);
+      if (_selectedFolderId == folder.id) {
+        setState(() => _selectedFolderId = null);
+      }
+      _load();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(AppLocalizations.of(context).couldNotRemoveFolder),
+          ),
+        );
+      }
+    }
+  }
+
   Future<void> _assignToFolders(Friend friend) async {
     final l10n = AppLocalizations.of(context);
     final selected = <String>{
@@ -908,40 +951,46 @@ class _FriendsScreenState extends State<FriendsScreen> {
                         ),
                       ),
                       const SizedBox(height: 4),
-                      SizedBox(
-                        height: 36,
-                        child: ListView(
-                          scrollDirection: Axis.horizontal,
-                          children: [
-                            if (_folders.isNotEmpty)
-                              _FolderChip(
-                                label: l10n.allFriends,
-                                selected: _selectedFolderId == null,
-                                onTap: () =>
-                                    setState(() => _selectedFolderId = null),
-                              ),
-                            ..._folders.map(
-                              (folder) => _FolderChip(
-                                label: folder.name,
-                                selected: _selectedFolderId == folder.id,
-                                onTap: () => setState(
-                                  () => _selectedFolderId = folder.id,
-                                ),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: SizedBox(
+                              height: 36,
+                              child: ListView(
+                                scrollDirection: Axis.horizontal,
+                                children: [
+                                  if (_folders.isNotEmpty)
+                                    _FolderChip(
+                                      label: l10n.allFriends,
+                                      selected: _selectedFolderId == null,
+                                      onTap: () => setState(
+                                        () => _selectedFolderId = null,
+                                      ),
+                                    ),
+                                  ..._folders.map(
+                                    (folder) => _FolderChip(
+                                      label: folder.name,
+                                      selected: _selectedFolderId == folder.id,
+                                      onTap: () => setState(
+                                        () => _selectedFolderId = folder.id,
+                                      ),
+                                      onLongPress: () => _removeFolder(folder),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
-                            ActionChip(
-                              avatar: const Icon(Icons.add, size: 16),
-                              label: Text(l10n.newFolder),
-                              onPressed: _createFolder,
-                              backgroundColor: AppColors.surface,
-                              labelStyle: const TextStyle(
-                                fontSize: 13,
-                                color: AppColors.inkMuted,
-                              ),
-                              side: BorderSide.none,
+                          ),
+                          IconButton(
+                            onPressed: _createFolder,
+                            icon: const Icon(
+                              Icons.add_circle_outline,
+                              size: 22,
                             ),
-                          ],
-                        ),
+                            tooltip: l10n.newFolder,
+                            color: AppColors.inkMuted,
+                          ),
+                        ],
                       ),
                       const SizedBox(height: 16),
                       if (_pendingInvites.isNotEmpty) ...[
@@ -1095,29 +1144,35 @@ class _FolderChip extends StatelessWidget {
   final String label;
   final bool selected;
   final VoidCallback onTap;
+  final VoidCallback? onLongPress;
 
   const _FolderChip({
     required this.label,
     required this.selected,
     required this.onTap,
+    this.onLongPress,
   });
 
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(right: 8),
-      child: ChoiceChip(
-        label: Text(label),
-        selected: selected,
-        onSelected: (_) => onTap(),
-        backgroundColor: AppColors.surface,
-        selectedColor: AppColors.surfaceRaised,
-        side: BorderSide(
-          color: selected ? const Color(0xFFE0A458) : Colors.transparent,
-        ),
-        labelStyle: TextStyle(
-          fontSize: 13,
-          color: selected ? AppColors.ink : AppColors.inkMuted,
+      child: GestureDetector(
+        onLongPress: onLongPress,
+        child: ChoiceChip(
+          label: Text(label),
+          selected: selected,
+          showCheckmark: false,
+          onSelected: (_) => onTap(),
+          backgroundColor: AppColors.surface,
+          selectedColor: AppColors.surfaceRaised,
+          side: BorderSide(
+            color: selected ? const Color(0xFFE0A458) : Colors.transparent,
+          ),
+          labelStyle: TextStyle(
+            fontSize: 13,
+            color: selected ? AppColors.ink : AppColors.inkMuted,
+          ),
         ),
       ),
     );

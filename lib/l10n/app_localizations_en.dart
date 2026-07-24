@@ -378,6 +378,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get noFoldersYet => 'No circles yet.';
 
   @override
+  String removeFolderConfirmTitle(String name) {
+    return 'Delete the \"$name\" circle?';
+  }
+
+  @override
+  String get couldNotRemoveFolder => 'Couldn\'t delete the circle.';
+
+  @override
   String get me => 'Me';
 
   @override

@@ -788,6 +788,18 @@ abstract class AppLocalizations {
   /// **'Ще немає кіл.'**
   String get noFoldersYet;
 
+  /// No description provided for @removeFolderConfirmTitle.
+  ///
+  /// In uk, this message translates to:
+  /// **'Видалити коло {name}?'**
+  String removeFolderConfirmTitle(String name);
+
+  /// No description provided for @couldNotRemoveFolder.
+  ///
+  /// In uk, this message translates to:
+  /// **'Не вдалось видалити коло.'**
+  String get couldNotRemoveFolder;
+
   /// No description provided for @me.
   ///
   /// In uk, this message translates to:

@@ -136,6 +136,13 @@
   "couldNotCreateFolder": "Couldn't create the circle.",
   "addToFolder": "Add to circle",
   "noFoldersYet": "No circles yet.",
+  "removeFolderConfirmTitle": "Delete the \"{name}\" circle?",
+  "@removeFolderConfirmTitle": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+  "couldNotRemoveFolder": "Couldn't delete the circle.",
 
   "me": "Me",
   "newSubject": "New diary",

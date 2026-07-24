@@ -410,6 +410,7 @@ class _SubjectChip extends StatelessWidget {
         child: ChoiceChip(
           label: Text(label),
           selected: selected,
+          showCheckmark: false,
           onSelected: (_) => onTap(),
           backgroundColor: AppColors.surface,
           selectedColor: AppColors.surfaceRaised,
@@ -551,11 +552,13 @@ class _CheckInScreenState extends State<CheckInScreen> {
   Future<void> _createSubject() async {
     final l10n = AppLocalizations.of(context);
     final controller = TextEditingController();
+    // Поза StatefulBuilder.builder — інакше кожен setState перестворював би
+    // цю змінну заново й скидав вибір назад на 'child'.
+    var kind = 'child';
     final result = await showDialog<Map<String, String>>(
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setState) {
-          var kind = 'child';
           return AlertDialog(
             backgroundColor: AppColors.surfaceRaised,
             title: Text(l10n.newSubject),
@@ -1450,37 +1453,38 @@ class _CheckInScreenState extends State<CheckInScreen> {
                 ],
               ),
               const SizedBox(height: 12),
-              SizedBox(
-                height: 36,
-                child: ListView(
-                  scrollDirection: Axis.horizontal,
-                  children: [
-                    _SubjectChip(
-                      label: l10n.me,
-                      selected: _activeSubjectId == null,
-                      onTap: () => _switchSubject(null),
-                    ),
-                    ..._subjects.map(
-                      (s) => _SubjectChip(
-                        label: s.name,
-                        selected: _activeSubjectId == s.id,
-                        onTap: () => _switchSubject(s.id),
-                        onLongPress: () => _removeSubject(s),
+              Row(
+                children: [
+                  Expanded(
+                    child: SizedBox(
+                      height: 36,
+                      child: ListView(
+                        scrollDirection: Axis.horizontal,
+                        children: [
+                          _SubjectChip(
+                            label: l10n.me,
+                            selected: _activeSubjectId == null,
+                            onTap: () => _switchSubject(null),
+                          ),
+                          ..._subjects.map(
+                            (s) => _SubjectChip(
+                              label: s.name,
+                              selected: _activeSubjectId == s.id,
+                              onTap: () => _switchSubject(s.id),
+                              onLongPress: () => _removeSubject(s),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    ActionChip(
-                      avatar: const Icon(Icons.add, size: 16),
-                      label: Text(l10n.newSubject),
-                      onPressed: _createSubject,
-                      backgroundColor: AppColors.surface,
-                      labelStyle: const TextStyle(
-                        fontSize: 13,
-                        color: AppColors.inkMuted,
-                      ),
-                      side: BorderSide.none,
-                    ),
-                  ],
-                ),
+                  ),
+                  IconButton(
+                    onPressed: _createSubject,
+                    icon: const Icon(Icons.add_circle_outline, size: 22),
+                    tooltip: l10n.newSubject,
+                    color: AppColors.inkMuted,
+                  ),
+                ],
               ),
               Expanded(
                 child: Center(

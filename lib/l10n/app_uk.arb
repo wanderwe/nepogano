@@ -145,6 +145,13 @@
   "couldNotCreateFolder": "Не вдалось створити коло.",
   "addToFolder": "Додати в коло",
   "noFoldersYet": "Ще немає кіл.",
+  "removeFolderConfirmTitle": "Видалити коло {name}?",
+  "@removeFolderConfirmTitle": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+  "couldNotRemoveFolder": "Не вдалось видалити коло.",
 
   "me": "Я",
   "newSubject": "Новий щоденник",
