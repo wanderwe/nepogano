@@ -62,7 +62,9 @@ class _AuthScreenState extends State<AuthScreen> {
       setState(() => _errorMessage = e.message);
     } catch (e) {
       if (mounted) {
-        setState(() => _errorMessage = AppLocalizations.of(context).somethingWentWrong);
+        setState(
+          () => _errorMessage = AppLocalizations.of(context).somethingWentWrong,
+        );
       }
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -100,7 +102,9 @@ class _AuthScreenState extends State<AuthScreen> {
       );
     } catch (e) {
       if (mounted) {
-        setState(() => _errorMessage = AppLocalizations.of(context).googleSignInFailed);
+        setState(
+          () => _errorMessage = AppLocalizations.of(context).googleSignInFailed,
+        );
       }
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -129,7 +133,10 @@ class _AuthScreenState extends State<AuthScreen> {
                   Text(
                     _isSignUp ? l10n.createAccount : l10n.signInToAccount,
                     textAlign: TextAlign.center,
-                    style: const TextStyle(fontSize: 15, color: AppColors.inkMuted),
+                    style: const TextStyle(
+                      fontSize: 15,
+                      color: AppColors.inkMuted,
+                    ),
                   ),
                   const SizedBox(height: 32),
 
@@ -167,28 +174,23 @@ class _AuthScreenState extends State<AuthScreen> {
                     const SizedBox(height: 12),
                     Text(
                       _errorMessage!,
-                      style: const TextStyle(color: Colors.redAccent, fontSize: 13),
+                      style: const TextStyle(
+                        color: Colors.redAccent,
+                        fontSize: 13,
+                      ),
                     ),
                   ],
 
                   const SizedBox(height: 20),
                   ElevatedButton(
                     onPressed: _loading ? null : _submitEmailAuth,
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      backgroundColor: AppColors.ink,
-                      foregroundColor: AppColors.background,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
                     child: _loading
                         ? const SizedBox(
                             height: 18,
                             width: 18,
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
-                              color: AppColors.background,
+                              color: AppColors.accentInk,
                             ),
                           )
                         : Text(_isSignUp ? l10n.signUp : l10n.signIn),
@@ -210,7 +212,10 @@ class _AuthScreenState extends State<AuthScreen> {
                       const Expanded(child: Divider(color: AppColors.divider)),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 12),
-                        child: Text(l10n.or, style: TextStyle(color: Colors.grey.shade500)),
+                        child: Text(
+                          l10n.or,
+                          style: TextStyle(color: Colors.grey.shade500),
+                        ),
                       ),
                       const Expanded(child: Divider(color: AppColors.divider)),
                     ],
@@ -219,13 +224,15 @@ class _AuthScreenState extends State<AuthScreen> {
 
                   OutlinedButton(
                     onPressed: _loading ? null : _signInWithGoogle,
+                    // Навмисно окремий вигляд (залита поверхня, без рамки) —
+                    // конвенція для кнопки стороннього провайдера входу,
+                    // не звичайна другорядна дія застосунку.
                     style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
                       backgroundColor: AppColors.surface,
                       foregroundColor: AppColors.ink,
                       side: BorderSide.none,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(16),
                       ),
                     ),
                     child: Text(l10n.continueWithGoogle),

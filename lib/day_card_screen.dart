@@ -159,28 +159,17 @@ class _DayCardScreenState extends State<DayCardScreen> {
                   width: double.infinity,
                   child: ElevatedButton.icon(
                     onPressed: (_sharing || _photoLoading) ? null : _share,
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      backgroundColor: AppColors.ink,
-                      foregroundColor: AppColors.background,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
                     icon: _sharing
                         ? const SizedBox(
                             height: 18,
                             width: 18,
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
-                              color: AppColors.background,
+                              color: AppColors.accentInk,
                             ),
                           )
                         : const Icon(PhosphorIconsLight.export, size: 18),
-                    label: Text(
-                      l10n.share,
-                      style: const TextStyle(fontSize: 16),
-                    ),
+                    label: Text(l10n.share),
                   ),
                 ),
                 const SizedBox(height: 12),

@@ -116,6 +116,36 @@ class NepoganoApp extends StatelessWidget {
       iconButtonTheme: IconButtonThemeData(
         style: IconButton.styleFrom(foregroundColor: AppColors.inkMuted),
       ),
+      // Раніше кожен екран мав власну кнопкову мову: біла ElevatedButton тут,
+      // бурштинова FilledButton у попапах, OutlinedButton з іншим радіусом там.
+      // Один стиль на кожен рівень ваги (primary/secondary/tertiary) — і його
+      // більше не треба повторювати в кожному .styleFrom() окремо.
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.accent,
+          foregroundColor: AppColors.accentInk,
+          disabledBackgroundColor: AppColors.surface,
+          disabledForegroundColor: AppColors.inkMuted,
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+        ),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: AppColors.inkMuted,
+          side: const BorderSide(color: AppColors.divider),
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+        ),
+      ),
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(foregroundColor: AppColors.inkMuted),
+      ),
     );
 
     return ValueListenableBuilder<Locale>(
@@ -1051,14 +1081,6 @@ class _CheckInScreenState extends State<CheckInScreen> {
         onPressed: _choosePhotoSource,
         icon: const Icon(PhosphorIconsLight.camera, size: 18),
         label: Text(l10n.addPhoto),
-        style: OutlinedButton.styleFrom(
-          foregroundColor: AppColors.inkMuted,
-          side: const BorderSide(color: AppColors.divider),
-          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
       ),
     );
   }
@@ -1123,26 +1145,17 @@ class _CheckInScreenState extends State<CheckInScreen> {
                     width: double.infinity,
                     child: ElevatedButton(
                       onPressed: _saving ? null : _save,
-                      style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        backgroundColor: AppColors.ink,
-                        foregroundColor: AppColors.background,
-                      ),
                       child: _saving
                           ? const SizedBox(
                               height: 18,
                               width: 18,
                               child: CircularProgressIndicator(
                                 strokeWidth: 2,
-                                color: AppColors.background,
+                                color: AppColors.accentInk,
                               ),
                             )
                           : Text(
                               _todayEntryId != null ? l10n.update : l10n.save,
-                              style: const TextStyle(fontSize: 16),
                             ),
                     ),
                   ),
@@ -1255,14 +1268,6 @@ class _CheckInScreenState extends State<CheckInScreen> {
           onPressed: _startEditing,
           icon: const Icon(PhosphorIconsLight.pencilSimple, size: 18),
           label: Text(l10n.edit),
-          style: OutlinedButton.styleFrom(
-            padding: const EdgeInsets.symmetric(vertical: 14),
-            foregroundColor: AppColors.ink,
-            side: const BorderSide(color: AppColors.divider),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-          ),
         ),
       ),
       const SizedBox(height: 12),

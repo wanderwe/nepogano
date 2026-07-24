@@ -28,7 +28,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       widget.onDone();
       return;
     }
-    _controller.nextPage(duration: const Duration(milliseconds: 300), curve: Curves.easeOut);
+    _controller.nextPage(
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeOut,
+    );
   }
 
   @override
@@ -64,7 +67,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 alignment: Alignment.centerRight,
                 child: TextButton(
                   onPressed: widget.onDone,
-                  child: Text(l10n.skip, style: const TextStyle(color: AppColors.inkMuted)),
+                  child: Text(
+                    l10n.skip,
+                    style: const TextStyle(color: AppColors.inkMuted),
+                  ),
                 ),
               ),
               Expanded(
@@ -95,11 +101,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 onPressed: _next,
                 style: ElevatedButton.styleFrom(
                   minimumSize: const Size.fromHeight(52),
-                  backgroundColor: AppColors.ink,
-                  foregroundColor: AppColors.background,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
-                child: Text(_page == _pageCount - 1 ? l10n.getStarted : l10n.next),
+                child: Text(
+                  _page == _pageCount - 1 ? l10n.getStarted : l10n.next,
+                ),
               ),
               const SizedBox(height: 24),
             ],
@@ -130,13 +135,21 @@ class _OnboardingPage extends StatelessWidget {
                   Text(
                     headline,
                     textAlign: TextAlign.center,
-                    style: appSerif(fontSize: 28, fontWeight: FontWeight.w700, height: 1.2),
+                    style: appSerif(
+                      fontSize: 28,
+                      fontWeight: FontWeight.w700,
+                      height: 1.2,
+                    ),
                   ),
                   const SizedBox(height: 16),
                   Text(
                     body,
                     textAlign: TextAlign.center,
-                    style: const TextStyle(fontSize: 16, color: AppColors.inkMuted, height: 1.4),
+                    style: const TextStyle(
+                      fontSize: 16,
+                      color: AppColors.inkMuted,
+                      height: 1.4,
+                    ),
                   ),
                 ],
               ),
