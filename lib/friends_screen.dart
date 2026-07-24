@@ -208,6 +208,12 @@ class _FriendsScreenState extends State<FriendsScreen> {
   Map<String, Set<String>> _folderMembership = {};
   String? _selectedFolderId;
 
+  // Скільки разів друзі вгадували мій настрій і скільки з цих спроб — вірно.
+  // null, поки не завантажено або якщо ще жодної спроби не було (тоді
+  // просто не показуємо статистику — нічого хвалитись нулем).
+  int? _guessesTotal;
+  int? _guessesCorrect;
+
   @override
   void initState() {
     super.initState();
@@ -229,6 +235,19 @@ class _FriendsScreenState extends State<FriendsScreen> {
           .select('friend_code, display_name')
           .eq('user_id', myId)
           .maybeSingle();
+
+      // Скільки разів друзі намагались вгадати мій настрій і скільки з цих
+      // спроб — вірно. Потребує окремої RLS-політики на select (нижче) —
+      // стара дозволяла бачити тільки власні здогадки (guesser_id = я),
+      // не ті, що про мене (guess-stats-migration.sql).
+      final myGuessRows = await _supabase
+          .from('circle_guesses')
+          .select('correct')
+          .eq('target_user_id', myId);
+      final guessesTotal = (myGuessRows as List).length;
+      final guessesCorrect = myGuessRows
+          .where((r) => r['correct'] == true)
+          .length;
 
       final friendshipRows = await _supabase
           .from('friendships')
@@ -384,6 +403,8 @@ class _FriendsScreenState extends State<FriendsScreen> {
           _pendingInvites = (inviteRows as List).cast<Map<String, dynamic>>();
           _folders = folders;
           _folderMembership = membership;
+          _guessesTotal = guessesTotal;
+          _guessesCorrect = guessesCorrect;
           _loading = false;
         });
       } else {
@@ -395,6 +416,8 @@ class _FriendsScreenState extends State<FriendsScreen> {
           _pendingInvites = (inviteRows as List).cast<Map<String, dynamic>>();
           _folders = folders;
           _folderMembership = membership;
+          _guessesTotal = guessesTotal;
+          _guessesCorrect = guessesCorrect;
           _loading = false;
         });
       }
@@ -985,6 +1008,20 @@ class _FriendsScreenState extends State<FriendsScreen> {
                           ),
                         ),
                       ),
+                      if ((_guessesTotal ?? 0) > 0) ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          l10n.guessStats(
+                            _guessesCorrect!,
+                            _guessesTotal!,
+                            ((_guessesCorrect! / _guessesTotal!) * 100).round(),
+                          ),
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: AppColors.inkMuted,
+                          ),
+                        ),
+                      ],
                       const SizedBox(height: 4),
                       Row(
                         children: [

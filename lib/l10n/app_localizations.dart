@@ -746,6 +746,12 @@ abstract class AppLocalizations {
   /// **'Не вдалось зберегти здогадку.'**
   String get couldNotSaveGuess;
 
+  /// No description provided for @guessStats.
+  ///
+  /// In uk, this message translates to:
+  /// **'Друзі вгадали твій настрій {correct} із {total} ({percent}%)'**
+  String guessStats(int correct, int total, int percent);
+
   /// No description provided for @allFriends.
   ///
   /// In uk, this message translates to:

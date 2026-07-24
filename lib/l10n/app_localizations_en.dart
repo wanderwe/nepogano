@@ -357,6 +357,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get couldNotSaveGuess => 'Couldn\'t save the guess.';
 
   @override
+  String guessStats(int correct, int total, int percent) {
+    return 'Friends guessed your mood $correct out of $total ($percent%)';
+  }
+
+  @override
   String get allFriends => 'All';
 
   @override

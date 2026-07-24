@@ -137,6 +137,14 @@
   "guessedWrong": "не вгадав(ла)",
   "howAreTheyToday": "Як думаєш, як у них?",
   "couldNotSaveGuess": "Не вдалось зберегти здогадку.",
+  "guessStats": "Друзі вгадали твій настрій {correct} із {total} ({percent}%)",
+  "@guessStats": {
+    "placeholders": {
+      "correct": { "type": "int" },
+      "total": { "type": "int" },
+      "percent": { "type": "int" }
+    }
+  },
 
   "allFriends": "Усі",
   "newFolder": "Нове коло",

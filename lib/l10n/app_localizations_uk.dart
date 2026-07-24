@@ -357,6 +357,11 @@ class AppLocalizationsUk extends AppLocalizations {
   String get couldNotSaveGuess => 'Не вдалось зберегти здогадку.';
 
   @override
+  String guessStats(int correct, int total, int percent) {
+    return 'Друзі вгадали твій настрій $correct із $total ($percent%)';
+  }
+
+  @override
   String get allFriends => 'Усі';
 
   @override

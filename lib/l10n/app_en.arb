@@ -128,6 +128,14 @@
   "guessedWrong": "not quite",
   "howAreTheyToday": "How do you think they're doing?",
   "couldNotSaveGuess": "Couldn't save the guess.",
+  "guessStats": "Friends guessed your mood {correct} out of {total} ({percent}%)",
+  "@guessStats": {
+    "placeholders": {
+      "correct": { "type": "int" },
+      "total": { "type": "int" },
+      "percent": { "type": "int" }
+    }
+  },
 
   "allFriends": "All",
   "newFolder": "New circle",
