@@ -710,7 +710,6 @@ class _CheckInScreenState extends State<CheckInScreen> {
     final l10n = AppLocalizations.of(context);
     final choice = await showModalBottomSheet<String>(
       context: context,
-      backgroundColor: AppColors.surfaceRaised,
       builder: (context) => SafeArea(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(8, 12, 8, 8),
@@ -825,7 +824,6 @@ class _CheckInScreenState extends State<CheckInScreen> {
 
     await showModalBottomSheet<void>(
       context: context,
-      backgroundColor: AppColors.surfaceRaised,
       builder: (context) => StatefulBuilder(
         builder: (context, setSheetState) => SafeArea(
           child: Padding(
@@ -1002,7 +1000,6 @@ class _CheckInScreenState extends State<CheckInScreen> {
     final l10n = AppLocalizations.of(context);
     final source = await showModalBottomSheet<ImageSource>(
       context: context,
-      backgroundColor: AppColors.surfaceRaised,
       builder: (context) => SafeArea(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(8, 12, 8, 8),
@@ -1440,10 +1437,6 @@ class _CheckInScreenState extends State<CheckInScreen> {
   void _openMoreMenu() {
     showModalBottomSheet(
       context: context,
-      backgroundColor: AppColors.surfaceRaised,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
       builder: (sheetContext) => _MoreMenuSheet(
         onLanguage: () {
           Navigator.of(sheetContext).pop();

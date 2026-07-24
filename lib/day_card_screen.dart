@@ -101,10 +101,6 @@ class _DayCardScreenState extends State<DayCardScreen> {
     if (!mounted) return;
     showModalBottomSheet(
       context: context,
-      backgroundColor: AppColors.surfaceRaised,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
       builder: (context) => _MultiShareSheet(imagePath: path),
     );
   }

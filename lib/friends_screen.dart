@@ -564,7 +564,6 @@ class _FriendsScreenState extends State<FriendsScreen> {
     final l10n = AppLocalizations.of(context);
     final choice = await showModalBottomSheet<String>(
       context: context,
-      backgroundColor: AppColors.surfaceRaised,
       builder: (context) => SafeArea(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(8, 12, 8, 8),
@@ -800,7 +799,6 @@ class _FriendsScreenState extends State<FriendsScreen> {
     final l10n = AppLocalizations.of(context);
     final choice = await showModalBottomSheet<String>(
       context: context,
-      backgroundColor: AppColors.surfaceRaised,
       builder: (context) => SafeArea(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(8, 12, 8, 8),
@@ -840,7 +838,6 @@ class _FriendsScreenState extends State<FriendsScreen> {
 
     await showModalBottomSheet<void>(
       context: context,
-      backgroundColor: AppColors.surfaceRaised,
       builder: (context) => StatefulBuilder(
         builder: (context, setSheetState) => SafeArea(
           child: Padding(
