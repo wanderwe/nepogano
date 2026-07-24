@@ -576,14 +576,14 @@ class _FriendsScreenState extends State<FriendsScreen> {
                 onTap: () => Navigator.of(context).pop('link'),
               ),
               _MenuRow(
-                icon: Icons.vpn_key_outlined,
-                label: l10n.haveCode,
-                onTap: () => Navigator.of(context).pop('code'),
-              ),
-              _MenuRow(
                 icon: Icons.email_outlined,
                 label: l10n.inviteFriendByEmail,
                 onTap: () => Navigator.of(context).pop('email'),
+              ),
+              _MenuRow(
+                icon: Icons.vpn_key_outlined,
+                label: l10n.haveCode,
+                onTap: () => Navigator.of(context).pop('code'),
               ),
             ],
           ),
