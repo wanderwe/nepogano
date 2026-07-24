@@ -382,6 +382,44 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get commentHint => 'Write a comment...';
+
+  @override
+  String get postComment => 'Send';
+
+  @override
+  String get reply => 'Reply';
+
+  @override
+  String replyingTo(String name) {
+    return 'Replying to $name';
+  }
+
+  @override
+  String get editedLabel => '(edited)';
+
+  @override
+  String get commentDeleted => 'Comment deleted';
+
+  @override
+  String get deleteCommentConfirmTitle => 'Delete this comment?';
+
+  @override
+  String get deleteCommentConfirmBody => 'This can\'t be undone.';
+
+  @override
+  String get couldNotLoadComments => 'Couldn\'t load comments.';
+
+  @override
+  String get couldNotPostComment => 'Couldn\'t post the comment.';
+
+  @override
+  String get couldNotEditComment => 'Couldn\'t save the changes.';
+
+  @override
+  String get couldNotDeleteComment => 'Couldn\'t delete the comment.';
+
+  @override
   String get allFriends => 'All';
 
   @override

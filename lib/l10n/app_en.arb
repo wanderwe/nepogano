@@ -150,6 +150,24 @@
     }
   },
 
+  "commentHint": "Write a comment...",
+  "postComment": "Send",
+  "reply": "Reply",
+  "replyingTo": "Replying to {name}",
+  "@replyingTo": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+  "editedLabel": "(edited)",
+  "commentDeleted": "Comment deleted",
+  "deleteCommentConfirmTitle": "Delete this comment?",
+  "deleteCommentConfirmBody": "This can't be undone.",
+  "couldNotLoadComments": "Couldn't load comments.",
+  "couldNotPostComment": "Couldn't post the comment.",
+  "couldNotEditComment": "Couldn't save the changes.",
+  "couldNotDeleteComment": "Couldn't delete the comment.",
+
   "allFriends": "All",
   "newFolder": "New circle",
   "folderNameHint": "e.g. Family",

@@ -382,6 +382,44 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
+  String get commentHint => 'Напиши коментар...';
+
+  @override
+  String get postComment => 'Надіслати';
+
+  @override
+  String get reply => 'Відповісти';
+
+  @override
+  String replyingTo(String name) {
+    return 'Відповідаєш $name';
+  }
+
+  @override
+  String get editedLabel => '(редаговано)';
+
+  @override
+  String get commentDeleted => 'Коментар видалено';
+
+  @override
+  String get deleteCommentConfirmTitle => 'Видалити коментар?';
+
+  @override
+  String get deleteCommentConfirmBody => 'Цю дію не можна скасувати.';
+
+  @override
+  String get couldNotLoadComments => 'Не вдалось завантажити коментарі.';
+
+  @override
+  String get couldNotPostComment => 'Не вдалось надіслати коментар.';
+
+  @override
+  String get couldNotEditComment => 'Не вдалось зберегти зміни.';
+
+  @override
+  String get couldNotDeleteComment => 'Не вдалось видалити коментар.';
+
+  @override
   String get allFriends => 'Усі';
 
   @override

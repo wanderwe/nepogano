@@ -159,6 +159,24 @@
     }
   },
 
+  "commentHint": "Напиши коментар...",
+  "postComment": "Надіслати",
+  "reply": "Відповісти",
+  "replyingTo": "Відповідаєш {name}",
+  "@replyingTo": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+  "editedLabel": "(редаговано)",
+  "commentDeleted": "Коментар видалено",
+  "deleteCommentConfirmTitle": "Видалити коментар?",
+  "deleteCommentConfirmBody": "Цю дію не можна скасувати.",
+  "couldNotLoadComments": "Не вдалось завантажити коментарі.",
+  "couldNotPostComment": "Не вдалось надіслати коментар.",
+  "couldNotEditComment": "Не вдалось зберегти зміни.",
+  "couldNotDeleteComment": "Не вдалось видалити коментар.",
+
   "allFriends": "Усі",
   "newFolder": "Нове коло",
   "folderNameHint": "Наприклад, Родина",

@@ -788,6 +788,78 @@ abstract class AppLocalizations {
   /// **'Вгадує тебе: {correct} із {total} ({percent}%)'**
   String friendGuessStats(int correct, int total, int percent);
 
+  /// No description provided for @commentHint.
+  ///
+  /// In uk, this message translates to:
+  /// **'Напиши коментар...'**
+  String get commentHint;
+
+  /// No description provided for @postComment.
+  ///
+  /// In uk, this message translates to:
+  /// **'Надіслати'**
+  String get postComment;
+
+  /// No description provided for @reply.
+  ///
+  /// In uk, this message translates to:
+  /// **'Відповісти'**
+  String get reply;
+
+  /// No description provided for @replyingTo.
+  ///
+  /// In uk, this message translates to:
+  /// **'Відповідаєш {name}'**
+  String replyingTo(String name);
+
+  /// No description provided for @editedLabel.
+  ///
+  /// In uk, this message translates to:
+  /// **'(редаговано)'**
+  String get editedLabel;
+
+  /// No description provided for @commentDeleted.
+  ///
+  /// In uk, this message translates to:
+  /// **'Коментар видалено'**
+  String get commentDeleted;
+
+  /// No description provided for @deleteCommentConfirmTitle.
+  ///
+  /// In uk, this message translates to:
+  /// **'Видалити коментар?'**
+  String get deleteCommentConfirmTitle;
+
+  /// No description provided for @deleteCommentConfirmBody.
+  ///
+  /// In uk, this message translates to:
+  /// **'Цю дію не можна скасувати.'**
+  String get deleteCommentConfirmBody;
+
+  /// No description provided for @couldNotLoadComments.
+  ///
+  /// In uk, this message translates to:
+  /// **'Не вдалось завантажити коментарі.'**
+  String get couldNotLoadComments;
+
+  /// No description provided for @couldNotPostComment.
+  ///
+  /// In uk, this message translates to:
+  /// **'Не вдалось надіслати коментар.'**
+  String get couldNotPostComment;
+
+  /// No description provided for @couldNotEditComment.
+  ///
+  /// In uk, this message translates to:
+  /// **'Не вдалось зберегти зміни.'**
+  String get couldNotEditComment;
+
+  /// No description provided for @couldNotDeleteComment.
+  ///
+  /// In uk, this message translates to:
+  /// **'Не вдалось видалити коментар.'**
+  String get couldNotDeleteComment;
+
   /// No description provided for @allFriends.
   ///
   /// In uk, this message translates to:

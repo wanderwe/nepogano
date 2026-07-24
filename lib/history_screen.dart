@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'comments_section.dart';
 import 'date_labels.dart';
 import 'day_card_screen.dart';
 import 'l10n/app_localizations.dart';
@@ -11,6 +12,7 @@ import 'photo_storage.dart';
 import 'style.dart';
 
 class CheckinEntry {
+  final String id;
   final DateTime createdAt;
   final MoodLevel mood;
   final String? note;
@@ -19,6 +21,7 @@ class CheckinEntry {
   final int updateCount;
 
   CheckinEntry({
+    required this.id,
     required this.createdAt,
     required this.mood,
     this.note,
@@ -100,13 +103,14 @@ class _HistoryScreenState extends State<HistoryScreen> {
       final rows = await _supabase
           .from(_table)
           .select(
-            'mood, note, created_at, photo_path, photo_align_y, update_count',
+            'id, mood, note, created_at, photo_path, photo_align_y, update_count',
           )
           .eq(_idColumn, _idValue)
           .order('created_at');
 
       final entries = (rows as List).map((row) {
         return CheckinEntry(
+          id: row['id'] as String,
           createdAt: DateTime.parse(row['created_at'] as String).toLocal(),
           mood: moodFromDbValue(row['mood'] as String),
           note: row['note'] as String?,
@@ -567,6 +571,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
                         },
                       ),
                     ],
+                    if (widget.subjectId == null)
+                      CommentsSection(checkinId: entry.id, canComment: true),
                   ],
                 ),
               ),

@@ -6,6 +6,7 @@ import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'comments_section.dart';
 import 'history_screen.dart';
 import 'l10n/app_localizations.dart';
 import 'main.dart';
@@ -27,6 +28,7 @@ bool _isSameDay(DateTime a, DateTime b) =>
 /// Один чек-ін конкретного друга за конкретний день у вікні "нещодавно" —
 /// дозволяє бачити й вгадувати кожен день окремо, а не тільки останній.
 class _FriendDayEntry {
+  final String id;
   final String userId;
   final MoodLevel mood;
   final String? note;
@@ -35,6 +37,7 @@ class _FriendDayEntry {
   final DateTime date;
 
   _FriendDayEntry({
+    required this.id,
     required this.userId,
     required this.mood,
     required this.note,
@@ -234,12 +237,6 @@ class _FriendsScreenState extends State<FriendsScreen> {
   Map<String, Set<String>> _folderMembership = {};
   String? _selectedFolderId;
 
-  // Скільки разів друзі вгадували мій настрій і скільки з цих спроб — вірно.
-  // null, поки не завантажено або якщо ще жодної спроби не було (тоді
-  // просто не показуємо статистику — нічого хвалитись нулем).
-  int? _guessesTotal;
-  int? _guessesCorrect;
-
   List<SharedSubject> _sharedSubjects = [];
 
   @override
@@ -268,17 +265,14 @@ class _FriendsScreenState extends State<FriendsScreen> {
       // спроб — вірно. Потребує окремої RLS-політики на select (нижче) —
       // стара дозволяла бачити тільки власні здогадки (guesser_id = я),
       // не ті, що про мене (guess-stats-migration.sql).
-      final myGuessRows = await _supabase
-          .from('circle_guesses')
-          .select('correct, guesser_id')
-          .eq('target_user_id', myId);
-      final guessesTotal = (myGuessRows as List).length;
-      final guessesCorrect = myGuessRows
-          .where((r) => r['correct'] == true)
-          .length;
-
-      // Той самий підрахунок, але окремо на кожного друга — щоб порівняти,
-      // хто вгадує краще (не тільки загальну суму).
+      // Підрахунок окремо на кожного друга — щоб порівняти, хто вгадує
+      // краще (замість однієї сумарної цифри по всіх друзях одразу).
+      final myGuessRows =
+          await _supabase
+                  .from('circle_guesses')
+                  .select('correct, guesser_id')
+                  .eq('target_user_id', myId)
+              as List;
       final guessesTotalByFriend = <String, int>{};
       final guessesCorrectByFriend = <String, int>{};
       for (final row in myGuessRows) {
@@ -499,8 +493,6 @@ class _FriendsScreenState extends State<FriendsScreen> {
           _pendingInvites = (inviteRows as List).cast<Map<String, dynamic>>();
           _folders = folders;
           _folderMembership = membership;
-          _guessesTotal = guessesTotal;
-          _guessesCorrect = guessesCorrect;
           _sharedSubjects = sharedSubjects;
           _loading = false;
         });
@@ -513,8 +505,6 @@ class _FriendsScreenState extends State<FriendsScreen> {
           _pendingInvites = (inviteRows as List).cast<Map<String, dynamic>>();
           _folders = folders;
           _folderMembership = membership;
-          _guessesTotal = guessesTotal;
-          _guessesCorrect = guessesCorrect;
           _sharedSubjects = sharedSubjects;
           _loading = false;
         });
@@ -1000,19 +990,6 @@ class _FriendsScreenState extends State<FriendsScreen> {
                 Expanded(
                   child: ListView(
                     children: [
-                      if ((_guessesTotal ?? 0) > 0) ...[
-                        Text(
-                          l10n.guessStats(
-                            _guessesCorrect!,
-                            _guessesTotal!,
-                            ((_guessesCorrect! / _guessesTotal!) * 100).round(),
-                          ),
-                          style: const TextStyle(
-                            fontSize: 13,
-                            color: AppColors.inkMuted,
-                          ),
-                        ),
-                      ],
                       const SizedBox(height: 4),
                       Row(
                         children: [
@@ -1298,7 +1275,7 @@ class _PersonDetailScreenState extends State<PersonDetailScreen> {
 
     final checkinRows = await _supabase
         .from('checkins')
-        .select('mood, note, photo_path, photo_align_y, created_at')
+        .select('id, mood, note, photo_path, photo_align_y, created_at')
         .eq('user_id', widget.userId)
         .gte('created_at', sinceUtc)
         .order('created_at', ascending: false);
@@ -1311,6 +1288,7 @@ class _PersonDetailScreenState extends State<PersonDetailScreen> {
       if (!seenDayKeys.add(_entryKey(widget.userId, date))) continue;
       entries.add(
         _FriendDayEntry(
+          id: row['id'] as String,
           userId: widget.userId,
           mood: moodFromDbValue(row['mood'] as String),
           note: row['note'] as String?,
@@ -1588,6 +1566,7 @@ class _PersonDetailScreenState extends State<PersonDetailScreen> {
                 },
               ),
             ],
+            CommentsSection(checkinId: entry.id, canComment: true),
           ] else ...[
             Text(
               l10n.howAreTheyToday,

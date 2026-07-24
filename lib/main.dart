@@ -12,6 +12,7 @@ import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'auth_screen.dart';
+import 'comments_section.dart';
 import 'date_labels.dart';
 import 'day_card_screen.dart';
 import 'friends_screen.dart';
@@ -1102,6 +1103,9 @@ class _CheckInScreenState extends State<CheckInScreen> {
   DayCardScreen _buildDayCardScreen() {
     return DayCardScreen(
       entry: CheckinEntry(
+        // Картка дня — статичне зображення для шеру, коментарі туди не
+        // рендеряться, тож id не потрібен.
+        id: (_todayEntryId as String?) ?? '',
         createdAt: _todayEntrySavedAt ?? DateTime.now(),
         mood: _selected!,
         note: _noteController.text.trim().isEmpty
@@ -1186,19 +1190,6 @@ class _CheckInScreenState extends State<CheckInScreen> {
                         child: Text(l10n.cancel),
                       ),
                     ),
-                    const SizedBox(height: 4),
-                    SizedBox(
-                      width: double.infinity,
-                      child: TextButton.icon(
-                        onPressed: () => Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) => _buildDayCardScreen(),
-                          ),
-                        ),
-                        icon: const Icon(PhosphorIconsLight.export, size: 18),
-                        label: Text(l10n.dayCard),
-                      ),
-                    ),
                   ],
                 ],
               )
@@ -1279,6 +1270,11 @@ class _CheckInScreenState extends State<CheckInScreen> {
                 },
               ),
             ],
+            if (_activeSubjectId == null && _todayEntryId != null)
+              CommentsSection(
+                checkinId: _todayEntryId as String,
+                canComment: true,
+              ),
           ],
         ),
       ),
@@ -1342,6 +1338,9 @@ class _CheckInScreenState extends State<CheckInScreen> {
     setState(() {
       _weekEntries = (rows as List).map((row) {
         return CheckinEntry(
+          // Лише для крапок тижневої стрічки — id тут ніде не читається
+          // (CommentsSection на цей список не підключений).
+          id: '',
           createdAt: DateTime.parse(row['created_at'] as String).toLocal(),
           mood: moodFromDbValue(row['mood'] as String),
           note: row['note'] as String?,
