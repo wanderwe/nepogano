@@ -197,13 +197,13 @@ abstract class AppLocalizations {
   /// No description provided for @onboarding1Headline.
   ///
   /// In uk, this message translates to:
-  /// **'Не кожен день неймовірний'**
+  /// **'Твій день, без прикрас'**
   String get onboarding1Headline;
 
   /// No description provided for @onboarding1Body.
   ///
   /// In uk, this message translates to:
-  /// **'І це нормально. Тут не треба прикрашати — просто чесно зафіксуй, як минув день.'**
+  /// **'Не кожен день має бути неймовірним — і це нормально. Просто чесно зафіксуй, як він минув.'**
   String get onboarding1Body;
 
   /// No description provided for @onboarding2Headline.
@@ -215,7 +215,7 @@ abstract class AppLocalizations {
   /// No description provided for @onboarding2Body.
   ///
   /// In uk, this message translates to:
-  /// **'Три прості оцінки без пафосу. Жодного тиску відповідати \"чудово\", коли насправді \"так собі\".'**
+  /// **'Три прості слова — швидко й чесно, без тиску вигадувати щось \"грандіозне\", коли насправді просто \"так собі\".'**
   String get onboarding2Body;
 
   /// No description provided for @onboarding4Headline.
@@ -227,7 +227,7 @@ abstract class AppLocalizations {
   /// No description provided for @onboarding4Body.
   ///
   /// In uk, this message translates to:
-  /// **'Не нескінченна стрічка чужих людей — лише ті, кого ти справді знаєш. Додай друзів і спробуй вгадати, як минув їхній день.'**
+  /// **'Лише ті, кого ти справді знаєш — без нескінченної стрічки чужих людей. Додай друзів і спробуй вгадати, як минув їхній день.'**
   String get onboarding4Body;
 
   /// No description provided for @onboarding5Headline.
@@ -239,7 +239,7 @@ abstract class AppLocalizations {
   /// No description provided for @onboarding5Body.
   ///
   /// In uk, this message translates to:
-  /// **'Записи складаються в спокійну ретроспективу — без оцінок, просто дзеркало твого місяця.'**
+  /// **'Записи складаються в спокійну ретроспективу — просто дзеркало твого місяця, без оцінок.'**
   String get onboarding5Body;
 
   /// No description provided for @addPhoto.

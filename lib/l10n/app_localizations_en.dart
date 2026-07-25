@@ -57,32 +57,32 @@ class AppLocalizationsEn extends AppLocalizations {
   String get getStarted => 'Get started';
 
   @override
-  String get onboarding1Headline => 'Not every day is amazing';
+  String get onboarding1Headline => 'Your day, no dressing it up';
 
   @override
   String get onboarding1Body =>
-      'And that\'s fine. No need to dress it up here — just honestly note how the day went.';
+      'Not every day has to be amazing — and that\'s fine. Just honestly note how it went.';
 
   @override
   String get onboarding2Headline => 'Meh. Not bad. Awesome.';
 
   @override
   String get onboarding2Body =>
-      'Three plain ratings, no hype. No pressure to say \"amazing\" when it was really just okay.';
+      'Three plain words, quick and honest — no pressure to dress it up as \"amazing\" when it was really just okay.';
 
   @override
   String get onboarding4Headline => 'Close ones, close by';
 
   @override
   String get onboarding4Body =>
-      'No endless feed of strangers — just the people you actually know. Add friends and try to guess how their day went.';
+      'Just the people you actually know — no endless feed of strangers. Add friends and try to guess how their day went.';
 
   @override
   String get onboarding5Headline => 'A look back at your month';
 
   @override
   String get onboarding5Body =>
-      'Your entries add up into a quiet retrospective — no scoring, just a mirror of your month.';
+      'Your entries add up into a quiet retrospective — just a mirror of your month, no scoring.';
 
   @override
   String get addPhoto => 'Add photo';
