@@ -254,7 +254,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get myDayInNepogano => 'My day with Nepogano';
 
   @override
-  String get friends => 'Friends';
+  String get friends => 'Circles';
 
   @override
   String get profile => 'Profile';
@@ -311,7 +311,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get friendInviteSent =>
-      'Sent. They\'ll see the invite when they open \"Friends\" in the app.';
+      'Sent. They\'ll see the invite when they open \"Circles\" in the app.';
 
   @override
   String get couldNotInviteFriend =>
@@ -516,7 +516,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get noFoldersYetForSharing =>
-      'Create a circle on the \"Friends\" screen first.';
+      'Create a circle on the \"Circles\" screen first.';
 
   @override
   String shareSubjectTitle(String name) {

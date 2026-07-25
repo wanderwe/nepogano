@@ -85,7 +85,7 @@
   "notInstalled": "{app} isn't installed on this device.",
   "myDayInNepogano": "My day with Nepogano",
 
-  "friends": "Friends",
+  "friends": "Circles",
   "profile": "Profile",
   "myFriendCode": "My code",
   "codeCopied": "Code copied",
@@ -103,7 +103,7 @@
   "invite": "Invite",
   "personEmailHint": "Person's email",
   "inviteFriendByEmail": "Invite a friend by email",
-  "friendInviteSent": "Sent. They'll see the invite when they open \"Friends\" in the app.",
+  "friendInviteSent": "Sent. They'll see the invite when they open \"Circles\" in the app.",
   "couldNotInviteFriend": "Couldn't invite. They may already be invited.",
   "shareMyLink": "Share my link",
   "friendInviteShareText": "{name} wants to add you as a friend on Nepogano!\n\nhttps://nepogano.app/join/{code}",
@@ -213,7 +213,7 @@
   "couldNotRenameSubject": "Couldn't rename it.",
   "shareWithCircle": "Share with circle",
   "deleteDiary": "Delete diary",
-  "noFoldersYetForSharing": "Create a circle on the \"Friends\" screen first.",
+  "noFoldersYetForSharing": "Create a circle on the \"Circles\" screen first.",
   "shareSubjectTitle": "Who can see {name}'s diary",
   "@shareSubjectTitle": {
     "placeholders": {

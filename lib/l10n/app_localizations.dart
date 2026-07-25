@@ -557,7 +557,7 @@ abstract class AppLocalizations {
   /// No description provided for @friends.
   ///
   /// In uk, this message translates to:
-  /// **'Друзі'**
+  /// **'Кола'**
   String get friends;
 
   /// No description provided for @profile.
@@ -665,7 +665,7 @@ abstract class AppLocalizations {
   /// No description provided for @friendInviteSent.
   ///
   /// In uk, this message translates to:
-  /// **'Запрошення надіслано. Людина побачить його, коли відкриє \"Друзі\" в застосунку.'**
+  /// **'Запрошення надіслано. Людина побачить його, коли відкриє \"Кола\" в застосунку.'**
   String get friendInviteSent;
 
   /// No description provided for @couldNotInviteFriend.
@@ -1037,7 +1037,7 @@ abstract class AppLocalizations {
   /// No description provided for @noFoldersYetForSharing.
   ///
   /// In uk, this message translates to:
-  /// **'Спершу створи коло на екрані \"Друзі\".'**
+  /// **'Спершу створи коло на екрані \"Кола\".'**
   String get noFoldersYetForSharing;
 
   /// No description provided for @shareSubjectTitle.
