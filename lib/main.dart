@@ -1306,8 +1306,8 @@ class _CheckInScreenState extends State<CheckInScreen> {
                 future: downloadCheckinPhoto(_existingPhotoPath!),
                 builder: (context, snapshot) {
                   if (!snapshot.hasData) {
-                    return const SizedBox(
-                      height: 140,
+                    return const AspectRatio(
+                      aspectRatio: kCompactPhotoAspectRatio,
                       child: Center(
                         child: SizedBox(
                           width: 20,
@@ -1319,14 +1319,15 @@ class _CheckInScreenState extends State<CheckInScreen> {
                   }
                   return ClipRRect(
                     borderRadius: BorderRadius.circular(14),
-                    child: ScaledPhoto(
-                      scale: _photoScale,
-                      child: Image.memory(
-                        snapshot.data!,
-                        height: 160,
-                        width: double.infinity,
-                        fit: BoxFit.cover,
-                        alignment: Alignment(0, _photoAlignY),
+                    child: AspectRatio(
+                      aspectRatio: kCompactPhotoAspectRatio,
+                      child: ScaledPhoto(
+                        scale: _photoScale,
+                        child: Image.memory(
+                          snapshot.data!,
+                          fit: BoxFit.cover,
+                          alignment: Alignment(0, _photoAlignY),
+                        ),
                       ),
                     ),
                   );
@@ -1975,9 +1976,8 @@ class _PhotoPreview extends StatelessWidget {
       children: [
         ClipRRect(
           borderRadius: BorderRadius.circular(16),
-          child: SizedBox(
-            height: 140,
-            width: double.infinity,
+          child: AspectRatio(
+            aspectRatio: kCompactPhotoAspectRatio,
             child: GestureDetector(onTap: onReposition, child: image),
           ),
         ),

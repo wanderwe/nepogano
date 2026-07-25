@@ -1618,8 +1618,8 @@ class _PersonDetailScreenState extends State<PersonDetailScreen> {
                 future: downloadCheckinPhoto(entry.photoPath!),
                 builder: (context, snapshot) {
                   if (!snapshot.hasData) {
-                    return const SizedBox(
-                      height: 140,
+                    return const AspectRatio(
+                      aspectRatio: kCompactPhotoAspectRatio,
                       child: Center(
                         child: SizedBox(
                           width: 20,
@@ -1631,14 +1631,15 @@ class _PersonDetailScreenState extends State<PersonDetailScreen> {
                   }
                   return ClipRRect(
                     borderRadius: BorderRadius.circular(12),
-                    child: ScaledPhoto(
-                      scale: entry.photoScale,
-                      child: Image.memory(
-                        snapshot.data!,
-                        height: 140,
-                        width: double.infinity,
-                        fit: BoxFit.cover,
-                        alignment: Alignment(0, entry.photoAlignY),
+                    child: AspectRatio(
+                      aspectRatio: kCompactPhotoAspectRatio,
+                      child: ScaledPhoto(
+                        scale: entry.photoScale,
+                        child: Image.memory(
+                          snapshot.data!,
+                          fit: BoxFit.cover,
+                          alignment: Alignment(0, entry.photoAlignY),
+                        ),
                       ),
                     ),
                   );

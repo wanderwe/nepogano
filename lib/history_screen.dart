@@ -599,14 +599,15 @@ class _HistoryScreenState extends State<HistoryScreen> {
                           if (!snapshot.hasData) return const SizedBox.shrink();
                           return ClipRRect(
                             borderRadius: BorderRadius.circular(10),
-                            child: ScaledPhoto(
-                              scale: entry.photoScale,
-                              child: Image.memory(
-                                snapshot.data!,
-                                height: 90,
-                                width: double.infinity,
-                                fit: BoxFit.cover,
-                                alignment: Alignment(0, entry.photoAlignY),
+                            child: AspectRatio(
+                              aspectRatio: kCompactPhotoAspectRatio,
+                              child: ScaledPhoto(
+                                scale: entry.photoScale,
+                                child: Image.memory(
+                                  snapshot.data!,
+                                  fit: BoxFit.cover,
+                                  alignment: Alignment(0, entry.photoAlignY),
+                                ),
                               ),
                             ),
                           );
