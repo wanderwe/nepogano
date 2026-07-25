@@ -455,6 +455,12 @@ class AppLocalizationsUk extends AppLocalizations {
   String get addToFolder => 'Додати в коло';
 
   @override
+  String get renameFolder => 'Перейменувати коло';
+
+  @override
+  String get couldNotRenameFolder => 'Не вдалось перейменувати коло.';
+
+  @override
   String get noFoldersYet => 'Ще немає кіл.';
 
   @override

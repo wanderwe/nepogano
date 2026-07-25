@@ -926,6 +926,18 @@ abstract class AppLocalizations {
   /// **'Додати в коло'**
   String get addToFolder;
 
+  /// No description provided for @renameFolder.
+  ///
+  /// In uk, this message translates to:
+  /// **'Перейменувати коло'**
+  String get renameFolder;
+
+  /// No description provided for @couldNotRenameFolder.
+  ///
+  /// In uk, this message translates to:
+  /// **'Не вдалось перейменувати коло.'**
+  String get couldNotRenameFolder;
+
   /// No description provided for @noFoldersYet.
   ///
   /// In uk, this message translates to:

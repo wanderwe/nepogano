@@ -184,6 +184,8 @@
   "create": "Create",
   "couldNotCreateFolder": "Couldn't create the circle.",
   "addToFolder": "Add to circle",
+  "renameFolder": "Rename circle",
+  "couldNotRenameFolder": "Couldn't rename the circle.",
   "noFoldersYet": "No circles yet.",
   "removeFolderConfirmTitle": "Delete the \"{name}\" circle?",
   "@removeFolderConfirmTitle": {

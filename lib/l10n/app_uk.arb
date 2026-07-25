@@ -193,6 +193,8 @@
   "create": "Створити",
   "couldNotCreateFolder": "Не вдалось створити коло.",
   "addToFolder": "Додати в коло",
+  "renameFolder": "Перейменувати коло",
+  "couldNotRenameFolder": "Не вдалось перейменувати коло.",
   "noFoldersYet": "Ще немає кіл.",
   "removeFolderConfirmTitle": "Видалити коло {name}?",
   "@removeFolderConfirmTitle": {

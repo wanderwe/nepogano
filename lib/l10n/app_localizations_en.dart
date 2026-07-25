@@ -456,6 +456,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get addToFolder => 'Add to circle';
 
   @override
+  String get renameFolder => 'Rename circle';
+
+  @override
+  String get couldNotRenameFolder => 'Couldn\'t rename the circle.';
+
+  @override
   String get noFoldersYet => 'No circles yet.';
 
   @override

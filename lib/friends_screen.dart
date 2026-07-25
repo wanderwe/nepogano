@@ -779,6 +779,83 @@ class _FriendsScreenState extends State<FriendsScreen> {
     }
   }
 
+  Future<void> _openFolderMenu(FriendFolder folder) async {
+    final l10n = AppLocalizations.of(context);
+    final choice = await showModalBottomSheet<String>(
+      context: context,
+      builder: (context) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(8, 12, 8, 8),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _MenuRow(
+                icon: PhosphorIconsLight.pencilSimple,
+                label: l10n.renameFolder,
+                onTap: () => Navigator.of(context).pop('rename'),
+              ),
+              _MenuRow(
+                icon: PhosphorIconsLight.trash,
+                label: l10n.delete,
+                color: Colors.redAccent,
+                onTap: () => Navigator.of(context).pop('delete'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    if (choice == 'rename') {
+      await _renameFolder(folder);
+    } else if (choice == 'delete') {
+      await _removeFolder(folder);
+    }
+  }
+
+  Future<void> _renameFolder(FriendFolder folder) async {
+    final l10n = AppLocalizations.of(context);
+    final controller = TextEditingController(text: folder.name);
+    final name = await showDialog<String>(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => AppDialog(
+          title: l10n.renameFolder,
+          content: TextField(
+            controller: controller,
+            autofocus: true,
+            decoration: appFieldDecoration(l10n.folderNameHint),
+            onChanged: (_) => setState(() {}),
+          ),
+          primaryLabel: l10n.save,
+          onPrimary: controller.text.trim().isEmpty
+              ? null
+              : () => Navigator.of(context).pop(controller.text.trim()),
+          secondaryLabel: l10n.cancel,
+          onSecondary: () => Navigator.of(context).pop(),
+        ),
+      ),
+    );
+
+    if (name == null || name.isEmpty || name == folder.name) return;
+
+    try {
+      await _supabase
+          .from('friend_folders')
+          .update({'name': name})
+          .eq('id', folder.id);
+      _load();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(AppLocalizations.of(context).couldNotRenameFolder),
+          ),
+        );
+      }
+    }
+  }
+
   Future<void> _removeFolder(FriendFolder folder) async {
     final l10n = AppLocalizations.of(context);
     final confirmed = await showDialog<bool>(
@@ -1006,7 +1083,8 @@ class _FriendsScreenState extends State<FriendsScreen> {
                                       onTap: () => setState(
                                         () => _selectedFolderId = folder.id,
                                       ),
-                                      onLongPress: () => _removeFolder(folder),
+                                      onLongPress: () =>
+                                          _openFolderMenu(folder),
                                     ),
                                   ),
                                 ],
