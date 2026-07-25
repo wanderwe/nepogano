@@ -308,14 +308,41 @@ class _CommentsSectionState extends State<CommentsSection> {
     return null;
   }
 
+  // Рахуємо лише те, що реально рендериться (корінь + пряма відповідь на
+  // нього) — а не всі рядки в базі. Стара модель дозволяла необмежену
+  // глибину, тож у тестових даних могли лишитись відповіді-на-відповідь,
+  // яких нова модель просто не показує; без цього лічильник розходився б
+  // із тим, що видно на екрані.
+  int get _visibleCount {
+    final roots = _topLevel;
+    var count = roots.length;
+    for (final r in roots) {
+      if (_replyFor(r.id) != null) count++;
+    }
+    return count;
+  }
+
+  void _handleToggleTap() {
+    if (_visibleCount == 0) {
+      // Немає ще жодного коментаря — одразу відкриваємо поле вводу, а не
+      // змушуємо тапати двічі (спершу розгорнути, тоді ще раз "Додати
+      // коментар" всередині).
+      setState(() => _expanded = true);
+      _startCompose();
+    } else {
+      setState(() => _expanded = !_expanded);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     if (!widget.canComment || _loading) return const SizedBox.shrink();
-    if (_comments.isEmpty && !widget.showWhenEmpty) {
+    if (_visibleCount == 0 && !widget.showWhenEmpty) {
       return const SizedBox.shrink();
     }
     final l10n = AppLocalizations.of(context);
     final topLevel = _topLevel;
+    final visibleCount = _visibleCount;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -324,7 +351,7 @@ class _CommentsSectionState extends State<CommentsSection> {
         const Divider(color: AppColors.divider, height: 1),
         const SizedBox(height: 10),
         GestureDetector(
-          onTap: () => setState(() => _expanded = !_expanded),
+          onTap: _handleToggleTap,
           behavior: HitTestBehavior.opaque,
           child: Row(
             children: [
@@ -335,9 +362,9 @@ class _CommentsSectionState extends State<CommentsSection> {
               ),
               const SizedBox(width: 6),
               Text(
-                _comments.isEmpty
+                visibleCount == 0
                     ? l10n.addComment
-                    : l10n.commentsCount(_comments.length),
+                    : l10n.commentsCount(visibleCount),
                 style: const TextStyle(fontSize: 13, color: AppColors.inkMuted),
               ),
               const Spacer(),
