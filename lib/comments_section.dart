@@ -1,9 +1,56 @@
 import 'package:flutter/material.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'l10n/app_localizations.dart';
 import 'style.dart';
+
+const _commentsLastSeenKey = 'comments_last_seen';
+
+/// Чи є коментар на МОЇХ днях, новіший за останній перегляд власної Історії
+/// (локальна мітка часу в SharedPreferences — без окремої таблиці "read
+/// receipts"). Власні відповіді (author_id = я) не рахуються — це не "нове
+/// повідомлення від когось", хоч і лежать у тій самій таблиці.
+Future<bool> hasUnseenComments(SupabaseClient supabase) async {
+  final myId = supabase.auth.currentUser?.id;
+  if (myId == null) return false;
+
+  final myCheckinRows = await supabase
+      .from('checkins')
+      .select('id')
+      .eq('user_id', myId);
+  final myCheckinIds = (myCheckinRows as List)
+      .map((r) => r['id'] as String)
+      .toList();
+  if (myCheckinIds.isEmpty) return false;
+
+  final prefs = await SharedPreferences.getInstance();
+  final lastSeenIso = prefs.getString(_commentsLastSeenKey);
+  final since = lastSeenIso != null
+      ? DateTime.parse(lastSeenIso)
+      : DateTime.fromMillisecondsSinceEpoch(0);
+
+  final commentRows = await supabase
+      .from('checkin_comments')
+      .select('id')
+      .inFilter('checkin_id', myCheckinIds)
+      .neq('author_id', myId)
+      .gt('created_at', since.toUtc().toIso8601String())
+      .limit(1);
+
+  return (commentRows as List).isNotEmpty;
+}
+
+/// Позначає всі поточні коментарі як переглянуті — викликати, коли юзер
+/// відкрив власну Історію (не чужу сутність), де коментарі й видно.
+Future<void> markCommentsSeen() async {
+  final prefs = await SharedPreferences.getInstance();
+  await prefs.setString(
+    _commentsLastSeenKey,
+    DateTime.now().toUtc().toIso8601String(),
+  );
+}
 
 class CheckinComment {
   final String id;

@@ -522,6 +522,7 @@ class _CheckInScreenState extends State<CheckInScreen> {
   DateTime? _todayEntrySavedAt;
   List<CheckinEntry> _weekEntries = [];
   bool _hasCircleActivity = false;
+  bool _hasUnseenComments = false;
   late DateTime _visibleWeekStart;
 
   // Фото: або вже збережений шлях (з попереднього завантаження цього дня),
@@ -574,6 +575,7 @@ class _CheckInScreenState extends State<CheckInScreen> {
     _loadTodayEntry();
     _loadWeek();
     _checkCircleActivity();
+    _checkUnseenComments();
     _loadSubjects();
   }
 
@@ -595,6 +597,11 @@ class _CheckInScreenState extends State<CheckInScreen> {
   Future<void> _checkCircleActivity() async {
     final has = await hasUnseenFriendActivity(_supabase);
     if (mounted) setState(() => _hasCircleActivity = has);
+  }
+
+  Future<void> _checkUnseenComments() async {
+    final has = await hasUnseenComments(_supabase);
+    if (mounted) setState(() => _hasUnseenComments = has);
   }
 
   /// Перемикає, за кого зараз ведеться чек-ін (null = я сам) — той самий
@@ -1606,27 +1613,52 @@ class _CheckInScreenState extends State<CheckInScreen> {
                             ),
                         ],
                       ),
-                      IconButton(
-                        onPressed: () {
-                          final activeName = _activeSubjectId == null
-                              ? null
-                              : _subjects
-                                    .firstWhere((s) => s.id == _activeSubjectId)
-                                    .name;
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => HistoryScreen(
-                                subjectId: _activeSubjectId,
-                                subjectName: activeName,
+                      Stack(
+                        clipBehavior: Clip.none,
+                        children: [
+                          IconButton(
+                            onPressed: () async {
+                              final wasOwnHistory = _activeSubjectId == null;
+                              final activeName = _activeSubjectId == null
+                                  ? null
+                                  : _subjects
+                                        .firstWhere(
+                                          (s) => s.id == _activeSubjectId,
+                                        )
+                                        .name;
+                              await Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) => HistoryScreen(
+                                    subjectId: _activeSubjectId,
+                                    subjectName: activeName,
+                                  ),
+                                ),
+                              );
+                              // Крапка про нові коментарі стосується лише
+                              // власних днів — перегляд календаря сутності
+                              // її не знімає.
+                              if (wasOwnHistory) await markCommentsSeen();
+                              _checkUnseenComments();
+                            },
+                            icon: const Icon(
+                              PhosphorIconsLight.calendarBlank,
+                              size: 20,
+                            ),
+                            tooltip: l10n.history,
+                          ),
+                          if (_hasUnseenComments)
+                            const Positioned(
+                              top: 8,
+                              right: 8,
+                              child: DecoratedBox(
+                                decoration: BoxDecoration(
+                                  color: AppColors.notification,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: SizedBox(width: 8, height: 8),
                               ),
                             ),
-                          );
-                        },
-                        icon: const Icon(
-                          PhosphorIconsLight.calendarBlank,
-                          size: 20,
-                        ),
-                        tooltip: l10n.history,
+                        ],
                       ),
                       IconButton(
                         onPressed: _openMoreMenu,
