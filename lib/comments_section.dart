@@ -323,14 +323,24 @@ class _CommentsSectionState extends State<CommentsSection> {
   }
 
   void _handleToggleTap() {
-    if (_visibleCount == 0) {
+    if (!_expanded && _visibleCount == 0) {
       // Немає ще жодного коментаря — одразу відкриваємо поле вводу, а не
       // змушуємо тапати двічі (спершу розгорнути, тоді ще раз "Додати
       // коментар" всередині).
       setState(() => _expanded = true);
       _startCompose();
+    } else if (_expanded) {
+      // Згортання шевроном — єдиний спосіб "закрити" секцію, і він же
+      // відкидає незбережену чернетку (окрема "×" для цього була б
+      // дублюючим елементом керування).
+      setState(() {
+        _expanded = false;
+        _composing = false;
+        _replyToId = null;
+        _replyToName = null;
+      });
     } else {
-      setState(() => _expanded = !_expanded);
+      setState(() => _expanded = true);
     }
   }
 
@@ -362,19 +372,13 @@ class _CommentsSectionState extends State<CommentsSection> {
               ),
               const SizedBox(width: 6),
               Text(
+                // Один і той самий напис завжди — розкриття/згортання ("чи є
+                // тут коментарі") і сам заклик "додати" це різні речі: перше
+                // не повинно міняти назву залежно від стану.
                 visibleCount > 0
                     ? l10n.commentsCount(visibleCount)
-                    : (_expanded ? l10n.commentsLabel : l10n.addComment),
-                style: TextStyle(
-                  fontSize: 13,
-                  // Бурштиновий лише коли цей напис і є запрошенням до дії
-                  // (згорнуто, ще нема коментарів) — щойно поле вводу вже
-                  // відкрите нижче, той самий текст був би дублюючим
-                  // закликом, тож стає нейтральним.
-                  color: (!_expanded && visibleCount == 0)
-                      ? AppColors.accent
-                      : AppColors.inkMuted,
-                ),
+                    : l10n.commentsLabel,
+                style: const TextStyle(fontSize: 13, color: AppColors.inkMuted),
               ),
               const Spacer(),
               Icon(
@@ -540,8 +544,10 @@ class _CommentsSectionState extends State<CommentsSection> {
   }
 
   // Спільний для обох сценаріїв (відповідь власника на конкретний коментар
-  // і новий коментар друга) — щоб банер "Відповідаєш X" і кнопка "×" не
-  // дублювались у двох місцях з ризиком розійтись.
+  // і новий коментар друга) — щоб банер "Відповідаєш X" не дублювався у
+  // двох місцях з ризиком розійтись. Закриття незбереженого чернетки —
+  // лише через той самий шеврон вгорі секції (не окрема "×" поруч, яка
+  // робила б те саме іншою іконкою).
   Widget _buildComposer() {
     final l10n = AppLocalizations.of(context);
     return Padding(
@@ -549,32 +555,14 @@ class _CommentsSectionState extends State<CommentsSection> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Padding(
-            padding: const EdgeInsets.only(bottom: 6),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                if (_replyToId != null)
-                  Text(
-                    l10n.replyingTo(_replyToName ?? ''),
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: AppColors.inkMuted,
-                    ),
-                  )
-                else
-                  const SizedBox.shrink(),
-                GestureDetector(
-                  onTap: _closeCompose,
-                  child: const Icon(
-                    PhosphorIconsLight.x,
-                    size: 14,
-                    color: AppColors.inkMuted,
-                  ),
-                ),
-              ],
+          if (_replyToId != null)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 6),
+              child: Text(
+                l10n.replyingTo(_replyToName ?? ''),
+                style: const TextStyle(fontSize: 12, color: AppColors.inkMuted),
+              ),
             ),
-          ),
           _buildInputField(),
         ],
       ),
