@@ -254,7 +254,7 @@ class AppLocalizationsUk extends AppLocalizations {
   String get myDayInNepogano => 'Мій день з Nepogano';
 
   @override
-  String get friends => 'Кола';
+  String get friends => 'Друзі';
 
   @override
   String get profile => 'Профіль';
@@ -310,7 +310,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get friendInviteSent =>
-      'Запрошення надіслано. Людина побачить його, коли відкриє \"Кола\" в застосунку.';
+      'Запрошення надіслано. Людина побачить його, коли відкриє \"Друзі\" в застосунку.';
 
   @override
   String get couldNotInviteFriend =>
@@ -519,7 +519,8 @@ class AppLocalizationsUk extends AppLocalizations {
   String get deleteDiary => 'Видалити щоденник';
 
   @override
-  String get noFoldersYetForSharing => 'Спершу створи коло на екрані \"Кола\".';
+  String get noFoldersYetForSharing =>
+      'Спершу створи коло на екрані \"Друзі\".';
 
   @override
   String shareSubjectTitle(String name) {

@@ -94,7 +94,7 @@
   },
   "myDayInNepogano": "Мій день з Nepogano",
 
-  "friends": "Кола",
+  "friends": "Друзі",
   "profile": "Профіль",
   "myFriendCode": "Мій код",
   "codeCopied": "Код скопійовано",
@@ -112,7 +112,7 @@
   "invite": "Запросити",
   "personEmailHint": "Email людини",
   "inviteFriendByEmail": "Запросити друга по email",
-  "friendInviteSent": "Запрошення надіслано. Людина побачить його, коли відкриє \"Кола\" в застосунку.",
+  "friendInviteSent": "Запрошення надіслано. Людина побачить його, коли відкриє \"Друзі\" в застосунку.",
   "couldNotInviteFriend": "Не вдалось запросити. Можливо, вже запрошений.",
   "shareMyLink": "Поділитися посиланням",
   "friendInviteShareText": "{name} хоче додати тебе другом у Nepogano!\n\nhttps://nepogano.app/join/{code}",
@@ -224,7 +224,7 @@
   "couldNotRenameSubject": "Не вдалось перейменувати.",
   "shareWithCircle": "Поділитись з колом",
   "deleteDiary": "Видалити щоденник",
-  "noFoldersYetForSharing": "Спершу створи коло на екрані \"Кола\".",
+  "noFoldersYetForSharing": "Спершу створи коло на екрані \"Друзі\".",
   "shareSubjectTitle": "Кому видно щоденник {name}",
   "@shareSubjectTitle": {
     "placeholders": {
