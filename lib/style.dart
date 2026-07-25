@@ -2,6 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 
+/// Пропорція фото і в рамці позиціювання (`PhotoRepositionScreen`), і в
+/// картці дня (`day_card_screen.dart`) — має лишатись однією константою:
+/// якщо вони розійдуться, юзер побачить у шері не те, що обрізав рамкою.
+const kPhotoAspectRatio = 4 / 5;
+
 /// Спільна дизайн-система застосунку: темна тема (у стилі картки дня),
 /// два шрифти (serif для "голосу" бренду, sans для функціонального UI).
 /// Глибина на темному тлі передається тоном поверхні, а не тінями.

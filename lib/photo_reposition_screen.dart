@@ -3,10 +3,11 @@ import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'l10n/app_localizations.dart';
 import 'style.dart';
 
-/// Дає перетягнути фото вертикально в рамці тієї ж пропорції (16:10), що
-/// й картка дня — щоб підняти/опустити видиму частину, якщо BoxFit.cover
-/// десь зрізав важливе (наприклад, голову). Повертає нове alignY (-1..1)
-/// через Navigator.pop, або null якщо закрито без змін.
+/// Дає перетягнути фото вертикально в рамці тієї ж пропорції
+/// (`kPhotoAspectRatio`), що й картка дня — щоб підняти/опустити видиму
+/// частину, якщо BoxFit.cover десь зрізав важливе (наприклад, голову).
+/// Повертає нове alignY (-1..1) через Navigator.pop, або null якщо закрито
+/// без змін.
 class PhotoRepositionScreen extends StatefulWidget {
   final ImageProvider image;
   final double initialAlignY;
@@ -60,7 +61,7 @@ class _PhotoRepositionScreenState extends State<PhotoRepositionScreen> {
               ),
               const SizedBox(height: 24),
               AspectRatio(
-                aspectRatio: 16 / 10,
+                aspectRatio: kPhotoAspectRatio,
                 child: LayoutBuilder(
                   builder: (context, constraints) {
                     return ClipRRect(

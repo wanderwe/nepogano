@@ -84,6 +84,10 @@
   "other": "Other",
   "notInstalled": "{app} isn't installed on this device.",
   "myDayInNepogano": "My day with Nepogano",
+  "subjectDayInNepogano": "{name} in Nepogano",
+  "@subjectDayInNepogano": {
+    "placeholders": { "name": { "type": "String" } }
+  },
 
   "friends": "Friends",
   "profile": "Profile",

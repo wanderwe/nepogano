@@ -18,8 +18,11 @@ import 'style.dart';
 
 class DayCardScreen extends StatefulWidget {
   final CheckinEntry entry;
+  // Якщо картка належить щоденнику сутності (дитина/улюбленець), а не
+  // власному чек-іну — підписуємо шер її іменем, а не "Мій день".
+  final String? subjectName;
 
-  const DayCardScreen({super.key, required this.entry});
+  const DayCardScreen({super.key, required this.entry, this.subjectName});
 
   @override
   State<DayCardScreen> createState() => _DayCardScreenState();
@@ -30,6 +33,14 @@ class _DayCardScreenState extends State<DayCardScreen> {
   bool _sharing = false;
   bool _photoLoading = false;
   Uint8List? _photoBytes;
+
+  String get _shareText {
+    final l10n = AppLocalizations.of(context);
+    final name = widget.subjectName;
+    return name == null
+        ? l10n.myDayInNepogano
+        : l10n.subjectDayInNepogano(name);
+  }
 
   @override
   void initState() {
@@ -63,7 +74,7 @@ class _DayCardScreenState extends State<DayCardScreen> {
 
   Future<void> _share() async {
     setState(() => _sharing = true);
-    final shareText = AppLocalizations.of(context).myDayInNepogano;
+    final shareText = _shareText;
     try {
       final path = await _renderCardToFile();
       await SharePlus.instance.share(
@@ -101,7 +112,8 @@ class _DayCardScreenState extends State<DayCardScreen> {
     if (!mounted) return;
     showModalBottomSheet(
       context: context,
-      builder: (context) => _MultiShareSheet(imagePath: path),
+      builder: (context) =>
+          _MultiShareSheet(imagePath: path, shareText: _shareText),
     );
   }
 
@@ -190,8 +202,9 @@ class _DayCardScreenState extends State<DayCardScreen> {
 
 class _MultiShareSheet extends StatefulWidget {
   final String imagePath;
+  final String shareText;
 
-  const _MultiShareSheet({required this.imagePath});
+  const _MultiShareSheet({required this.imagePath, required this.shareText});
 
   @override
   State<_MultiShareSheet> createState() => _MultiShareSheetState();
@@ -241,10 +254,7 @@ class _MultiShareSheetState extends State<_MultiShareSheet> {
 
   Future<void> _shareOther() async {
     await SharePlus.instance.share(
-      ShareParams(
-        files: [XFile(widget.imagePath)],
-        text: AppLocalizations.of(context).myDayInNepogano,
-      ),
+      ShareParams(files: [XFile(widget.imagePath)], text: widget.shareText),
     );
     if (mounted) setState(() => _done.add('other'));
   }
@@ -364,11 +374,6 @@ class _DayCard extends StatelessWidget {
     final moodIndex = MoodLevel.values.indexOf(entry.mood);
     final noteText = entry.note?.trim();
     final hasNote = noteText != null && noteText.isNotEmpty;
-    // Коротка нотатка (або її відсутність) лишає багато вільного місця під
-    // фото — тоді розтягуємо фото на більшу, майже квадратну область замість
-    // вузької смужки. З довшою нотаткою повертаємось до ширшого кадру, щоб
-    // лишити місце тексту.
-    final photoAspectRatio = hasNote && noteText.length > 60 ? 16 / 10 : 4 / 5;
 
     return Container(
       width: 320,
@@ -383,7 +388,7 @@ class _DayCard extends StatelessWidget {
         children: [
           if (photoBytes != null)
             AspectRatio(
-              aspectRatio: photoAspectRatio,
+              aspectRatio: kPhotoAspectRatio,
               child: Image.memory(
                 photoBytes!,
                 fit: BoxFit.cover,

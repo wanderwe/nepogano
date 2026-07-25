@@ -1137,7 +1137,11 @@ class _CheckInScreenState extends State<CheckInScreen> {
   }
 
   DayCardScreen _buildDayCardScreen() {
+    final subjectName = _activeSubjectId == null
+        ? null
+        : _subjects.firstWhere((s) => s.id == _activeSubjectId).name;
     return DayCardScreen(
+      subjectName: subjectName,
       entry: CheckinEntry(
         // Картка дня — статичне зображення для шеру, коментарі туди не
         // рендеряться, тож id не потрібен.

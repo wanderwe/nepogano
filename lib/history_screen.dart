@@ -582,7 +582,10 @@ class _HistoryScreenState extends State<HistoryScreen> {
               IconButton(
                 onPressed: () => Navigator.of(context).push(
                   MaterialPageRoute(
-                    builder: (_) => DayCardScreen(entry: entry),
+                    builder: (_) => DayCardScreen(
+                      entry: entry,
+                      subjectName: widget.subjectName,
+                    ),
                   ),
                 ),
                 icon: const Icon(PhosphorIconsLight.export, size: 18),

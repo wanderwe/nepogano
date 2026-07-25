@@ -254,6 +254,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get myDayInNepogano => 'My day with Nepogano';
 
   @override
+  String subjectDayInNepogano(String name) {
+    return '$name in Nepogano';
+  }
+
+  @override
   String get friends => 'Friends';
 
   @override

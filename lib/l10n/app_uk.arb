@@ -93,6 +93,10 @@
     "placeholders": { "app": { "type": "String" } }
   },
   "myDayInNepogano": "Мій день з Nepogano",
+  "subjectDayInNepogano": "{name} у Nepogano",
+  "@subjectDayInNepogano": {
+    "placeholders": { "name": { "type": "String" } }
+  },
 
   "friends": "Друзі",
   "profile": "Профіль",

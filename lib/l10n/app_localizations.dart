@@ -554,6 +554,12 @@ abstract class AppLocalizations {
   /// **'Мій день з Nepogano'**
   String get myDayInNepogano;
 
+  /// No description provided for @subjectDayInNepogano.
+  ///
+  /// In uk, this message translates to:
+  /// **'{name} у Nepogano'**
+  String subjectDayInNepogano(String name);
+
   /// No description provided for @friends.
   ///
   /// In uk, this message translates to:
