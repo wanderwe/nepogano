@@ -18,6 +18,7 @@ class CheckinEntry {
   final String? note;
   final String? photoPath;
   final double photoAlignY;
+  final double photoScale;
   final int updateCount;
 
   CheckinEntry({
@@ -27,6 +28,7 @@ class CheckinEntry {
     this.note,
     this.photoPath,
     this.photoAlignY = 0,
+    this.photoScale = 1,
     this.updateCount = 0,
   });
 }
@@ -103,7 +105,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
       final rows = await _supabase
           .from(_table)
           .select(
-            'id, mood, note, created_at, photo_path, photo_align_y, update_count',
+            'id, mood, note, created_at, photo_path, photo_align_y, photo_scale, update_count',
           )
           .eq(_idColumn, _idValue)
           .order('created_at');
@@ -116,6 +118,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
           note: row['note'] as String?,
           photoPath: row['photo_path'] as String?,
           photoAlignY: (row['photo_align_y'] as num?)?.toDouble() ?? 0,
+          photoScale: (row['photo_scale'] as num?)?.toDouble() ?? 1,
           updateCount: (row['update_count'] as num?)?.toInt() ?? 0,
         );
       }).toList();
@@ -558,12 +561,15 @@ class _HistoryScreenState extends State<HistoryScreen> {
                           if (!snapshot.hasData) return const SizedBox.shrink();
                           return ClipRRect(
                             borderRadius: BorderRadius.circular(10),
-                            child: Image.memory(
-                              snapshot.data!,
-                              height: 90,
-                              width: double.infinity,
-                              fit: BoxFit.cover,
-                              alignment: Alignment(0, entry.photoAlignY),
+                            child: ScaledPhoto(
+                              scale: entry.photoScale,
+                              child: Image.memory(
+                                snapshot.data!,
+                                height: 90,
+                                width: double.infinity,
+                                fit: BoxFit.cover,
+                                alignment: Alignment(0, entry.photoAlignY),
+                              ),
                             ),
                           );
                         },

@@ -275,7 +275,7 @@ abstract class AppLocalizations {
   /// No description provided for @repositionPhotoHint.
   ///
   /// In uk, this message translates to:
-  /// **'Перетягни фото вгору чи вниз, щоб показати потрібну частину'**
+  /// **'Перетягни фото вгору чи вниз або зведи пальці, щоб наблизити'**
   String get repositionPhotoHint;
 
   /// No description provided for @repositionPhotoTooltip.

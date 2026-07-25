@@ -3,19 +3,21 @@ import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'l10n/app_localizations.dart';
 import 'style.dart';
 
-/// Дає перетягнути фото вертикально в рамці тієї ж пропорції
-/// (`kPhotoAspectRatio`), що й картка дня — щоб підняти/опустити видиму
-/// частину, якщо BoxFit.cover десь зрізав важливе (наприклад, голову).
-/// Повертає нове alignY (-1..1) через Navigator.pop, або null якщо закрито
-/// без змін.
+/// Дає перетягнути фото вертикально й наблизити пінчем у рамці тієї ж
+/// пропорції (`kPhotoAspectRatio`), що й картка дня — щоб підняти/опустити
+/// видиму частину або наблизити, якщо BoxFit.cover десь зрізав важливе
+/// (наприклад, голову). Повертає `(alignY, scale)` через Navigator.pop,
+/// або null якщо закрито без змін.
 class PhotoRepositionScreen extends StatefulWidget {
   final ImageProvider image;
   final double initialAlignY;
+  final double initialScale;
 
   const PhotoRepositionScreen({
     super.key,
     required this.image,
     this.initialAlignY = 0,
+    this.initialScale = 1,
   });
 
   @override
@@ -24,6 +26,8 @@ class PhotoRepositionScreen extends StatefulWidget {
 
 class _PhotoRepositionScreenState extends State<PhotoRepositionScreen> {
   late double _alignY = widget.initialAlignY;
+  late double _scale = widget.initialScale;
+  double _gestureStartScale = 1;
 
   @override
   Widget build(BuildContext context) {
@@ -67,19 +71,27 @@ class _PhotoRepositionScreenState extends State<PhotoRepositionScreen> {
                     return ClipRRect(
                       borderRadius: BorderRadius.circular(20),
                       child: GestureDetector(
-                        onVerticalDragUpdate: (details) {
+                        onScaleStart: (_) => _gestureStartScale = _scale,
+                        onScaleUpdate: (details) {
                           setState(() {
+                            _scale = (_gestureStartScale * details.scale).clamp(
+                              1.0,
+                              3.0,
+                            );
                             _alignY =
                                 (_alignY +
-                                        details.delta.dy /
+                                        details.focalPointDelta.dy /
                                             (constraints.maxHeight / 2))
                                     .clamp(-1.0, 1.0);
                           });
                         },
-                        child: Image(
-                          image: widget.image,
-                          fit: BoxFit.cover,
-                          alignment: Alignment(0, _alignY),
+                        child: ScaledPhoto(
+                          scale: _scale,
+                          child: Image(
+                            image: widget.image,
+                            fit: BoxFit.cover,
+                            alignment: Alignment(0, _alignY),
+                          ),
                         ),
                       ),
                     );
@@ -90,7 +102,7 @@ class _PhotoRepositionScreenState extends State<PhotoRepositionScreen> {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: () => Navigator.of(context).pop(_alignY),
+                  onPressed: () => Navigator.of(context).pop((_alignY, _scale)),
                   child: Text(l10n.done),
                 ),
               ),

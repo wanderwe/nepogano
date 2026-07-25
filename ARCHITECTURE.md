@@ -63,6 +63,7 @@
 4. `guess-stats-migration.sql` — RLS для статистики вгадувань
 5. `subject-sharing-migration.sql` — доступ колам до щоденників сутностей (залежить від #1 і #2)
 6. `checkin-comments-migration.sql` — коментарі під днями реальних людей (залежить від #1: використовує `circle_guesses`)
+7. `photo-scale-migration.sql` — зум фото при кадруванні (залежить від #2 — чіпає `subject_checkins`)
 
 ## Огляд фіч по екранах
 

@@ -33,7 +33,7 @@
   "chooseFromGallery": "Choose from gallery",
   "removePhotoTooltip": "Remove photo",
   "repositionPhoto": "Reposition photo",
-  "repositionPhotoHint": "Drag the photo up or down to show the right part",
+  "repositionPhotoHint": "Drag the photo up or down, or pinch to zoom in",
   "repositionPhotoTooltip": "Reposition photo",
 
   "history": "History",

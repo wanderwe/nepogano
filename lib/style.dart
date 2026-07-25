@@ -7,6 +7,26 @@ import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 /// якщо вони розійдуться, юзер побачить у шері не те, що обрізав рамкою.
 const kPhotoAspectRatio = 4 / 5;
 
+/// Обгортка для фото з урахуванням zoom (`photo_scale` у БД) — єдина
+/// точка, де застосовується масштаб, щоб він не розійшовся між формою
+/// вводу, підсумком дня, історією, друзями й карткою дня так само, як
+/// щойно розійшлась пропорція рамки. `scale <= 1` — no-op (найчастіший
+/// випадок, без зайвого ClipRect у дереві).
+class ScaledPhoto extends StatelessWidget {
+  final double scale;
+  final Widget child;
+
+  const ScaledPhoto({super.key, required this.scale, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    if (scale <= 1.0) return child;
+    return ClipRect(
+      child: Transform.scale(scale: scale, child: child),
+    );
+  }
+}
+
 /// Спільна дизайн-система застосунку: темна тема (у стилі картки дня),
 /// два шрифти (serif для "голосу" бренду, sans для функціонального UI).
 /// Глибина на темному тлі передається тоном поверхні, а не тінями.

@@ -34,6 +34,7 @@ class _FriendDayEntry {
   final String? note;
   final String? photoPath;
   final double photoAlignY;
+  final double photoScale;
   final DateTime date;
 
   _FriendDayEntry({
@@ -43,6 +44,7 @@ class _FriendDayEntry {
     required this.note,
     required this.photoPath,
     required this.photoAlignY,
+    required this.photoScale,
     required this.date,
   });
 }
@@ -1345,7 +1347,9 @@ class _PersonDetailScreenState extends State<PersonDetailScreen> {
 
     final checkinRows = await _supabase
         .from('checkins')
-        .select('id, mood, note, photo_path, photo_align_y, created_at')
+        .select(
+          'id, mood, note, photo_path, photo_align_y, photo_scale, created_at',
+        )
         .eq('user_id', widget.userId)
         .gte('created_at', sinceUtc)
         .order('created_at', ascending: false);
@@ -1364,6 +1368,7 @@ class _PersonDetailScreenState extends State<PersonDetailScreen> {
           note: row['note'] as String?,
           photoPath: row['photo_path'] as String?,
           photoAlignY: (row['photo_align_y'] as num?)?.toDouble() ?? 0,
+          photoScale: (row['photo_scale'] as num?)?.toDouble() ?? 1,
           date: date,
         ),
       );
@@ -1622,12 +1627,15 @@ class _PersonDetailScreenState extends State<PersonDetailScreen> {
                   }
                   return ClipRRect(
                     borderRadius: BorderRadius.circular(12),
-                    child: Image.memory(
-                      snapshot.data!,
-                      height: 140,
-                      width: double.infinity,
-                      fit: BoxFit.cover,
-                      alignment: Alignment(0, entry.photoAlignY),
+                    child: ScaledPhoto(
+                      scale: entry.photoScale,
+                      child: Image.memory(
+                        snapshot.data!,
+                        height: 140,
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                        alignment: Alignment(0, entry.photoAlignY),
+                      ),
                     ),
                   );
                 },

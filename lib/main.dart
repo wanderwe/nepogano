@@ -531,6 +531,7 @@ class _CheckInScreenState extends State<CheckInScreen> {
   File? _pickedPhotoFile;
   bool _removePhoto = false;
   double _photoAlignY = 0;
+  double _photoScale = 1;
 
   // Якщо запис за сьогодні вже є — за замовчуванням показуємо його як
   // готовий підсумок, а не одразу активну форму. Форма з'являється тільки
@@ -618,6 +619,7 @@ class _CheckInScreenState extends State<CheckInScreen> {
       _pickedPhotoFile = null;
       _removePhoto = false;
       _photoAlignY = 0;
+      _photoScale = 1;
       _updateCount = 0;
       _editing = false;
     });
@@ -955,7 +957,7 @@ class _CheckInScreenState extends State<CheckInScreen> {
       final rows = await _supabase
           .from(_table)
           .select(
-            'id, mood, note, created_at, photo_path, photo_align_y, update_count',
+            'id, mood, note, created_at, photo_path, photo_align_y, photo_scale, update_count',
           )
           .eq(_idColumn, _idValue)
           .gte('created_at', startOfDay)
@@ -980,6 +982,7 @@ class _CheckInScreenState extends State<CheckInScreen> {
         ).toLocal();
         _existingPhotoPath = row['photo_path'] as String?;
         _photoAlignY = (row['photo_align_y'] as num?)?.toDouble() ?? 0;
+        _photoScale = (row['photo_scale'] as num?)?.toDouble() ?? 1;
         _updateCount = (row['update_count'] as num?)?.toInt() ?? 0;
         _pickedPhotoFile = null;
         _removePhoto = false;
@@ -1015,7 +1018,7 @@ class _CheckInScreenState extends State<CheckInScreen> {
     if (picked == null || !mounted) return;
 
     final file = File(picked.path);
-    final alignY = await Navigator.of(context).push<double>(
+    final result = await Navigator.of(context).push<(double, double)>(
       MaterialPageRoute(
         builder: (_) => PhotoRepositionScreen(image: FileImage(file)),
       ),
@@ -1023,19 +1026,28 @@ class _CheckInScreenState extends State<CheckInScreen> {
     if (!mounted) return;
     setState(() {
       _pickedPhotoFile = file;
-      _photoAlignY = alignY ?? 0;
+      _photoAlignY = result?.$1 ?? 0;
+      _photoScale = result?.$2 ?? 1;
       _removePhoto = false;
     });
   }
 
   Future<void> _repositionPhoto(ImageProvider image) async {
-    final alignY = await Navigator.of(context).push<double>(
+    final result = await Navigator.of(context).push<(double, double)>(
       MaterialPageRoute(
-        builder: (_) =>
-            PhotoRepositionScreen(image: image, initialAlignY: _photoAlignY),
+        builder: (_) => PhotoRepositionScreen(
+          image: image,
+          initialAlignY: _photoAlignY,
+          initialScale: _photoScale,
+        ),
       ),
     );
-    if (alignY != null && mounted) setState(() => _photoAlignY = alignY);
+    if (result != null && mounted) {
+      setState(() {
+        _photoAlignY = result.$1;
+        _photoScale = result.$2;
+      });
+    }
   }
 
   Future<void> _choosePhotoSource() async {
@@ -1071,6 +1083,7 @@ class _CheckInScreenState extends State<CheckInScreen> {
       _pickedPhotoFile = null;
       _removePhoto = _existingPhotoPath != null;
       _photoAlignY = 0;
+      _photoScale = 1;
     });
   }
 
@@ -1078,10 +1091,13 @@ class _CheckInScreenState extends State<CheckInScreen> {
     if (_pickedPhotoFile != null) {
       final image = FileImage(_pickedPhotoFile!);
       return _PhotoPreview(
-        image: Image(
-          image: image,
-          fit: BoxFit.cover,
-          alignment: Alignment(0, _photoAlignY),
+        image: ScaledPhoto(
+          scale: _photoScale,
+          child: Image(
+            image: image,
+            fit: BoxFit.cover,
+            alignment: Alignment(0, _photoAlignY),
+          ),
         ),
         onRemove: _clearPhoto,
         onReposition: () => _repositionPhoto(image),
@@ -1112,10 +1128,13 @@ class _CheckInScreenState extends State<CheckInScreen> {
           }
           final image = MemoryImage(snapshot.data!);
           return _PhotoPreview(
-            image: Image(
-              image: image,
-              fit: BoxFit.cover,
-              alignment: Alignment(0, _photoAlignY),
+            image: ScaledPhoto(
+              scale: _photoScale,
+              child: Image(
+                image: image,
+                fit: BoxFit.cover,
+                alignment: Alignment(0, _photoAlignY),
+              ),
             ),
             onRemove: _clearPhoto,
             onReposition: () => _repositionPhoto(image),
@@ -1153,6 +1172,7 @@ class _CheckInScreenState extends State<CheckInScreen> {
             : _noteController.text.trim(),
         photoPath: _existingPhotoPath,
         photoAlignY: _photoAlignY,
+        photoScale: _photoScale,
         updateCount: _updateCount,
       ),
     );
@@ -1299,12 +1319,15 @@ class _CheckInScreenState extends State<CheckInScreen> {
                   }
                   return ClipRRect(
                     borderRadius: BorderRadius.circular(14),
-                    child: Image.memory(
-                      snapshot.data!,
-                      height: 160,
-                      width: double.infinity,
-                      fit: BoxFit.cover,
-                      alignment: Alignment(0, _photoAlignY),
+                    child: ScaledPhoto(
+                      scale: _photoScale,
+                      child: Image.memory(
+                        snapshot.data!,
+                        height: 160,
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                        alignment: Alignment(0, _photoAlignY),
+                      ),
                     ),
                   );
                 },
@@ -1417,6 +1440,7 @@ class _CheckInScreenState extends State<CheckInScreen> {
             : _noteController.text.trim(),
         'photo_path': photoPath,
         'photo_align_y': photoPath == null ? 0 : _photoAlignY,
+        'photo_scale': photoPath == null ? 1 : _photoScale,
         // 'user_id' у checkins має дефолт auth.uid(), тому передавати не
         // треба — а от subject_id у subject_checkins нема звідки взяти
         // самостійно, вказуємо явно тільки коли ведемо чек-ін сутності.
