@@ -143,10 +143,7 @@ class _DayCardScreenState extends State<DayCardScreen> {
                 const SizedBox(height: 32),
                 Center(
                   child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(28),
-                      boxShadow: AppShadows.soft,
-                    ),
+                    decoration: BoxDecoration(boxShadow: AppShadows.soft),
                     child: _photoLoading
                         ? const SizedBox(
                             width: 320,
@@ -376,12 +373,14 @@ class _DayCard extends StatelessWidget {
     final hasNote = noteText != null && noteText.isNotEmpty;
 
     return Container(
+      // Навмисно без borderRadius/clip: це саме той віджет, що йде у
+      // RepaintBoundary.toImage() для шеру. Заокруглені кути означали б
+      // прозорі трикутники по кутах експортованого PNG — а прозорість там,
+      // де накладається чужий фон (сторіс, месенджер), не контрольована:
+      // хост сам домальовує туди щось своє (тінь стікера тощо), і виходить
+      // видима "виїмка" в кутах. Суцільний прямокутник цього не має.
       width: 320,
-      decoration: BoxDecoration(
-        color: const Color(0xFF1C1C1E),
-        borderRadius: BorderRadius.circular(28),
-      ),
-      clipBehavior: Clip.antiAlias,
+      color: const Color(0xFF1C1C1E),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
