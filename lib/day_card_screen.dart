@@ -362,6 +362,13 @@ class _DayCard extends StatelessWidget {
     final dateLabel = '${d.day} ${monthNameGenitive(d.month, locale)}';
     final weekdayName = weekdayNameFull(d.weekday, locale);
     final moodIndex = MoodLevel.values.indexOf(entry.mood);
+    final noteText = entry.note?.trim();
+    final hasNote = noteText != null && noteText.isNotEmpty;
+    // Коротка нотатка (або її відсутність) лишає багато вільного місця під
+    // фото — тоді розтягуємо фото на більшу, майже квадратну область замість
+    // вузької смужки. З довшою нотаткою повертаємось до ширшого кадру, щоб
+    // лишити місце тексту.
+    final photoAspectRatio = hasNote && noteText.length > 60 ? 16 / 10 : 4 / 5;
 
     return Container(
       width: 320,
@@ -376,7 +383,7 @@ class _DayCard extends StatelessWidget {
         children: [
           if (photoBytes != null)
             AspectRatio(
-              aspectRatio: 16 / 10,
+              aspectRatio: photoAspectRatio,
               child: Image.memory(
                 photoBytes!,
                 fit: BoxFit.cover,
@@ -427,10 +434,12 @@ class _DayCard extends StatelessWidget {
                     ],
                   ),
                 ),
-                if (entry.note != null && entry.note!.isNotEmpty) ...[
+                if (hasNote) ...[
                   const SizedBox(height: 12),
                   Text(
-                    entry.note!,
+                    noteText,
+                    maxLines: 6,
+                    overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
                       fontSize: 15,
                       color: AppColors.ink,
