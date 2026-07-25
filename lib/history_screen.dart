@@ -139,6 +139,9 @@ class _HistoryScreenState extends State<HistoryScreen> {
   void _changeMonth(int delta) {
     setState(() {
       _visibleMonth = DateTime(_visibleMonth.year, _visibleMonth.month + delta);
+      // День місяця (1-31) повторюється в кожному місяці, тож старі ключі
+      // могли б колізити з новими — скидаємо лише тут, а не на кожен build.
+      _entryKeys.clear();
     });
   }
 
@@ -488,8 +491,6 @@ class _HistoryScreenState extends State<HistoryScreen> {
         ),
       );
     }
-
-    _entryKeys.clear();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
