@@ -4,15 +4,14 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Приєднатися — Nepogano</title>
-<link rel="icon" href="assets/icon.png">
+<link rel="icon" href="/assets/icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Lora:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="/styles.css">
 </head>
 <body>
 <header class="topbar">
   <div class="wrap topbar-inner">
-    <img src="assets/icon.png" alt="" class="logo-dot" width="28" height="28">
     <span class="wordmark">Nepogano</span>
   </div>
 </header>
@@ -35,7 +34,7 @@
 
 <footer class="footer">
   <div class="wrap footer-inner">
-    <a href="index.html">На головну</a>
+    <a href="/">На головну</a>
     <a href="https://github.com/wanderwe/nepogano/wiki/Privacy-Policy">Політика конфіденційності</a>
   </div>
 </footer>
@@ -54,6 +53,12 @@
       'href',
       base + '&referrer=' + encodeURIComponent('join_code=' + code)
     );
+  }
+
+  var inviterName = new URLSearchParams(window.location.search).get('name');
+  if (inviterName) {
+    document.getElementById('join-title').textContent =
+      inviterName + ' хоче додати тебе другом';
   }
 </script>
 </body>

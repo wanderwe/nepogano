@@ -110,11 +110,12 @@
   "friendInviteSent": "Sent. They'll see the invite when they open \"Friends\" in the app.",
   "couldNotInviteFriend": "Couldn't invite. They may already be invited.",
   "shareMyLink": "Share my link",
-  "friendInviteShareText": "{name} wants to add you as a friend on Nepogano!\n\nhttps://nepogano.app/join/{code}",
+  "friendInviteShareText": "{name} wants to add you as a friend on Nepogano!\n\nhttps://nepogano.app/join/{code}?name={encodedName}",
   "@friendInviteShareText": {
     "placeholders": {
       "name": { "type": "String" },
-      "code": { "type": "String" }
+      "code": { "type": "String" },
+      "encodedName": { "type": "String" }
     }
   },
   "haveCode": "I have a code",

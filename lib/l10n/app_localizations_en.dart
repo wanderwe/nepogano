@@ -326,8 +326,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get shareMyLink => 'Share my link';
 
   @override
-  String friendInviteShareText(String name, String code) {
-    return '$name wants to add you as a friend on Nepogano!\n\nhttps://nepogano.app/join/$code';
+  String friendInviteShareText(String name, String code, String encodedName) {
+    return '$name wants to add you as a friend on Nepogano!\n\nhttps://nepogano.app/join/$code?name=$encodedName';
   }
 
   @override

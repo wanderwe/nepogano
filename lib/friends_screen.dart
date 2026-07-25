@@ -625,7 +625,11 @@ class _FriendsScreenState extends State<FriendsScreen> {
     final myName =
         _myDisplayName ??
         (_supabase.auth.currentUser?.email ?? '').split('@').first;
-    final text = l10n.friendInviteShareText(myName, code);
+    final text = l10n.friendInviteShareText(
+      myName,
+      code,
+      Uri.encodeComponent(myName),
+    );
     await SharePlus.instance.share(ShareParams(text: text));
   }
 
