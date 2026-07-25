@@ -395,6 +395,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get addComment => 'Add a comment';
 
   @override
+  String get commentsLabel => 'Comments';
+
+  @override
   String commentsCount(int count) {
     return 'Comments ($count)';
   }

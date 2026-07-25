@@ -154,6 +154,7 @@
 
   "commentHint": "Write a comment...",
   "addComment": "Add a comment",
+  "commentsLabel": "Comments",
   "commentsCount": "Comments ({count})",
   "@commentsCount": {
     "placeholders": {

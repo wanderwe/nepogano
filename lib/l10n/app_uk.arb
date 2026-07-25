@@ -163,6 +163,7 @@
 
   "commentHint": "Напиши коментар...",
   "addComment": "Додати коментар",
+  "commentsLabel": "Коментарі",
   "commentsCount": "Коментарі ({count})",
   "@commentsCount": {
     "placeholders": {

@@ -812,6 +812,12 @@ abstract class AppLocalizations {
   /// **'Додати коментар'**
   String get addComment;
 
+  /// No description provided for @commentsLabel.
+  ///
+  /// In uk, this message translates to:
+  /// **'Коментарі'**
+  String get commentsLabel;
+
   /// No description provided for @commentsCount.
   ///
   /// In uk, this message translates to:

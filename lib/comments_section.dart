@@ -362,10 +362,19 @@ class _CommentsSectionState extends State<CommentsSection> {
               ),
               const SizedBox(width: 6),
               Text(
-                visibleCount == 0
-                    ? l10n.addComment
-                    : l10n.commentsCount(visibleCount),
-                style: const TextStyle(fontSize: 13, color: AppColors.inkMuted),
+                visibleCount > 0
+                    ? l10n.commentsCount(visibleCount)
+                    : (_expanded ? l10n.commentsLabel : l10n.addComment),
+                style: TextStyle(
+                  fontSize: 13,
+                  // Бурштиновий лише коли цей напис і є запрошенням до дії
+                  // (згорнуто, ще нема коментарів) — щойно поле вводу вже
+                  // відкрите нижче, той самий текст був би дублюючим
+                  // закликом, тож стає нейтральним.
+                  color: (!_expanded && visibleCount == 0)
+                      ? AppColors.accent
+                      : AppColors.inkMuted,
+                ),
               ),
               const Spacer(),
               Icon(
@@ -406,7 +415,6 @@ class _CommentsSectionState extends State<CommentsSection> {
   }
 
   Widget _buildThread(CheckinComment comment) {
-    final l10n = AppLocalizations.of(context);
     final reply = _replyFor(comment.id);
     final replying = widget.isOwner && _composing && _replyToId == comment.id;
     final canReply =
@@ -436,36 +444,7 @@ class _CommentsSectionState extends State<CommentsSection> {
           if (replying)
             Padding(
               padding: const EdgeInsets.only(left: 20, top: 10),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 6),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            l10n.replyingTo(_replyToName ?? ''),
-                            style: const TextStyle(
-                              fontSize: 12,
-                              color: AppColors.inkMuted,
-                            ),
-                          ),
-                        ),
-                        GestureDetector(
-                          onTap: _closeCompose,
-                          child: const Icon(
-                            PhosphorIconsLight.x,
-                            size: 14,
-                            color: AppColors.inkMuted,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  _buildComposer(),
-                ],
-              ),
+              child: _buildComposer(),
             ),
         ],
       ),
@@ -560,48 +539,87 @@ class _CommentsSectionState extends State<CommentsSection> {
     );
   }
 
+  // Спільний для обох сценаріїв (відповідь власника на конкретний коментар
+  // і новий коментар друга) — щоб банер "Відповідаєш X" і кнопка "×" не
+  // дублювались у двох місцях з ризиком розійтись.
   Widget _buildComposer() {
     final l10n = AppLocalizations.of(context);
     return Padding(
       padding: const EdgeInsets.only(bottom: 4),
-      child: TextField(
-        controller: _inputController,
-        focusNode: _inputFocusNode,
-        minLines: 1,
-        maxLines: 4,
-        textInputAction: TextInputAction.send,
-        onSubmitted: (_) => _sending ? null : _post(),
-        style: const TextStyle(fontSize: 14),
-        decoration: InputDecoration(
-          hintText: l10n.commentHint,
-          hintStyle: const TextStyle(fontSize: 14, color: AppColors.inkMuted),
-          filled: true,
-          fillColor: AppColors.surface,
-          isDense: true,
-          contentPadding: const EdgeInsets.fromLTRB(14, 10, 4, 10),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(20),
-            borderSide: BorderSide.none,
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(20),
-            borderSide: const BorderSide(color: AppColors.accent, width: 1.5),
-          ),
-          suffixIcon: _sending
-              ? const Padding(
-                  padding: EdgeInsets.all(12),
-                  child: SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(strokeWidth: 2),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(bottom: 6),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                if (_replyToId != null)
+                  Text(
+                    l10n.replyingTo(_replyToName ?? ''),
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: AppColors.inkMuted,
+                    ),
+                  )
+                else
+                  const SizedBox.shrink(),
+                GestureDetector(
+                  onTap: _closeCompose,
+                  child: const Icon(
+                    PhosphorIconsLight.x,
+                    size: 14,
+                    color: AppColors.inkMuted,
                   ),
-                )
-              : IconButton(
-                  onPressed: _post,
-                  icon: const Icon(PhosphorIconsLight.paperPlaneRight),
-                  tooltip: l10n.postComment,
                 ),
+              ],
+            ),
+          ),
+          _buildInputField(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInputField() {
+    final l10n = AppLocalizations.of(context);
+    return TextField(
+      controller: _inputController,
+      focusNode: _inputFocusNode,
+      minLines: 1,
+      maxLines: 4,
+      textInputAction: TextInputAction.send,
+      onSubmitted: (_) => _sending ? null : _post(),
+      style: const TextStyle(fontSize: 14),
+      decoration: InputDecoration(
+        hintText: l10n.commentHint,
+        hintStyle: const TextStyle(fontSize: 14, color: AppColors.inkMuted),
+        filled: true,
+        fillColor: AppColors.surface,
+        isDense: true,
+        contentPadding: const EdgeInsets.fromLTRB(14, 10, 4, 10),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(20),
+          borderSide: BorderSide.none,
         ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(20),
+          borderSide: const BorderSide(color: AppColors.accent, width: 1.5),
+        ),
+        suffixIcon: _sending
+            ? const Padding(
+                padding: EdgeInsets.all(12),
+                child: SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+              )
+            : IconButton(
+                onPressed: _post,
+                icon: const Icon(PhosphorIconsLight.paperPlaneRight),
+                tooltip: l10n.postComment,
+              ),
       ),
     );
   }
