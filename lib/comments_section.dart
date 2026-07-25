@@ -42,6 +42,33 @@ Future<bool> hasUnseenComments(SupabaseClient supabase) async {
   return (commentRows as List).isNotEmpty;
 }
 
+/// Той самий "новий коментар" запит, що [hasUnseenComments], але повертає
+/// **які саме** дні (checkin_id) мають непереглянутий коментар — щоб
+/// підсвітити конкретні дні на календарі, а не лише показати загальну
+/// крапку "є щось нове" на іконці.
+Future<Set<String>> unseenCommentCheckinIds(
+  SupabaseClient supabase,
+  List<String> checkinIds,
+) async {
+  final myId = supabase.auth.currentUser?.id;
+  if (myId == null || checkinIds.isEmpty) return {};
+
+  final prefs = await SharedPreferences.getInstance();
+  final lastSeenIso = prefs.getString(_commentsLastSeenKey);
+  final since = lastSeenIso != null
+      ? DateTime.parse(lastSeenIso)
+      : DateTime.fromMillisecondsSinceEpoch(0);
+
+  final commentRows = await supabase
+      .from('checkin_comments')
+      .select('checkin_id')
+      .inFilter('checkin_id', checkinIds)
+      .neq('author_id', myId)
+      .gt('created_at', since.toUtc().toIso8601String());
+
+  return (commentRows as List).map((r) => r['checkin_id'] as String).toSet();
+}
+
 /// Позначає всі поточні коментарі як переглянуті — викликати, коли юзер
 /// відкрив власну Історію (не чужу сутність), де коментарі й видно.
 Future<void> markCommentsSeen() async {

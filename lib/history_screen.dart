@@ -54,6 +54,10 @@ class _HistoryScreenState extends State<HistoryScreen> {
   bool _loading = true;
   String? _error;
   List<CheckinEntry> _entries = [];
+  // Тільки для власної історії (subjectId == null) — які дні мають комент,
+  // не позначений переглянутим, щоб підсвітити саме ці клітинки календаря,
+  // а не тільки загальну крапку на іконці "Історія".
+  Set<String> _unseenCommentDayIds = {};
   late DateTime _visibleMonth;
 
   /// Ключі записів у списку внизу (по дню місяця), щоб можна було
@@ -123,9 +127,17 @@ class _HistoryScreenState extends State<HistoryScreen> {
         );
       }).toList();
 
+      final unseenIds = widget.subjectId == null
+          ? await unseenCommentCheckinIds(
+              _supabase,
+              entries.map((e) => e.id).toList(),
+            )
+          : <String>{};
+
       if (mounted) {
         setState(() {
           _entries = entries;
+          _unseenCommentDayIds = unseenIds;
           _loading = false;
         });
       }
@@ -362,38 +374,64 @@ class _HistoryScreenState extends State<HistoryScreen> {
                 date.month == today.month &&
                 date.day == today.day;
 
+            final hasUnseenComment =
+                entry != null && _unseenCommentDayIds.contains(entry.id);
+
             return AspectRatio(
               aspectRatio: 1,
-              child: Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  onTap: entry != null ? () => _scrollToDay(day) : null,
-                  borderRadius: BorderRadius.circular(9),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: entry != null
-                          ? entry.mood.color.withValues(alpha: 0.85)
-                          : AppColors.surface,
+              child: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: entry != null ? () => _scrollToDay(day) : null,
                       borderRadius: BorderRadius.circular(9),
-                      border: isToday
-                          ? Border.all(color: AppColors.ink, width: 1.5)
-                          : null,
-                    ),
-                    alignment: Alignment.center,
-                    child: Text(
-                      '$day',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: entry != null
-                            ? FontWeight.w600
-                            : FontWeight.w400,
-                        color: entry != null
-                            ? Colors.white
-                            : (isFuture ? Colors.white24 : AppColors.inkMuted),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: entry != null
+                              ? entry.mood.color.withValues(alpha: 0.85)
+                              : AppColors.surface,
+                          borderRadius: BorderRadius.circular(9),
+                          border: isToday
+                              ? Border.all(color: AppColors.ink, width: 1.5)
+                              : null,
+                        ),
+                        alignment: Alignment.center,
+                        child: Text(
+                          '$day',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: entry != null
+                                ? FontWeight.w600
+                                : FontWeight.w400,
+                            color: entry != null
+                                ? Colors.white
+                                : (isFuture
+                                      ? Colors.white24
+                                      : AppColors.inkMuted),
+                          ),
+                        ),
                       ),
                     ),
                   ),
-                ),
+                  if (hasUnseenComment)
+                    Positioned(
+                      top: -3,
+                      right: -3,
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          color: AppColors.notification,
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: AppColors.background,
+                            width: 1.5,
+                          ),
+                        ),
+                        child: const SizedBox(width: 10, height: 10),
+                      ),
+                    ),
+                ],
               ),
             );
           },
