@@ -75,7 +75,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get onboarding4Body =>
-      'Додай друзів, побач їхній настрій і спробуй вгадати, як минув їхній день.';
+      'Не нескінченна стрічка чужих людей — лише ті, кого ти справді знаєш. Додай друзів і спробуй вгадати, як минув їхній день.';
 
   @override
   String get onboarding5Headline => 'Погляд на місяць';

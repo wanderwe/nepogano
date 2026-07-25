@@ -75,7 +75,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get onboarding4Body =>
-      'Add friends, see how they\'re doing, and try to guess how their day went.';
+      'No endless feed of strangers — just the people you actually know. Add friends and try to guess how their day went.';
 
   @override
   String get onboarding5Headline => 'A look back at your month';
