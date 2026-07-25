@@ -102,15 +102,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     tooltip: l10n.back,
                   ),
                   const SizedBox(width: 4),
-                  Expanded(
-                    child: Text(
-                      l10n.profile,
-                      style: appSerif(
-                        fontSize: 22,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
+                  Expanded(child: Text(l10n.profile, style: appScreenTitle())),
                 ],
               ),
               const SizedBox(height: 24),

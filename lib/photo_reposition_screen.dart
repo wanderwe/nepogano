@@ -46,7 +46,7 @@ class _PhotoRepositionScreenState extends State<PhotoRepositionScreen> {
                     child: Text(
                       l10n.repositionPhoto,
                       textAlign: TextAlign.center,
-                      style: appSerif(fontSize: 18),
+                      style: appScreenTitle(fontSize: 18),
                     ),
                   ),
                   const SizedBox(width: 48),

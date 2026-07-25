@@ -219,10 +219,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                           ? l10n.history
                           : '${l10n.history} — ${widget.subjectName}',
                       overflow: TextOverflow.ellipsis,
-                      style: appSerif(
-                        fontSize: 22,
-                        fontWeight: FontWeight.w500,
-                      ),
+                      style: appScreenTitle(),
                     ),
                   ),
                 ],

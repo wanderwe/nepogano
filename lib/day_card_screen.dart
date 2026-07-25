@@ -125,13 +125,7 @@ class _DayCardScreenState extends State<DayCardScreen> {
                       tooltip: l10n.back,
                     ),
                     const SizedBox(width: 4),
-                    Text(
-                      l10n.dayCard,
-                      style: appSerif(
-                        fontSize: 22,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
+                    Text(l10n.dayCard, style: appScreenTitle()),
                   ],
                 ),
                 const SizedBox(height: 32),

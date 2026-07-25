@@ -951,15 +951,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
                     tooltip: l10n.back,
                   ),
                   const SizedBox(width: 4),
-                  Expanded(
-                    child: Text(
-                      l10n.friends,
-                      style: appSerif(
-                        fontSize: 22,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
+                  Expanded(child: Text(l10n.friends, style: appScreenTitle())),
                   IconButton(
                     onPressed: _openProfile,
                     icon: const Icon(PhosphorIconsLight.userCircle, size: 20),
@@ -1382,10 +1374,7 @@ class _PersonDetailScreenState extends State<PersonDetailScreen> {
                     child: Text(
                       displayName,
                       overflow: TextOverflow.ellipsis,
-                      style: appSerif(
-                        fontSize: 22,
-                        fontWeight: FontWeight.w500,
-                      ),
+                      style: appScreenTitle(),
                     ),
                   ),
                 ],

@@ -39,7 +39,10 @@ class AppShadows {
   static List<BoxShadow> subtle = [];
 }
 
-/// Serif — для моментів "голосу" бренду: заголовки, назва оцінки, назва застосунку.
+/// Serif — для моментів "голосу" бренду: питання настрою, онбординг, назва
+/// застосунку на вході. НЕ для щоденних заголовків екранів (Друзі/Історія/
+/// Профіль тощо) — там serif лише виглядає чужорідним елементом поруч із
+/// рештою уніфікованого UI, для цього — [appScreenTitle] нижче.
 TextStyle appSerif({
   required double fontSize,
   FontWeight fontWeight = FontWeight.w600,
@@ -51,6 +54,17 @@ TextStyle appSerif({
     fontWeight: fontWeight,
     color: color,
     height: height,
+  );
+}
+
+/// Заголовок екрана (шапка "← Назва") — свідомо sans (Inter, той самий
+/// шрифт, що й решта UI), не serif. Один хелпер замість повторення того
+/// самого TextStyle на кожному екрані.
+TextStyle appScreenTitle({double fontSize = 22}) {
+  return TextStyle(
+    fontSize: fontSize,
+    fontWeight: FontWeight.w600,
+    color: AppColors.ink,
   );
 }
 
