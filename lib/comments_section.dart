@@ -29,27 +29,34 @@ class CheckinComment {
   });
 }
 
-/// Коментарі (з необмеженими тредами відповідей) під конкретним чек-іном
-/// реальної людини. [canComment] вирішує викликач: власник дня — завжди,
-/// друг — лише якщо вже вгадав саме цей день (той самий "спойлер"-принцип,
-/// що ховає настрій до вгадування). Коли false, віджет узагалі нічого не
-/// показує й не запитує — RLS і так заблокує читання, тут просто не
-/// витрачаємо запит на порожній результат.
+/// Коментарі під конкретним чек-іном реальної людини — навмисно лише один
+/// рівень: друг лишає (кореневий) коментар, автор дня може відповісти на
+/// нього максимум один раз, і все. Необмежені треди пробували раніше —
+/// вже з 2-3 рівнями вкладеності це нечитабельно на телефоні, тож модель
+/// свідомо спрощена (і те саме гарантовано на рівні БД — унікальний індекс
+/// на parent_id в checkin-comments-simplify-migration.sql).
 ///
-/// [showWhenEmpty] — чи показувати "Додати коментар" узагалі без жодного
-/// коментаря. На чужому дні (друг щойно вгадав) це запрошення до розмови —
-/// доречно. На власному щойно збереженому пості пропозиція одразу
-/// прокоментувати саму себе — ні, тож там false: секція з'являється лише
-/// коли хтось інший уже щось написав.
+/// [canComment] вирішує викликач: друг — лише якщо вже вгадав саме цей
+/// день (той самий "спойлер"-принцип, що ховає настрій до вгадування).
+/// [isOwner] — це екран власника дня чи друга: визначає, чи можна лишати
+/// нові кореневі коментарі (тільки друг) чи тільки відповідати (тільки
+/// власник).
+///
+/// [showWhenEmpty] — чи показувати секцію взагалі без жодного коментаря.
+/// На чужому дні (друг щойно вгадав) це запрошення до розмови — доречно.
+/// На власному щойно збереженому пості пропозиція відповісти нікому — ні,
+/// тож там false: секція з'являється лише коли хтось інший уже щось написав.
 class CommentsSection extends StatefulWidget {
   final String checkinId;
   final bool canComment;
+  final bool isOwner;
   final bool showWhenEmpty;
 
   const CommentsSection({
     super.key,
     required this.checkinId,
     required this.canComment,
+    required this.isOwner,
     this.showWhenEmpty = true,
   });
 
@@ -60,15 +67,22 @@ class CommentsSection extends StatefulWidget {
 class _CommentsSectionState extends State<CommentsSection> {
   final _supabase = Supabase.instance.client;
   final _inputController = TextEditingController();
+  final _inputFocusNode = FocusNode();
   bool _loading = true;
   List<CheckinComment> _comments = [];
+  bool _sending = false;
+  // Згорнуто за замовчуванням — інакше тред роздуває кожен запис у списку
+  // днів. Кількість все одно вантажимо одразу, щоб показати "Коментарі (3)"
+  // ще до розгортання.
+  bool _expanded = false;
+  // Поле вводу теж не висить відкритим за замовчуванням — з'являється лише
+  // по тапу на "Додати коментар" (друг) чи "Відповісти" (власник), і
+  // ховається назад після відправки.
+  bool _composing = false;
+  // Кому саме відповідає власник дня — null означає "друг пише кореневий
+  // коментар", не використовується власником взагалі.
   String? _replyToId;
   String? _replyToName;
-  bool _sending = false;
-  // Згорнуто за замовчуванням — інакше довгий тред роздуває кожен запис у
-  // списку днів, і важко просто пробігти очима по статусах. Кількість все
-  // одно вантажимо одразу, щоб показати "Коментарі (3)" ще до розгортання.
-  bool _expanded = false;
 
   @override
   void initState() {
@@ -79,6 +93,7 @@ class _CommentsSectionState extends State<CommentsSection> {
   @override
   void dispose() {
     _inputController.dispose();
+    _inputFocusNode.dispose();
     super.dispose();
   }
 
@@ -91,7 +106,10 @@ class _CommentsSectionState extends State<CommentsSection> {
             'id, checkin_id, author_id, parent_id, body, created_at, edited_at, deleted_at',
           )
           .eq('checkin_id', widget.checkinId)
-          .order('created_at');
+          // За замовчуванням .order() у Supabase сортує ascending: false
+          // (новіші перші) — без явного true коментарі йшли у зворотному,
+          // заплутаному порядку.
+          .order('created_at', ascending: true);
 
       final authorIds = (rows as List)
           .map((r) => r['author_id'] as String)
@@ -149,12 +167,11 @@ class _CommentsSectionState extends State<CommentsSection> {
       await _supabase.from('checkin_comments').insert({
         'checkin_id': widget.checkinId,
         'author_id': _supabase.auth.currentUser!.id,
-        'parent_id': _replyToId,
+        'parent_id': widget.isOwner ? _replyToId : null,
         'body': body,
       });
       _inputController.clear();
-      _replyToId = null;
-      _replyToName = null;
+      _closeCompose();
       await _load();
     } catch (e) {
       if (mounted) {
@@ -169,15 +186,20 @@ class _CommentsSectionState extends State<CommentsSection> {
     }
   }
 
-  void _startReply(CheckinComment comment) {
+  void _startCompose({String? replyToId, String? replyToName}) {
     setState(() {
-      _replyToId = comment.id;
-      _replyToName = comment.authorName ?? '';
+      _replyToId = replyToId;
+      _replyToName = replyToName;
+      _composing = true;
+    });
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _inputFocusNode.requestFocus();
     });
   }
 
-  void _cancelReply() {
+  void _closeCompose() {
     setState(() {
+      _composing = false;
       _replyToId = null;
       _replyToName = null;
     });
@@ -276,12 +298,14 @@ class _CommentsSectionState extends State<CommentsSection> {
     return '${dt.day}.${dt.month} $hh:$mm';
   }
 
-  Map<String?, List<CheckinComment>> get _byParent {
-    final map = <String?, List<CheckinComment>>{};
+  List<CheckinComment> get _topLevel =>
+      _comments.where((c) => c.parentId == null).toList();
+
+  CheckinComment? _replyFor(String topLevelId) {
     for (final c in _comments) {
-      map.putIfAbsent(c.parentId, () => []).add(c);
+      if (c.parentId == topLevelId) return c;
     }
-    return map;
+    return null;
   }
 
   @override
@@ -291,9 +315,7 @@ class _CommentsSectionState extends State<CommentsSection> {
       return const SizedBox.shrink();
     }
     final l10n = AppLocalizations.of(context);
-
-    final byParent = _byParent;
-    final topLevel = byParent[null] ?? [];
+    final topLevel = _topLevel;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -331,116 +353,147 @@ class _CommentsSectionState extends State<CommentsSection> {
         ),
         if (_expanded) ...[
           const SizedBox(height: 10),
-          ...topLevel.map((c) => _buildCommentTile(c, byParent, 0)),
-          if (_replyToId != null)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 6),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      l10n.replyingTo(_replyToName ?? ''),
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: AppColors.inkMuted,
-                      ),
+          ...topLevel.map((c) => _buildThread(c)),
+          if (!widget.isOwner) ...[
+            if (!_composing)
+              GestureDetector(
+                onTap: () => _startCompose(),
+                behavior: HitTestBehavior.opaque,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 4),
+                  child: Text(
+                    l10n.addComment,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: AppColors.accent,
                     ),
                   ),
-                  GestureDetector(
-                    onTap: _cancelReply,
-                    child: const Icon(
-                      PhosphorIconsLight.x,
-                      size: 14,
-                      color: AppColors.inkMuted,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Expanded(
-                child: TextField(
-                  controller: _inputController,
-                  minLines: 1,
-                  maxLines: 4,
-                  style: const TextStyle(fontSize: 14),
-                  decoration: appFieldDecoration(l10n.commentHint),
                 ),
-              ),
-              const SizedBox(width: 8),
-              IconButton(
-                onPressed: _sending ? null : _post,
-                icon: const Icon(PhosphorIconsLight.paperPlaneRight),
-                tooltip: l10n.postComment,
-              ),
-            ],
-          ),
+              )
+            else
+              _buildComposer(),
+          ],
         ],
       ],
     );
   }
 
-  Widget _buildCommentTile(
-    CheckinComment comment,
-    Map<String?, List<CheckinComment>> byParent,
-    int depth,
-  ) {
+  Widget _buildThread(CheckinComment comment) {
     final l10n = AppLocalizations.of(context);
-    final myId = _supabase.auth.currentUser!.id;
-    final isMine = comment.authorId == myId && !comment.isDeleted;
-    final replies = byParent[comment.id] ?? [];
-    final indent = depth.clamp(0, 3) * 16.0;
+    final reply = _replyFor(comment.id);
+    final replying = widget.isOwner && _composing && _replyToId == comment.id;
+    final canReply =
+        widget.isOwner &&
+        !comment.isDeleted &&
+        reply == null &&
+        comment.authorId != _supabase.auth.currentUser!.id;
 
     return Padding(
-      padding: EdgeInsets.only(left: indent, bottom: 12),
+      padding: const EdgeInsets.only(bottom: 12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Text(
-                comment.authorName ?? '',
-                style: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              const SizedBox(width: 6),
-              Text(
-                _timeLabel(comment.createdAt),
-                style: const TextStyle(fontSize: 11, color: AppColors.inkMuted),
-              ),
-              if (comment.editedAt != null && !comment.isDeleted) ...[
-                const SizedBox(width: 4),
-                Text(
-                  l10n.editedLabel,
-                  style: const TextStyle(
-                    fontSize: 11,
-                    color: AppColors.inkMuted,
-                  ),
-                ),
-              ],
-            ],
-          ),
-          const SizedBox(height: 2),
-          Text(
-            comment.isDeleted ? l10n.commentDeleted : comment.body,
-            style: TextStyle(
-              fontSize: 14,
-              color: comment.isDeleted ? AppColors.inkMuted : AppColors.ink,
-              fontStyle: comment.isDeleted
-                  ? FontStyle.italic
-                  : FontStyle.normal,
+          _buildCommentRow(
+            comment,
+            showReply: canReply && !replying,
+            onReply: () => _startCompose(
+              replyToId: comment.id,
+              replyToName: comment.authorName ?? '',
             ),
           ),
-          if (!comment.isDeleted) ...[
-            const SizedBox(height: 4),
-            Row(
-              children: [
+          if (reply != null)
+            Padding(
+              padding: const EdgeInsets.only(left: 20, top: 10),
+              child: _buildCommentRow(reply, showReply: false),
+            ),
+          if (replying)
+            Padding(
+              padding: const EdgeInsets.only(left: 20, top: 10),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 6),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            l10n.replyingTo(_replyToName ?? ''),
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: AppColors.inkMuted,
+                            ),
+                          ),
+                        ),
+                        GestureDetector(
+                          onTap: _closeCompose,
+                          child: const Icon(
+                            PhosphorIconsLight.x,
+                            size: 14,
+                            color: AppColors.inkMuted,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  _buildComposer(),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCommentRow(
+    CheckinComment comment, {
+    required bool showReply,
+    VoidCallback? onReply,
+  }) {
+    final l10n = AppLocalizations.of(context);
+    final isMine =
+        comment.authorId == _supabase.auth.currentUser!.id &&
+        !comment.isDeleted;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Text(
+              comment.authorName ?? '',
+              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(width: 6),
+            Text(
+              _timeLabel(comment.createdAt),
+              style: const TextStyle(fontSize: 11, color: AppColors.inkMuted),
+            ),
+            if (comment.editedAt != null && !comment.isDeleted) ...[
+              const SizedBox(width: 4),
+              Text(
+                l10n.editedLabel,
+                style: const TextStyle(fontSize: 11, color: AppColors.inkMuted),
+              ),
+            ],
+          ],
+        ),
+        const SizedBox(height: 2),
+        Text(
+          comment.isDeleted ? l10n.commentDeleted : comment.body,
+          style: TextStyle(
+            fontSize: 14,
+            color: comment.isDeleted ? AppColors.inkMuted : AppColors.ink,
+            fontStyle: comment.isDeleted ? FontStyle.italic : FontStyle.normal,
+          ),
+        ),
+        if (showReply || isMine) ...[
+          const SizedBox(height: 4),
+          Row(
+            children: [
+              if (showReply)
                 GestureDetector(
-                  onTap: () => _startReply(comment),
+                  onTap: onReply,
                   child: Text(
                     l10n.reply,
                     style: const TextStyle(
@@ -449,35 +502,79 @@ class _CommentsSectionState extends State<CommentsSection> {
                     ),
                   ),
                 ),
-                if (isMine) ...[
-                  const SizedBox(width: 12),
-                  GestureDetector(
-                    onTap: () => _editComment(comment),
-                    child: Text(
-                      l10n.edit,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: AppColors.inkMuted,
-                      ),
+              if (isMine) ...[
+                if (showReply) const SizedBox(width: 12),
+                GestureDetector(
+                  onTap: () => _editComment(comment),
+                  child: Text(
+                    l10n.edit,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: AppColors.inkMuted,
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  GestureDetector(
-                    onTap: () => _deleteComment(comment),
-                    child: Text(
-                      l10n.delete,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: Colors.redAccent,
-                      ),
+                ),
+                const SizedBox(width: 12),
+                GestureDetector(
+                  onTap: () => _deleteComment(comment),
+                  child: Text(
+                    l10n.delete,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: Colors.redAccent,
                     ),
                   ),
-                ],
+                ),
               ],
-            ),
-          ],
-          ...replies.map((r) => _buildCommentTile(r, byParent, depth + 1)),
+            ],
+          ),
         ],
+      ],
+    );
+  }
+
+  Widget _buildComposer() {
+    final l10n = AppLocalizations.of(context);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4),
+      child: TextField(
+        controller: _inputController,
+        focusNode: _inputFocusNode,
+        minLines: 1,
+        maxLines: 4,
+        textInputAction: TextInputAction.send,
+        onSubmitted: (_) => _sending ? null : _post(),
+        style: const TextStyle(fontSize: 14),
+        decoration: InputDecoration(
+          hintText: l10n.commentHint,
+          hintStyle: const TextStyle(fontSize: 14, color: AppColors.inkMuted),
+          filled: true,
+          fillColor: AppColors.surface,
+          isDense: true,
+          contentPadding: const EdgeInsets.fromLTRB(14, 10, 4, 10),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(20),
+            borderSide: BorderSide.none,
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(20),
+            borderSide: const BorderSide(color: AppColors.accent, width: 1.5),
+          ),
+          suffixIcon: _sending
+              ? const Padding(
+                  padding: EdgeInsets.all(12),
+                  child: SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                )
+              : IconButton(
+                  onPressed: _post,
+                  icon: const Icon(PhosphorIconsLight.paperPlaneRight),
+                  tooltip: l10n.postComment,
+                ),
+        ),
       ),
     );
   }

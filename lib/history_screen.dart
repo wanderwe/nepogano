@@ -576,6 +576,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                       CommentsSection(
                         checkinId: entry.id,
                         canComment: true,
+                        isOwner: true,
                         showWhenEmpty: false,
                       ),
                   ],

@@ -1566,7 +1566,11 @@ class _PersonDetailScreenState extends State<PersonDetailScreen> {
                 },
               ),
             ],
-            CommentsSection(checkinId: entry.id, canComment: true),
+            CommentsSection(
+              checkinId: entry.id,
+              canComment: true,
+              isOwner: false,
+            ),
           ] else ...[
             Text(
               l10n.howAreTheyToday,
