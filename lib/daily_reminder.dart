@@ -44,12 +44,12 @@ Future<void> initDailyReminder() async {
 /// (inexactAllowWhileIdle) — кілька хвилин різниці не критичні для такого
 /// нагадування, а точний вимагав би окремого "чутливого" дозволу
 /// SCHEDULE_EXACT_ALARM і супровідної Play-політики.
-Future<void> scheduleDailyReminder({
+Future<bool> scheduleDailyReminder({
   required String title,
   required String body,
 }) async {
   final granted = await _requestPermission();
-  if (!granted) return;
+  if (!granted) return false;
 
   await _plugin.zonedSchedule(
     id: _notificationId,
@@ -63,6 +63,7 @@ Future<void> scheduleDailyReminder({
     androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
     matchDateTimeComponents: DateTimeComponents.time,
   );
+  return true;
 }
 
 tz.TZDateTime get _next20 {

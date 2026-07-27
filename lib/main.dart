@@ -230,14 +230,19 @@ class _AuthGateState extends State<AuthGate> {
 
     final prefs = await SharedPreferences.getInstance();
     if (prefs.getBool(_dailyReminderScheduledKey) == true) return;
-    await prefs.setBool(_dailyReminderScheduledKey, true);
 
     if (!mounted) return;
     final l10n = AppLocalizations.of(context);
-    await scheduleDailyReminder(
+    // Позначаємо "зроблено" лише після фактичного успіху — якщо дозвіл ще
+    // не надано зараз, наступний вхід у застосунок спробує ще раз, замість
+    // назавжди мовчки здаватись після першої невдалої спроби.
+    final scheduled = await scheduleDailyReminder(
       title: l10n.dailyReminderTitle,
       body: l10n.dailyReminderBody,
     );
+    if (scheduled) {
+      await prefs.setBool(_dailyReminderScheduledKey, true);
+    }
   }
 
   /// Перевіряє (лише раз за весь час життя застосунку на пристрої) Play
