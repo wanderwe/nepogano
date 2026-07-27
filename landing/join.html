@@ -44,6 +44,14 @@
   var parts = window.location.pathname.split('/').filter(Boolean);
   var code = parts[parts.length - 1];
   if (code && code.toLowerCase() !== 'join') {
+    // App Links (https://nepogano.app/join/...) не спрацьовує, коли лінк
+    // відкритий у вбудованому браузері месенджера (Telegram тощо) — той
+    // рендерить сторінку сам, минаючи систему Android, яка й перевіряє App
+    // Links. Кастомна URL-схема — інший механізм: більшість webview все
+    // одно передають невідому їм схему системі Android, навіть зсередини
+    // in-app браузера. Тиха спроба, без видимого ефекту, якщо не спрацює.
+    window.location.href = 'io.supabase.nepogano://join/' + code;
+
     document.getElementById('join-code').textContent = code;
     // Play Маркет передає цей referrer застосунку одразу після встановлення
     // (Play Install Referrer API) — так код доходить до застосунку, навіть
