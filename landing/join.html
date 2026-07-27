@@ -24,6 +24,7 @@
     "Друзі" → "Маю код".
   </p>
   <div class="join-code" id="join-code">— — — — — —</div>
+  <button type="button" id="copy-code-btn" class="btn-secondary">Скопіювати код</button>
   <a id="install-link" class="btn-primary" href="https://play.google.com/store/apps/details?id=com.nepogano.app">Завантажити застосунок</a>
   <p class="join-note">
     Nepogano поки в закритому тестуванні — посилання встановить застосунок,
@@ -59,6 +60,41 @@
   if (inviterName) {
     document.getElementById('join-title').textContent =
       inviterName + ' хоче додати тебе другом';
+  }
+
+  var copyBtn = document.getElementById('copy-code-btn');
+  copyBtn.addEventListener('click', function () {
+    var text = document.getElementById('join-code').textContent;
+    var onCopied = function () {
+      copyBtn.textContent = 'Скопійовано!';
+      setTimeout(function () {
+        copyBtn.textContent = 'Скопіювати код';
+      }, 1500);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(onCopied, function () {
+        _fallbackCopy(text, onCopied);
+      });
+    } else {
+      _fallbackCopy(text, onCopied);
+    }
+  });
+
+  // Деякі вбудовані браузери месенджерів обмежують navigator.clipboard —
+  // текстове поле + execCommand('copy') працює майже скрізь як запасний варіант.
+  function _fallbackCopy(text, onDone) {
+    var el = document.createElement('textarea');
+    el.value = text;
+    el.setAttribute('readonly', '');
+    el.style.position = 'absolute';
+    el.style.left = '-9999px';
+    document.body.appendChild(el);
+    el.select();
+    try {
+      document.execCommand('copy');
+      onDone();
+    } catch (_) {}
+    document.body.removeChild(el);
   }
 </script>
 </body>
