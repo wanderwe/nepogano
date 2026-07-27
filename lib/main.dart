@@ -61,7 +61,13 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle.light);
   await loadSavedLocale();
-  await initDailyReminder();
+  // Ніщо тут не сміє заблокувати запуск застосунку — нагадування о 20:00
+  // не критичне для того, щоб узагалі побачити застосунок. Якщо нативний
+  // плагін сповіщень зависне чи впаде на якомусь конкретному пристрої,
+  // просто йдемо далі без нього, а не застрягаємо на splash-екрані назавжди.
+  try {
+    await initDailyReminder().timeout(const Duration(seconds: 5));
+  } catch (_) {}
 
   await Supabase.initialize(
     url: supabaseUrl,
