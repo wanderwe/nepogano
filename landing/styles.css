@@ -267,6 +267,12 @@ h1 {
   line-height: 1.6;
 }
 
+.join-note-small {
+  font-size: 12px;
+  margin-top: -8px;
+  margin-bottom: 20px;
+}
+
 .btn-primary {
   display: inline-block;
   background: var(--nepogano);

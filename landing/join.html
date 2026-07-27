@@ -18,14 +18,19 @@
 
 <main class="join-card">
   <h1 id="join-title">Хтось хоче додати тебе другом</h1>
-  <p class="join-note">
-    Якщо застосунок Nepogano вже встановлений, це посилання мало відкрити
-    його автоматично. Якщо ти тут — введи код нижче вручну на екрані
-    "Друзі" → "Маю код".
+
+  <a id="open-app-link" class="btn-primary" href="#" style="display:none">Відкрити застосунок</a>
+  <p class="join-note join-note-small" id="open-app-hint" style="display:none">
+    Не відкрилось? Це через вбудований браузер месенджера — натисни ⋮ (три
+    крапки) чи ⋯ вгорі сторінки і обери "Відкрити в браузері", і спробуй ще раз.
   </p>
+
   <div class="join-code" id="join-code">— — — — — —</div>
   <button type="button" id="copy-code-btn" class="btn-secondary">Скопіювати код</button>
-  <a id="install-link" class="btn-primary" href="https://play.google.com/store/apps/details?id=com.nepogano.app">Завантажити застосунок</a>
+  <p class="join-note">
+    Якщо застосунок ще не встановлений:
+  </p>
+  <a id="install-link" class="btn-secondary" href="https://play.google.com/store/apps/details?id=com.nepogano.app">Завантажити застосунок</a>
   <p class="join-note">
     Nepogano поки в закритому тестуванні — посилання встановить застосунок,
     якщо в тебе вже є доступ до тестування. Якщо ще немає — зверніся до
@@ -44,13 +49,23 @@
   var parts = window.location.pathname.split('/').filter(Boolean);
   var code = parts[parts.length - 1];
   if (code && code.toLowerCase() !== 'join') {
+    var customSchemeUrl = 'io.supabase.nepogano://join/' + code;
+
     // App Links (https://nepogano.app/join/...) не спрацьовує, коли лінк
     // відкритий у вбудованому браузері месенджера (Telegram тощо) — той
     // рендерить сторінку сам, минаючи систему Android, яка й перевіряє App
     // Links. Кастомна URL-схема — інший механізм: більшість webview все
     // одно передають невідому їм схему системі Android, навіть зсередини
-    // in-app браузера. Тиха спроба, без видимого ефекту, якщо не спрацює.
-    window.location.href = 'io.supabase.nepogano://join/' + code;
+    // in-app браузера. Тиха автоматична спроба, без видимого ефекту, якщо
+    // не спрацює — плюс справжня кнопка-посилання нижче як запасний
+    // варіант: пряме натискання на <a href> строгіші webview сприймають
+    // надійніше, ніж автоматичний window.location зі скрипта.
+    window.location.href = customSchemeUrl;
+
+    var openAppLink = document.getElementById('open-app-link');
+    openAppLink.setAttribute('href', customSchemeUrl);
+    openAppLink.style.display = '';
+    document.getElementById('open-app-hint').style.display = '';
 
     document.getElementById('join-code').textContent = code;
     // Play Маркет передає цей referrer застосунку одразу після встановлення
