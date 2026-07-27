@@ -134,6 +134,18 @@ abstract class AppLocalizations {
   /// **'Спробувати ще раз'**
   String get retry;
 
+  /// No description provided for @connectionFailedTitle.
+  ///
+  /// In uk, this message translates to:
+  /// **'Не вдалось з\'єднатися'**
+  String get connectionFailedTitle;
+
+  /// No description provided for @connectionFailedBody.
+  ///
+  /// In uk, this message translates to:
+  /// **'Перевір інтернет-з\'єднання і спробуй ще раз.'**
+  String get connectionFailedBody;
+
   /// No description provided for @done.
   ///
   /// In uk, this message translates to:

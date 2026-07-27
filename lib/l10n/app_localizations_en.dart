@@ -27,6 +27,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get retry => 'Try again';
 
   @override
+  String get connectionFailedTitle => 'Couldn\'t connect';
+
+  @override
+  String get connectionFailedBody =>
+      'Check your internet connection and try again.';
+
+  @override
   String get done => 'Done';
 
   @override

@@ -27,6 +27,13 @@ class AppLocalizationsUk extends AppLocalizations {
   String get retry => 'Спробувати ще раз';
 
   @override
+  String get connectionFailedTitle => 'Не вдалось з\'єднатися';
+
+  @override
+  String get connectionFailedBody =>
+      'Перевір інтернет-з\'єднання і спробуй ще раз.';
+
+  @override
   String get done => 'Готово';
 
   @override

@@ -60,34 +60,13 @@ void _handleJoinLink(Uri? uri) {
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle.light);
-  await loadSavedLocale();
-  // Ніщо тут не сміє заблокувати запуск застосунку — нагадування о 20:00
-  // не критичне для того, щоб узагалі побачити застосунок. Якщо нативний
-  // плагін сповіщень зависне чи впаде на якомусь конкретному пристрої,
-  // просто йдемо далі без нього, а не застрягаємо на splash-екрані назавжди.
-  try {
-    await initDailyReminder().timeout(const Duration(seconds: 5));
-  } catch (_) {}
-
-  await Supabase.initialize(
-    url: supabaseUrl,
-    anonKey: supabaseAnonKey,
-    // На деяких пристроях перший мережевий запит після старту застосунку іноді
-    // ловить короткочасну DNS-помилку (SocketException: Failed host lookup),
-    // навіть коли мережа в порядку — і Dart-рівень не ретраїть це сам. Обгортаємо
-    // HTTP-клієнт автоматичним retry на такі помилки для всіх запитів Supabase.
-    httpClient: RetryClient(
-      http.Client(),
-      retries: 5,
-      delay: (retryCount) => Duration(milliseconds: 500 * (retryCount + 1)),
-      whenError: (error, stackTrace) => error is SocketException,
-    ),
-  );
-
-  final appLinks = AppLinks();
-  unawaited(appLinks.getInitialLink().then(_handleJoinLink));
-  appLinks.uriLinkStream.listen(_handleJoinLink);
-
+  // Свідомо НІЧОГО важкого/асинхронного тут більше нема — нативний splash
+  // має змінитись на щось Flutter-намальоване якнайшвидше. Уся ініціалізація
+  // (локаль, нагадування, Supabase) переїхала в _AppBootstrap, що виконується
+  // вже ПІСЛЯ runApp(), з видимим індикатором завантаження і кнопкою "ще раз"
+  // при невдачі — а не блокує сам запуск, як було раніше (саме це залишало
+  // тестувальника на чорному екрані з лого назавжди, якщо мережа на його
+  // пристрої "тихо зависала" замість швидкої помилки).
   runApp(const NepoganoApp());
 }
 
@@ -182,9 +161,109 @@ class NepoganoApp extends StatelessWidget {
           locale: locale,
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
-          home: const AuthGate(),
+          home: const _AppBootstrap(),
         );
       },
+    );
+  }
+}
+
+enum _BootstrapStatus { loading, error, ready }
+
+/// Виконує всю асинхронну підготовку (локаль, нагадування, Supabase) вже
+/// ПІСЛЯ того, як щось Flutter-намальоване з'явилось на екрані — на відміну
+/// від старої версії, де все це чекалось у main() до runApp(), і будь-яке
+/// зависання (найчастіше — мережа Supabase.initialize на конкретному
+/// пристрої) лишало юзера на чорному нативному splash-екрані назавжди, без
+/// жодного індикатора чи можливості повторити спробу.
+class _AppBootstrap extends StatefulWidget {
+  const _AppBootstrap();
+
+  @override
+  State<_AppBootstrap> createState() => _AppBootstrapState();
+}
+
+class _AppBootstrapState extends State<_AppBootstrap> {
+  _BootstrapStatus _status = _BootstrapStatus.loading;
+
+  @override
+  void initState() {
+    super.initState();
+    _init();
+  }
+
+  Future<void> _init() async {
+    setState(() => _status = _BootstrapStatus.loading);
+
+    await loadSavedLocale();
+
+    // Нагадування о 20:00 не критичне для того, щоб узагалі побачити
+    // застосунок — якщо нативний плагін сповіщень зависне чи впаде на
+    // якомусь пристрої, просто йдемо далі без нього.
+    try {
+      await initDailyReminder().timeout(const Duration(seconds: 5));
+    } catch (_) {}
+
+    try {
+      await Supabase.initialize(
+        url: supabaseUrl,
+        anonKey: supabaseAnonKey,
+        // На деяких пристроях перший мережевий запит після старту застосунку
+        // іноді ловить короткочасну DNS-помилку (SocketException: Failed
+        // host lookup), навіть коли мережа в порядку — і Dart-рівень не
+        // ретраїть це сам. Обгортаємо HTTP-клієнт автоматичним retry на такі
+        // помилки для всіх запитів Supabase.
+        httpClient: RetryClient(
+          http.Client(),
+          retries: 5,
+          delay: (retryCount) => Duration(milliseconds: 500 * (retryCount + 1)),
+          whenError: (error, stackTrace) => error is SocketException,
+        ),
+      ).timeout(const Duration(seconds: 15));
+    } catch (_) {
+      if (mounted) setState(() => _status = _BootstrapStatus.error);
+      return;
+    }
+
+    final appLinks = AppLinks();
+    unawaited(appLinks.getInitialLink().then(_handleJoinLink));
+    appLinks.uriLinkStream.listen(_handleJoinLink);
+
+    if (mounted) setState(() => _status = _BootstrapStatus.ready);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_status == _BootstrapStatus.ready) return const AuthGate();
+
+    final l10n = AppLocalizations.of(context);
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      body: Center(
+        child: _status == _BootstrapStatus.loading
+            ? const CircularProgressIndicator()
+            : Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 32),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      l10n.connectionFailedTitle,
+                      textAlign: TextAlign.center,
+                      style: appSerif(fontSize: 20),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      l10n.connectionFailedBody,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(color: AppColors.inkMuted),
+                    ),
+                    const SizedBox(height: 24),
+                    ElevatedButton(onPressed: _init, child: Text(l10n.retry)),
+                  ],
+                ),
+              ),
+      ),
     );
   }
 }
