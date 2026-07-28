@@ -593,8 +593,16 @@ class Subject {
   final String id;
   final String kind;
   final String name;
+  // Власник керує співавторами/колами-перегляду/перейменуванням/видаленням;
+  // співавтор може лише читати й писати чек-іни.
+  final bool isOwner;
 
-  Subject({required this.id, required this.kind, required this.name});
+  Subject({
+    required this.id,
+    required this.kind,
+    required this.name,
+    required this.isOwner,
+  });
 }
 
 class CheckInScreen extends StatefulWidget {
@@ -642,6 +650,11 @@ class _CheckInScreenState extends State<CheckInScreen> {
   // після успішного _save(), щоб не чекати повторного запиту.
   int _updateCount = 0;
 
+  // Хто написав сьогоднішній запис сутності — актуально лише коли в
+  // щоденника кілька співавторів; для власного checkins завжди null (і так
+  // очевидно, що це я).
+  String? _authorName;
+
   // Сутності (дитина/улюбленець/інше) — той самий екран/ритуал, просто
   // перемкнутий на іншого адресата. null = веду власний чек-ін.
   List<Subject> _subjects = [];
@@ -671,17 +684,43 @@ class _CheckInScreenState extends State<CheckInScreen> {
   }
 
   Future<void> _loadSubjects() async {
-    final rows = await _supabase
+    final myId = _supabase.auth.currentUser!.id;
+
+    final ownRows = await _supabase
         .from('subjects')
         .select('id, kind, name')
-        .eq('owner_id', _supabase.auth.currentUser!.id)
+        .eq('owner_id', myId)
         .order('created_at');
+
+    // Сутності, де я не власник, а лише доданий співавтор — той самий
+    // перемикач нагорі, та сама можливість писати чек-іни.
+    final coauthorRows = await _supabase
+        .from('subject_coauthors')
+        .select('subjects(id, kind, name)')
+        .eq('coauthor_user_id', myId);
 
     if (!mounted) return;
     setState(() {
-      _subjects = (rows as List)
-          .map((r) => Subject(id: r['id'], kind: r['kind'], name: r['name']))
-          .toList();
+      final own = (ownRows as List).map(
+        (r) => Subject(
+          id: r['id'],
+          kind: r['kind'],
+          name: r['name'],
+          isOwner: true,
+        ),
+      );
+      final coauthored = (coauthorRows as List)
+          .map((r) => r['subjects'] as Map<String, dynamic>?)
+          .whereType<Map<String, dynamic>>()
+          .map(
+            (s) => Subject(
+              id: s['id'],
+              kind: s['kind'],
+              name: s['name'],
+              isOwner: false,
+            ),
+          );
+      _subjects = [...own, ...coauthored];
     });
   }
 
@@ -711,6 +750,7 @@ class _CheckInScreenState extends State<CheckInScreen> {
       _photoAlignY = 0;
       _photoScale = 1;
       _updateCount = 0;
+      _authorName = null;
       _editing = false;
     });
     _loadTodayEntry();
@@ -861,6 +901,11 @@ class _CheckInScreenState extends State<CheckInScreen> {
                 onTap: () => Navigator.of(context).pop('share'),
               ),
               _MenuRow(
+                icon: PhosphorIconsLight.userPlus,
+                label: l10n.addCoauthor,
+                onTap: () => Navigator.of(context).pop('coauthor'),
+              ),
+              _MenuRow(
                 icon: PhosphorIconsLight.trash,
                 label: l10n.deleteDiary,
                 color: Colors.redAccent,
@@ -876,6 +921,8 @@ class _CheckInScreenState extends State<CheckInScreen> {
       await _renameSubject(subject);
     } else if (choice == 'share') {
       await _shareSubjectWithFolders(subject);
+    } else if (choice == 'coauthor') {
+      await _manageCoauthors(subject);
     } else if (choice == 'delete') {
       await _removeSubject(subject);
     }
@@ -1005,6 +1052,164 @@ class _CheckInScreenState extends State<CheckInScreen> {
     );
   }
 
+  Future<void> _manageCoauthors(Subject subject) async {
+    final l10n = AppLocalizations.of(context);
+    final myId = _supabase.auth.currentUser!.id;
+
+    final friendshipRows = await _supabase
+        .from('friendships')
+        .select('requester_id, requester_email, addressee_id, addressee_email')
+        .or('requester_id.eq.$myId,addressee_id.eq.$myId')
+        .eq('status', 'accepted');
+
+    final friendIds = <String>[];
+    final friendEmailById = <String, String>{};
+    for (final row in friendshipRows as List) {
+      final isRequester = row['requester_id'] == myId;
+      final friendId = isRequester
+          ? row['addressee_id'] as String?
+          : row['requester_id'] as String;
+      final friendEmail = isRequester
+          ? row['addressee_email'] as String
+          : row['requester_email'] as String;
+      if (friendId != null) {
+        friendIds.add(friendId);
+        friendEmailById[friendId] = friendEmail;
+      }
+    }
+
+    if (!mounted) return;
+
+    if (friendIds.isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.noFriendsToAddAsCoauthor)));
+      return;
+    }
+
+    final nameRows = await _supabase
+        .from('profiles')
+        .select('user_id, display_name')
+        .inFilter('user_id', friendIds);
+    final nameById = <String, String?>{
+      for (final row in nameRows as List)
+        row['user_id'] as String: row['display_name'] as String?,
+    };
+
+    final friends =
+        friendIds
+            .map(
+              (id) => (
+                id: id,
+                name: nameById[id] ?? friendEmailById[id]!.split('@').first,
+              ),
+            )
+            .toList()
+          ..sort(
+            (a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()),
+          );
+
+    final coauthorRows = await _supabase
+        .from('subject_coauthors')
+        .select('coauthor_user_id')
+        .eq('subject_id', subject.id);
+    final selected = (coauthorRows as List)
+        .map((r) => r['coauthor_user_id'] as String)
+        .toSet();
+
+    if (!mounted) return;
+
+    final searchController = TextEditingController();
+
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setSheetState) {
+          final query = searchController.text.trim().toLowerCase();
+          final visible = query.isEmpty
+              ? friends
+              : friends
+                    .where((f) => f.name.toLowerCase().contains(query))
+                    .toList();
+
+          return Padding(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).viewInsets.bottom,
+            ),
+            child: SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      l10n.coauthorsTitle(subject.name),
+                      style: appSerif(fontSize: 18),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: searchController,
+                      decoration: appFieldDecoration(l10n.searchFriendHint),
+                      onChanged: (_) => setSheetState(() {}),
+                    ),
+                    const SizedBox(height: 8),
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(maxHeight: 360),
+                      child: visible.isEmpty
+                          ? Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              child: Text(
+                                l10n.noFriendsFoundForSearch,
+                                style: const TextStyle(
+                                  color: AppColors.inkMuted,
+                                ),
+                              ),
+                            )
+                          : ListView(
+                              shrinkWrap: true,
+                              children: visible.map((friend) {
+                                final checked = selected.contains(friend.id);
+                                return CheckboxListTile(
+                                  value: checked,
+                                  onChanged: (value) async {
+                                    if (value == true) {
+                                      selected.add(friend.id);
+                                      await _supabase
+                                          .from('subject_coauthors')
+                                          .insert({
+                                            'subject_id': subject.id,
+                                            'coauthor_user_id': friend.id,
+                                          });
+                                    } else {
+                                      selected.remove(friend.id);
+                                      await _supabase
+                                          .from('subject_coauthors')
+                                          .delete()
+                                          .eq('subject_id', subject.id)
+                                          .eq('coauthor_user_id', friend.id);
+                                    }
+                                    setSheetState(() {});
+                                  },
+                                  title: Text(friend.name),
+                                  contentPadding: EdgeInsets.zero,
+                                  controlAffinity:
+                                      ListTileControlAffinity.leading,
+                                );
+                              }).toList(),
+                            ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
   @override
   void dispose() {
     _noteController.dispose();
@@ -1044,11 +1249,12 @@ class _CheckInScreenState extends State<CheckInScreen> {
     final (startOfDay, startOfNextDay) = _todayRangeUtc();
 
     try {
+      final columns =
+          'id, mood, note, created_at, photo_path, photo_align_y, photo_scale, update_count'
+          '${_activeSubjectId != null ? ', author_id' : ''}';
       final rows = await _supabase
           .from(_table)
-          .select(
-            'id, mood, note, created_at, photo_path, photo_align_y, photo_scale, update_count',
-          )
+          .select(columns)
           .eq(_idColumn, _idValue)
           .gte('created_at', startOfDay)
           .lt('created_at', startOfNextDay)
@@ -1063,6 +1269,16 @@ class _CheckInScreenState extends State<CheckInScreen> {
       }
 
       final row = rows.first;
+
+      String? authorName;
+      final authorId = row['author_id'] as String?;
+      if (authorId != null) {
+        authorName = authorId == _supabase.auth.currentUser!.id
+            ? null // сам собі підпис не показуємо
+            : await _resolveDisplayName(authorId);
+      }
+      if (!mounted) return;
+
       setState(() {
         _todayEntryId = row['id'];
         _selected = moodFromDbValue(row['mood'] as String);
@@ -1074,6 +1290,7 @@ class _CheckInScreenState extends State<CheckInScreen> {
         _photoAlignY = (row['photo_align_y'] as num?)?.toDouble() ?? 0;
         _photoScale = (row['photo_scale'] as num?)?.toDouble() ?? 1;
         _updateCount = (row['update_count'] as num?)?.toInt() ?? 0;
+        _authorName = authorName;
         _pickedPhotoFile = null;
         _removePhoto = false;
         _editing = false;
@@ -1087,6 +1304,15 @@ class _CheckInScreenState extends State<CheckInScreen> {
         });
       }
     }
+  }
+
+  Future<String?> _resolveDisplayName(String userId) async {
+    final row = await _supabase
+        .from('profiles')
+        .select('display_name')
+        .eq('user_id', userId)
+        .maybeSingle();
+    return row?['display_name'] as String?;
   }
 
   void _startEditing() => setState(() => _editing = true);
@@ -1535,7 +1761,12 @@ class _CheckInScreenState extends State<CheckInScreen> {
         // 'user_id' у checkins має дефолт auth.uid(), тому передавати не
         // треба — а от subject_id у subject_checkins нема звідки взяти
         // самостійно, вказуємо явно тільки коли ведемо чек-ін сутності.
+        // author_id теж лише для сутностей — атрибуція "хто написав", коли
+        // щоденник ведуть кілька співавторів разом; для власного checkins
+        // це й так завжди "я", підписувати нема сенсу.
         if (_activeSubjectId != null) 'subject_id': _activeSubjectId,
+        if (_activeSubjectId != null)
+          'author_id': _supabase.auth.currentUser!.id,
       };
 
       if (_todayEntryId != null) {
@@ -1810,7 +2041,9 @@ class _CheckInScreenState extends State<CheckInScreen> {
                               label: s.name,
                               selected: _activeSubjectId == s.id,
                               onTap: () => _switchSubject(s.id),
-                              onLongPress: () => _openSubjectMenu(s),
+                              onLongPress: s.isOwner
+                                  ? () => _openSubjectMenu(s)
+                                  : null,
                             ),
                           ),
                         ],
@@ -1843,14 +2076,19 @@ class _CheckInScreenState extends State<CheckInScreen> {
                               if (_todayEntrySavedAt != null) ...[
                                 const SizedBox(height: 6),
                                 Text(
-                                  _updateCount > 0
-                                      ? '${l10n.alreadySavedToday('${_todayEntrySavedAt!.hour.toString().padLeft(2, '0')}:'
-                                            '${_todayEntrySavedAt!.minute.toString().padLeft(2, '0')}')} '
-                                            '· ${l10n.updatedCount(_updateCount)}'
-                                      : l10n.alreadySavedToday(
-                                          '${_todayEntrySavedAt!.hour.toString().padLeft(2, '0')}:'
-                                          '${_todayEntrySavedAt!.minute.toString().padLeft(2, '0')}',
-                                        ),
+                                  [
+                                    l10n.alreadySavedToday(
+                                      '${_todayEntrySavedAt!.hour.toString().padLeft(2, '0')}:'
+                                      '${_todayEntrySavedAt!.minute.toString().padLeft(2, '0')}',
+                                    ),
+                                    if (_updateCount > 0)
+                                      l10n.updatedCount(_updateCount),
+                                    // Тільки коли щоденник сутності веде хтось
+                                    // ще, крім мене — власний checkins ніколи
+                                    // не підписуємо.
+                                    if (_authorName != null)
+                                      l10n.authorLabel(_authorName!),
+                                  ].join(' · '),
                                   style: const TextStyle(
                                     fontSize: 13,
                                     color: AppColors.inkMuted,

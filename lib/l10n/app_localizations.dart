@@ -1076,6 +1076,42 @@ abstract class AppLocalizations {
   /// **'Кому видно щоденник {name}'**
   String shareSubjectTitle(String name);
 
+  /// No description provided for @addCoauthor.
+  ///
+  /// In uk, this message translates to:
+  /// **'Додати співавтора'**
+  String get addCoauthor;
+
+  /// No description provided for @coauthorsTitle.
+  ///
+  /// In uk, this message translates to:
+  /// **'Хто веде щоденник {name} разом з тобою'**
+  String coauthorsTitle(String name);
+
+  /// No description provided for @searchFriendHint.
+  ///
+  /// In uk, this message translates to:
+  /// **'Пошук друга'**
+  String get searchFriendHint;
+
+  /// No description provided for @noFriendsToAddAsCoauthor.
+  ///
+  /// In uk, this message translates to:
+  /// **'Спершу додай друзів, щоб зробити когось співавтором.'**
+  String get noFriendsToAddAsCoauthor;
+
+  /// No description provided for @noFriendsFoundForSearch.
+  ///
+  /// In uk, this message translates to:
+  /// **'Нікого не знайдено.'**
+  String get noFriendsFoundForSearch;
+
+  /// No description provided for @authorLabel.
+  ///
+  /// In uk, this message translates to:
+  /// **'Автор: {name}'**
+  String authorLabel(String name);
+
   /// No description provided for @updatedCount.
   ///
   /// In uk, this message translates to:

@@ -229,6 +229,22 @@
       "name": { "type": "String" }
     }
   },
+  "addCoauthor": "Add co-author",
+  "coauthorsTitle": "Who writes {name}'s diary with you",
+  "@coauthorsTitle": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+  "searchFriendHint": "Search a friend",
+  "noFriendsToAddAsCoauthor": "Add some friends first to make someone a co-author.",
+  "noFriendsFoundForSearch": "No one found.",
+  "authorLabel": "By {name}",
+  "@authorLabel": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
 
   "updatedCount": "Updated {count, plural, one{{count} time} other{{count} times}}",
   "@updatedCount": {

@@ -20,6 +20,10 @@ class CheckinEntry {
   final double photoAlignY;
   final double photoScale;
   final int updateCount;
+  // Тільки для щоденників сутностей з кількома співавторами — хто написав
+  // саме цей запис. Null для власного checkins і для сутностей з одним
+  // автором.
+  final String? authorName;
 
   CheckinEntry({
     required this.id,
@@ -30,6 +34,7 @@ class CheckinEntry {
     this.photoAlignY = 0,
     this.photoScale = 1,
     this.updateCount = 0,
+    this.authorName,
   });
 }
 
@@ -106,15 +111,40 @@ class _HistoryScreenState extends State<HistoryScreen> {
     });
 
     try {
+      final columns =
+          'id, mood, note, created_at, photo_path, photo_align_y, photo_scale, update_count'
+          '${widget.subjectId != null ? ', author_id' : ''}';
       final rows = await _supabase
           .from(_table)
-          .select(
-            'id, mood, note, created_at, photo_path, photo_align_y, photo_scale, update_count',
-          )
+          .select(columns)
           .eq(_idColumn, _idValue)
           .order('created_at');
 
+      // Атрибуція автора — тільки для щоденників сутностей, і тільки коли
+      // автор не я сам (собі підпис не показуємо).
+      final myId = _supabase.auth.currentUser?.id;
+      Map<String, String?> authorNameById = {};
+      if (widget.subjectId != null) {
+        final authorIds = (rows as List)
+            .map((row) => row['author_id'] as String?)
+            .whereType<String>()
+            .where((id) => id != myId)
+            .toSet()
+            .toList();
+        if (authorIds.isNotEmpty) {
+          final nameRows = await _supabase
+              .from('profiles')
+              .select('user_id, display_name')
+              .inFilter('user_id', authorIds);
+          authorNameById = {
+            for (final row in nameRows as List)
+              row['user_id'] as String: row['display_name'] as String?,
+          };
+        }
+      }
+
       final entries = (rows as List).map((row) {
+        final authorId = row['author_id'] as String?;
         return CheckinEntry(
           id: row['id'] as String,
           createdAt: DateTime.parse(row['created_at'] as String).toLocal(),
@@ -124,6 +154,9 @@ class _HistoryScreenState extends State<HistoryScreen> {
           photoAlignY: (row['photo_align_y'] as num?)?.toDouble() ?? 0,
           photoScale: (row['photo_scale'] as num?)?.toDouble() ?? 1,
           updateCount: (row['update_count'] as num?)?.toInt() ?? 0,
+          authorName: (authorId == null || authorId == myId)
+              ? null
+              : authorNameById[authorId],
         );
       }).toList();
 
@@ -581,6 +614,18 @@ class _HistoryScreenState extends State<HistoryScreen> {
                         ),
                       ],
                     ),
+                    if (entry.authorName != null) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        AppLocalizations.of(
+                          context,
+                        ).authorLabel(entry.authorName!),
+                        style: const TextStyle(
+                          fontSize: 11,
+                          color: AppColors.inkMuted,
+                        ),
+                      ),
+                    ],
                     if (entry.note != null && entry.note!.isNotEmpty) ...[
                       const SizedBox(height: 4),
                       Text(

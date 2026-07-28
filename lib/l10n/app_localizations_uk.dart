@@ -540,6 +540,29 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
+  String get addCoauthor => 'Додати співавтора';
+
+  @override
+  String coauthorsTitle(String name) {
+    return 'Хто веде щоденник $name разом з тобою';
+  }
+
+  @override
+  String get searchFriendHint => 'Пошук друга';
+
+  @override
+  String get noFriendsToAddAsCoauthor =>
+      'Спершу додай друзів, щоб зробити когось співавтором.';
+
+  @override
+  String get noFriendsFoundForSearch => 'Нікого не знайдено.';
+
+  @override
+  String authorLabel(String name) {
+    return 'Автор: $name';
+  }
+
+  @override
   String updatedCount(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,

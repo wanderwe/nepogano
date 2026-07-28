@@ -542,6 +542,29 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get addCoauthor => 'Add co-author';
+
+  @override
+  String coauthorsTitle(String name) {
+    return 'Who writes $name\'s diary with you';
+  }
+
+  @override
+  String get searchFriendHint => 'Search a friend';
+
+  @override
+  String get noFriendsToAddAsCoauthor =>
+      'Add some friends first to make someone a co-author.';
+
+  @override
+  String get noFriendsFoundForSearch => 'No one found.';
+
+  @override
+  String authorLabel(String name) {
+    return 'By $name';
+  }
+
+  @override
   String updatedCount(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,

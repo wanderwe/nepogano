@@ -238,6 +238,22 @@
       "name": { "type": "String" }
     }
   },
+  "addCoauthor": "Додати співавтора",
+  "coauthorsTitle": "Хто веде щоденник {name} разом з тобою",
+  "@coauthorsTitle": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+  "searchFriendHint": "Пошук друга",
+  "noFriendsToAddAsCoauthor": "Спершу додай друзів, щоб зробити когось співавтором.",
+  "noFriendsFoundForSearch": "Нікого не знайдено.",
+  "authorLabel": "Автор: {name}",
+  "@authorLabel": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
 
   "updatedCount": "Оновлено {count, plural, one{{count} раз} few{{count} рази} many{{count} разів} other{{count} разів}}",
   "@updatedCount": {
