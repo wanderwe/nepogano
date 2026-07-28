@@ -1228,9 +1228,10 @@ class _FriendsScreenState extends State<FriendsScreen> {
                     const SizedBox(height: 2),
                     Text(
                       l10n.friendGuessStats(
-                        friend.guessesCorrect!,
+                        friend.guessesCorrect ?? 0,
                         friend.guessesTotal!,
-                        ((friend.guessesCorrect! / friend.guessesTotal!) * 100)
+                        (((friend.guessesCorrect ?? 0) / friend.guessesTotal!) *
+                                100)
                             .round(),
                       ),
                       style: const TextStyle(
