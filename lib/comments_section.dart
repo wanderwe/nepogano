@@ -279,6 +279,77 @@ class _CommentsSectionState extends State<CommentsSection> {
     });
   }
 
+  Future<void> _openCommentMenu(CheckinComment comment) async {
+    final l10n = AppLocalizations.of(context);
+    final choice = await showModalBottomSheet<String>(
+      context: context,
+      builder: (context) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(8, 12, 8, 8),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              InkWell(
+                onTap: () => Navigator.of(context).pop('edit'),
+                borderRadius: BorderRadius.circular(14),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 14,
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        PhosphorIconsLight.pencilSimple,
+                        size: 20,
+                        color: AppColors.ink,
+                      ),
+                      const SizedBox(width: 16),
+                      Text(l10n.edit, style: const TextStyle(fontSize: 16)),
+                    ],
+                  ),
+                ),
+              ),
+              InkWell(
+                onTap: () => Navigator.of(context).pop('delete'),
+                borderRadius: BorderRadius.circular(14),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 14,
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        PhosphorIconsLight.trash,
+                        size: 20,
+                        color: Colors.redAccent,
+                      ),
+                      const SizedBox(width: 16),
+                      Text(
+                        l10n.delete,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          color: Colors.redAccent,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    if (choice == 'edit') {
+      await _editComment(comment);
+    } else if (choice == 'delete') {
+      await _deleteComment(comment);
+    }
+  }
+
   Future<void> _editComment(CheckinComment comment) async {
     final l10n = AppLocalizations.of(context);
     final controller = TextEditingController(text: comment.body);
@@ -586,30 +657,24 @@ class _CommentsSectionState extends State<CommentsSection> {
                     ),
                   ),
                 ),
-              if (isMine) ...[
-                if (showReply) const SizedBox(width: 12),
+              // Раніше тут завжди висіли два яскраві текстові лінки
+              // ("Редагувати"/"Видалити" червоним) — при кількох коментарях
+              // підряд вони відволікали від самого тексту розмови більше,
+              // ніж сам текст. Один приглушений "⋯" замість них, дії — у
+              // тому ж шторка-меню патерні, що й скрізь по застосунку
+              // (щоденники, друзі тощо).
+              if (isMine)
                 GestureDetector(
-                  onTap: () => _editComment(comment),
-                  child: Text(
-                    l10n.edit,
-                    style: const TextStyle(
-                      fontSize: 12,
+                  onTap: () => _openCommentMenu(comment),
+                  child: const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 2),
+                    child: Icon(
+                      PhosphorIconsLight.dotsThreeVertical,
+                      size: 16,
                       color: AppColors.inkMuted,
                     ),
                   ),
                 ),
-                const SizedBox(width: 12),
-                GestureDetector(
-                  onTap: () => _deleteComment(comment),
-                  child: Text(
-                    l10n.delete,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: Colors.redAccent,
-                    ),
-                  ),
-                ),
-              ],
             ],
           ),
         ],
