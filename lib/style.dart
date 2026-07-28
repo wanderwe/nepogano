@@ -193,10 +193,12 @@ class AppChip extends StatelessWidget {
 }
 
 /// Спільна картка-діалог для всього застосунку: заокруглена сильніше за
-/// стандартний Material AlertDialog, serif-заголовок (той самий "голос
-/// бренду", що й деінде), одна виразна повношира кнопка основної дії замість
-/// двох дрібних TextButton поруч — так з першого погляду видно, яка дія
-/// очікувана, а яка другорядна.
+/// стандартний Material AlertDialog, sans-заголовок (функціональний UI, не
+/// "голос бренду" — serif лишається лише для ритуалу настрою), одна виразна
+/// повношира кнопка основної дії замість двох дрібних TextButton поруч —
+/// так з першого погляду видно, яка дія очікувана, а яка другорядна.
+/// Контент прокручується (SingleChildScrollView) — без цього клавіатура під
+/// текстовим полем легко зіштовхує діалог в overflow знизу.
 class AppDialog extends StatelessWidget {
   final String title;
   final Widget? content;
@@ -229,49 +231,56 @@ class AppDialog extends StatelessWidget {
       insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(24, 28, 24, 16),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(title, style: appScreenTitle(fontSize: 20)),
-            if (content != null) ...[const SizedBox(height: 18), content!],
-            const SizedBox(height: 26),
-            SizedBox(
-              width: double.infinity,
-              height: 48,
-              child: FilledButton(
-                style: FilledButton.styleFrom(
-                  backgroundColor: primaryColor,
-                  foregroundColor: primaryForeground,
-                  disabledBackgroundColor: AppColors.surface,
-                  disabledForegroundColor: AppColors.inkMuted,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
+        // Клавіатура з'їдає частину висоти екрана — фіксований Column без
+        // скролу тоді просто overflow'ить знизу (як щойно показав скріншот:
+        // "BOTTOM OVERFLOWED BY 4.0 PIXELS" у діалозі з текстовим полем).
+        // Спільний компонент для всіх діалогів застосунку — фікс тут
+        // покриває їх усі одразу, не тільки цей конкретний випадок.
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(title, style: appScreenTitle(fontSize: 20)),
+              if (content != null) ...[const SizedBox(height: 18), content!],
+              const SizedBox(height: 26),
+              SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: FilledButton(
+                  style: FilledButton.styleFrom(
+                    backgroundColor: primaryColor,
+                    foregroundColor: primaryForeground,
+                    disabledBackgroundColor: AppColors.surface,
+                    disabledForegroundColor: AppColors.inkMuted,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
                   ),
-                ),
-                onPressed: onPrimary,
-                child: Text(
-                  primaryLabel,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 15,
+                  onPressed: onPrimary,
+                  child: Text(
+                    primaryLabel,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 15,
+                    ),
                   ),
                 ),
               ),
-            ),
-            const SizedBox(height: 8),
-            SizedBox(
-              width: double.infinity,
-              height: 44,
-              child: TextButton(
-                onPressed: onSecondary,
-                child: Text(
-                  secondaryLabel,
-                  style: TextStyle(color: secondaryColor),
+              const SizedBox(height: 8),
+              SizedBox(
+                width: double.infinity,
+                height: 44,
+                child: TextButton(
+                  onPressed: onSecondary,
+                  child: Text(
+                    secondaryLabel,
+                    style: TextStyle(color: secondaryColor),
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
