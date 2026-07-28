@@ -1074,14 +1074,17 @@ class _FriendsScreenState extends State<FriendsScreen> {
                               child: ListView(
                                 scrollDirection: Axis.horizontal,
                                 children: [
-                                  if (_folders.isNotEmpty)
-                                    _FolderChip(
-                                      label: l10n.allFriends,
-                                      selected: _selectedFolderId == null,
-                                      onTap: () => setState(
-                                        () => _selectedFolderId = null,
-                                      ),
+                                  // Завжди видима, навіть без жодного кола —
+                                  // інакше цей рядок порожній, і лишається
+                                  // самотня іконка "додати коло" незрозумілого
+                                  // призначення (як щойно показав скріншот).
+                                  _FolderChip(
+                                    label: l10n.allFriends,
+                                    selected: _selectedFolderId == null,
+                                    onTap: () => setState(
+                                      () => _selectedFolderId = null,
                                     ),
+                                  ),
                                   ..._folders.map(
                                     (folder) => _FolderChip(
                                       label: folder.name,
