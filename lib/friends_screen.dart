@@ -1418,85 +1418,6 @@ class _PersonDetailScreenState extends State<PersonDetailScreen> {
     }
   }
 
-  // Список щоденників окремою шторкою, а не інлайн-стовпчиком на екрані —
-  // якщо їх багато (кола часом ростуть до десятка й більше спільних
-  // щоденників), інлайн-список повністю виштовхнув би вгадування вниз, а
-  // саме вгадування — головна мета цього екрана.
-  void _openSharedDiariesSheet(AppLocalizations l10n) {
-    showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      builder: (context) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(l10n.sharedDiaries, style: appScreenTitle(fontSize: 18)),
-              const SizedBox(height: 12),
-              Flexible(
-                child: ListView.separated(
-                  shrinkWrap: true,
-                  itemCount: widget.sharedSubjects.length,
-                  separatorBuilder: (_, _) => const SizedBox(height: 10),
-                  itemBuilder: (context, index) {
-                    final shared = widget.sharedSubjects[index];
-                    return InkWell(
-                      borderRadius: BorderRadius.circular(16),
-                      onTap: () {
-                        Navigator.of(context).pop();
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) => HistoryScreen(
-                              subjectId: shared.subjectId,
-                              subjectName: shared.subjectName,
-                            ),
-                          ),
-                        );
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 12,
-                        ),
-                        decoration: BoxDecoration(
-                          color: AppColors.surface,
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: Row(
-                          children: [
-                            const Icon(
-                              PhosphorIconsLight.bookOpen,
-                              size: 18,
-                              color: AppColors.inkMuted,
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Text(
-                                shared.subjectName,
-                                style: const TextStyle(fontSize: 14),
-                              ),
-                            ),
-                            const Icon(
-                              PhosphorIconsLight.caretRight,
-                              size: 18,
-                              color: AppColors.inkMuted,
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -1530,39 +1451,40 @@ class _PersonDetailScreenState extends State<PersonDetailScreen> {
               ),
               if (widget.sharedSubjects.isNotEmpty) ...[
                 const SizedBox(height: 16),
-                InkWell(
-                  borderRadius: BorderRadius.circular(16),
-                  onTap: () => _openSharedDiariesSheet(l10n),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 12,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.surface,
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Row(
-                      children: [
-                        const Icon(
-                          PhosphorIconsLight.bookOpen,
-                          size: 18,
-                          color: AppColors.inkMuted,
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Text(
-                            '${l10n.sharedDiaries} (${widget.sharedSubjects.length})',
-                            style: const TextStyle(fontSize: 14),
+                Text(
+                  l10n.sharedDiaries,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    color: AppColors.inkMuted,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                // Ці щоденники завжди прив'язані до ОДНІЄЇ людини (цього
+                // екрана) — на відміну від кіл, тут реалістично не буде
+                // десятка позицій, тож горизонтальний свайп (той самий
+                // патерн, що й перемикач сутностей/кіл деінде в застосунку)
+                // зручніший за шторку з окремим тапом для відкриття.
+                SizedBox(
+                  height: 36,
+                  child: ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: widget.sharedSubjects.length,
+                    separatorBuilder: (_, _) => const SizedBox(width: 8),
+                    itemBuilder: (context, index) {
+                      final shared = widget.sharedSubjects[index];
+                      return AppChip(
+                        label: shared.subjectName,
+                        selected: false,
+                        onTap: () => Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => HistoryScreen(
+                              subjectId: shared.subjectId,
+                              subjectName: shared.subjectName,
+                            ),
                           ),
                         ),
-                        const Icon(
-                          PhosphorIconsLight.caretRight,
-                          size: 18,
-                          color: AppColors.inkMuted,
-                        ),
-                      ],
-                    ),
+                      );
+                    },
                   ),
                 ),
               ],
