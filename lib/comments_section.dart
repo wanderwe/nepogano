@@ -619,7 +619,7 @@ class _CommentsSectionState extends State<CommentsSection> {
         comment.authorId == _supabase.auth.currentUser!.id &&
         !comment.isDeleted;
 
-    return Column(
+    final content = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
@@ -693,6 +693,18 @@ class _CommentsSectionState extends State<CommentsSection> {
           ),
         ],
       ],
+    );
+
+    if (!isMine) return content;
+    // Довге натискання на весь коментар відкриває те саме меню, що й "⋯" —
+    // той самий патерн, що вже скрізь у застосунку для власних елементів
+    // списку (щоденники, кола): тап виконує основну дію, довге натискання
+    // відкриває керування. У коментаря основної дії на тап нема, тож весь
+    // рядок можна віддати під довге натискання, а не тільки малу іконку.
+    return GestureDetector(
+      onLongPress: () => _openCommentMenu(comment),
+      behavior: HitTestBehavior.opaque,
+      child: content,
     );
   }
 
