@@ -1091,8 +1091,32 @@ abstract class AppLocalizations {
   /// No description provided for @coauthorInfoBody.
   ///
   /// In uk, this message translates to:
-  /// **'Щоденник веде {name}. Ти можеш писати й редагувати записи — перейменувати, поділитись чи видалити щоденник може лише {name}.'**
+  /// **'Щоденник веде {name}. Ти можеш писати й редагувати записи, а перейменувати, поділитись чи видалити щоденник може лише {name}.'**
   String coauthorInfoBody(String name);
+
+  /// No description provided for @leaveCoauthoredDiary.
+  ///
+  /// In uk, this message translates to:
+  /// **'Прибрати щоденник'**
+  String get leaveCoauthoredDiary;
+
+  /// No description provided for @leaveCoauthoredDiaryConfirmTitle.
+  ///
+  /// In uk, this message translates to:
+  /// **'Прибрати щоденник {name}?'**
+  String leaveCoauthoredDiaryConfirmTitle(String name);
+
+  /// No description provided for @leaveCoauthoredDiaryConfirmBody.
+  ///
+  /// In uk, this message translates to:
+  /// **'Він зникне з твого перемикача. {name} і надалі його веде, а якщо захочеш повернутись, треба буде попросити додати ще раз.'**
+  String leaveCoauthoredDiaryConfirmBody(String name);
+
+  /// No description provided for @couldNotLeaveCoauthoredDiary.
+  ///
+  /// In uk, this message translates to:
+  /// **'Не вдалось прибрати щоденник.'**
+  String get couldNotLeaveCoauthoredDiary;
 
   /// No description provided for @coauthorsTitle.
   ///

@@ -140,6 +140,10 @@ class AppChip extends StatelessWidget {
   final bool selected;
   final VoidCallback onTap;
   final VoidCallback? onLongPress;
+  // Тільки коли НЕ selected — напр. позначає "це не твій щоденник, а
+  // спільний з кимось" на чіпі перемикача сутностей, ще до того, як юзер
+  // тапне й побачить деталі. Коли чіп вибраний, галочка важливіша.
+  final IconData? leadingIcon;
 
   const AppChip({
     super.key,
@@ -147,6 +151,7 @@ class AppChip extends StatelessWidget {
     required this.selected,
     required this.onTap,
     this.onLongPress,
+    this.leadingIcon,
   });
 
   @override
@@ -176,6 +181,9 @@ class AppChip extends StatelessWidget {
                 size: 14,
                 color: AppColors.accent,
               ),
+              const SizedBox(width: 6),
+            ] else if (leadingIcon != null) ...[
+              Icon(leadingIcon, size: 14, color: AppColors.inkMuted),
               const SizedBox(width: 6),
             ],
             Text(

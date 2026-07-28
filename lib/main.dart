@@ -565,12 +565,14 @@ class _SubjectChip extends StatelessWidget {
   final bool selected;
   final VoidCallback onTap;
   final VoidCallback? onLongPress;
+  final IconData? leadingIcon;
 
   const _SubjectChip({
     required this.label,
     required this.selected,
     required this.onTap,
     this.onLongPress,
+    this.leadingIcon,
   });
 
   @override
@@ -582,6 +584,7 @@ class _SubjectChip extends StatelessWidget {
         selected: selected,
         onTap: onTap,
         onLongPress: onLongPress,
+        leadingIcon: leadingIcon,
       ),
     );
   }
@@ -910,11 +913,13 @@ class _CheckInScreenState extends State<CheckInScreen> {
     final l10n = AppLocalizations.of(context);
 
     // Співавтор не керує щоденником (перейменування/шер/видалення) — замість
-    // порожньої відсутності меню (як було раніше) показуємо, хто ним керує
-    // і що саме сам співавтор може робити, а не мовчки нічого.
+    // порожньої відсутності меню (як було раніше) показуємо, хто ним керує,
+    // що сам співавтор може робити, і даємо реальний вихід — інакше щоденник,
+    // доданий власником, назавжди лишався б у перемикача без жодного способу
+    // його прибрати.
     if (!subject.isOwner) {
       final ownerName = subject.ownerName ?? l10n.someone;
-      await showModalBottomSheet<void>(
+      final choice = await showModalBottomSheet<String>(
         context: context,
         builder: (context) => SafeArea(
           child: Padding(
@@ -933,11 +938,19 @@ class _CheckInScreenState extends State<CheckInScreen> {
                     height: 1.4,
                   ),
                 ),
+                const SizedBox(height: 16),
+                _MenuRow(
+                  icon: PhosphorIconsLight.signOut,
+                  label: l10n.leaveCoauthoredDiary,
+                  color: Colors.redAccent,
+                  onTap: () => Navigator.of(context).pop('leave'),
+                ),
               ],
             ),
           ),
         ),
       );
+      if (choice == 'leave') await _leaveCoauthoredDiary(subject);
       return;
     }
 
@@ -984,6 +997,48 @@ class _CheckInScreenState extends State<CheckInScreen> {
       await _manageCoauthors(subject);
     } else if (choice == 'delete') {
       await _removeSubject(subject);
+    }
+  }
+
+  Future<void> _leaveCoauthoredDiary(Subject subject) async {
+    final l10n = AppLocalizations.of(context);
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AppDialog(
+        title: l10n.leaveCoauthoredDiaryConfirmTitle(subject.name),
+        content: Text(
+          l10n.leaveCoauthoredDiaryConfirmBody(
+            subject.ownerName ?? l10n.someone,
+          ),
+          style: const TextStyle(color: AppColors.inkMuted),
+        ),
+        primaryLabel: l10n.cancel,
+        onPrimary: () => Navigator.of(context).pop(false),
+        secondaryLabel: l10n.leaveCoauthoredDiary,
+        secondaryColor: Colors.redAccent,
+        onSecondary: () => Navigator.of(context).pop(true),
+      ),
+    );
+    if (confirmed != true) return;
+
+    try {
+      await _supabase
+          .from('subject_coauthors')
+          .delete()
+          .eq('subject_id', subject.id)
+          .eq('coauthor_user_id', _supabase.auth.currentUser!.id);
+      if (_activeSubjectId == subject.id) _switchSubject(null);
+      await _loadSubjects();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              AppLocalizations.of(context).couldNotLeaveCoauthoredDiary,
+            ),
+          ),
+        );
+      }
     }
   }
 
@@ -2107,6 +2162,11 @@ class _CheckInScreenState extends State<CheckInScreen> {
                               selected: _activeSubjectId == s.id,
                               onTap: () => _switchSubject(s.id),
                               onLongPress: () => _openSubjectMenu(s),
+                              // Видно ще до тапу, що це не власний
+                              // щоденник, а спільний з кимось.
+                              leadingIcon: s.isOwner
+                                  ? null
+                                  : PhosphorIconsLight.usersThree,
                             ),
                           ),
                         ],

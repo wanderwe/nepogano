@@ -240,12 +240,26 @@
   },
   "addCoauthor": "Додати співавтора",
   "someone": "хтось",
-  "coauthorInfoBody": "Щоденник веде {name}. Ти можеш писати й редагувати записи — перейменувати, поділитись чи видалити щоденник може лише {name}.",
+  "coauthorInfoBody": "Щоденник веде {name}. Ти можеш писати й редагувати записи, а перейменувати, поділитись чи видалити щоденник може лише {name}.",
   "@coauthorInfoBody": {
     "placeholders": {
       "name": { "type": "String" }
     }
   },
+  "leaveCoauthoredDiary": "Прибрати щоденник",
+  "leaveCoauthoredDiaryConfirmTitle": "Прибрати щоденник {name}?",
+  "@leaveCoauthoredDiaryConfirmTitle": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+  "leaveCoauthoredDiaryConfirmBody": "Він зникне з твого перемикача. {name} і надалі його веде, а якщо захочеш повернутись, треба буде попросити додати ще раз.",
+  "@leaveCoauthoredDiaryConfirmBody": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+  "couldNotLeaveCoauthoredDiary": "Не вдалось прибрати щоденник.",
   "coauthorsTitle": "Хто ще веде щоденник {name}",
   "@coauthorsTitle": {
     "placeholders": {

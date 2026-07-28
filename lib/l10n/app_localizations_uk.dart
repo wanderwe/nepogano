@@ -547,8 +547,24 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String coauthorInfoBody(String name) {
-    return 'Щоденник веде $name. Ти можеш писати й редагувати записи — перейменувати, поділитись чи видалити щоденник може лише $name.';
+    return 'Щоденник веде $name. Ти можеш писати й редагувати записи, а перейменувати, поділитись чи видалити щоденник може лише $name.';
   }
+
+  @override
+  String get leaveCoauthoredDiary => 'Прибрати щоденник';
+
+  @override
+  String leaveCoauthoredDiaryConfirmTitle(String name) {
+    return 'Прибрати щоденник $name?';
+  }
+
+  @override
+  String leaveCoauthoredDiaryConfirmBody(String name) {
+    return 'Він зникне з твого перемикача. $name і надалі його веде, а якщо захочеш повернутись, треба буде попросити додати ще раз.';
+  }
+
+  @override
+  String get couldNotLeaveCoauthoredDiary => 'Не вдалось прибрати щоденник.';
 
   @override
   String coauthorsTitle(String name) {

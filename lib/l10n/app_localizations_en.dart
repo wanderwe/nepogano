@@ -549,8 +549,24 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String coauthorInfoBody(String name) {
-    return 'This diary is kept by $name. You can write and edit entries — only $name can rename, share, or delete the diary.';
+    return 'This diary is kept by $name. You can write and edit entries, and only $name can rename, share, or delete the diary.';
   }
+
+  @override
+  String get leaveCoauthoredDiary => 'Remove diary';
+
+  @override
+  String leaveCoauthoredDiaryConfirmTitle(String name) {
+    return 'Remove $name?';
+  }
+
+  @override
+  String leaveCoauthoredDiaryConfirmBody(String name) {
+    return 'It\'ll disappear from your switcher. $name still keeps it, and if you want back in, you\'ll need to be added again.';
+  }
+
+  @override
+  String get couldNotLeaveCoauthoredDiary => 'Couldn\'t remove the diary.';
 
   @override
   String coauthorsTitle(String name) {
