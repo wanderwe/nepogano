@@ -24,6 +24,7 @@ import 'locale_provider.dart';
 import 'onboarding_screen.dart';
 import 'photo_reposition_screen.dart';
 import 'photo_storage.dart';
+import 'profile_screen.dart';
 import 'style.dart';
 
 // TODO: встав сюди свій Project URL і anon key з Supabase (Settings → API)
@@ -1833,6 +1834,12 @@ class _CheckInScreenState extends State<CheckInScreen> {
     showModalBottomSheet(
       context: context,
       builder: (sheetContext) => _MoreMenuSheet(
+        onProfile: () {
+          Navigator.of(sheetContext).pop();
+          Navigator.of(
+            context,
+          ).push(MaterialPageRoute(builder: (_) => const ProfileScreen()));
+        },
         onLanguage: () {
           Navigator.of(sheetContext).pop();
           setAppLocale(
@@ -2203,11 +2210,13 @@ class _CheckInScreenState extends State<CheckInScreen> {
 }
 
 class _MoreMenuSheet extends StatelessWidget {
+  final VoidCallback onProfile;
   final VoidCallback onLanguage;
   final VoidCallback onSignOut;
   final VoidCallback onDeleteAccount;
 
   const _MoreMenuSheet({
+    required this.onProfile,
     required this.onLanguage,
     required this.onSignOut,
     required this.onDeleteAccount,
@@ -2222,6 +2231,11 @@ class _MoreMenuSheet extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            _MenuRow(
+              icon: PhosphorIconsLight.userCircle,
+              label: l10n.profile,
+              onTap: onProfile,
+            ),
             _MenuRow(
               icon: PhosphorIconsLight.globe,
               label:

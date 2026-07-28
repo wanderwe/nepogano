@@ -9,13 +9,11 @@ import 'l10n/app_localizations.dart';
 import 'style.dart';
 
 /// Особистий профіль — ім'я, яке бачать друзі, і код для додавання в друзі.
-/// Винесено з екрану Друзі, щоб не змішувати "налаштування себе" зі списком
-/// інших людей.
+/// Живе в головному меню (не на екрані Друзі) — це налаштування себе, не
+/// частина списку інших людей. Сам завантажує свої дані, не залежить від
+/// того, звідки на нього перейшли.
 class ProfileScreen extends StatefulWidget {
-  final String? displayName;
-  final String? friendCode;
-
-  const ProfileScreen({super.key, this.displayName, this.friendCode});
+  const ProfileScreen({super.key});
 
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();
@@ -23,7 +21,29 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   final _supabase = Supabase.instance.client;
-  late String? _displayName = widget.displayName;
+  bool _loading = true;
+  String? _displayName;
+  String? _friendCode;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    final row = await _supabase
+        .from('profiles')
+        .select('display_name, friend_code')
+        .eq('user_id', _supabase.auth.currentUser!.id)
+        .maybeSingle();
+    if (!mounted) return;
+    setState(() {
+      _displayName = row?['display_name'] as String?;
+      _friendCode = row?['friend_code'] as String?;
+      _loading = false;
+    });
+  }
 
   Future<void> _editDisplayName() async {
     final l10n = AppLocalizations.of(context);
@@ -69,7 +89,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _copyFriendCode() async {
-    final code = widget.friendCode;
+    final code = _friendCode;
     if (code == null) return;
     await Clipboard.setData(ClipboardData(text: code));
     // Android сам показує системне повідомлення про копіювання з 13 версії —
@@ -97,7 +117,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               Row(
                 children: [
                   IconButton(
-                    onPressed: () => Navigator.of(context).pop(_displayName),
+                    onPressed: () => Navigator.of(context).pop(),
                     icon: const Icon(PhosphorIconsLight.arrowLeft, size: 20),
                     tooltip: l10n.back,
                   ),
@@ -106,59 +126,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ],
               ),
               const SizedBox(height: 24),
-              InkWell(
-                borderRadius: BorderRadius.circular(14),
-                onTap: _editDisplayName,
-                child: Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: AppColors.surface,
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(
-                        PhosphorIconsLight.identificationBadge,
-                        size: 18,
-                        color: AppColors.inkMuted,
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              l10n.editDisplayName,
-                              style: const TextStyle(
-                                fontSize: 12,
-                                color: AppColors.inkMuted,
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              _displayName ?? l10n.setDisplayName,
-                              style: const TextStyle(
-                                fontSize: 16,
-                                color: AppColors.ink,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const Icon(
-                        PhosphorIconsLight.caretRight,
-                        size: 18,
-                        color: AppColors.inkMuted,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              if (widget.friendCode != null) ...[
-                const SizedBox(height: 12),
+              if (_loading)
+                const Padding(
+                  padding: EdgeInsets.only(top: 32),
+                  child: Center(child: CircularProgressIndicator()),
+                )
+              else ...[
                 InkWell(
                   borderRadius: BorderRadius.circular(14),
-                  onTap: _copyFriendCode,
+                  onTap: _editDisplayName,
                   child: Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
@@ -168,7 +144,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     child: Row(
                       children: [
                         const Icon(
-                          PhosphorIconsLight.key,
+                          PhosphorIconsLight.identificationBadge,
                           size: 18,
                           color: AppColors.inkMuted,
                         ),
@@ -178,7 +154,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                l10n.myFriendCode,
+                                l10n.editDisplayName,
                                 style: const TextStyle(
                                   fontSize: 12,
                                   color: AppColors.inkMuted,
@@ -186,7 +162,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               ),
                               const SizedBox(height: 2),
                               Text(
-                                widget.friendCode!,
+                                _displayName ?? l10n.setDisplayName,
                                 style: const TextStyle(
                                   fontSize: 16,
                                   color: AppColors.ink,
@@ -196,7 +172,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           ),
                         ),
                         const Icon(
-                          PhosphorIconsLight.copy,
+                          PhosphorIconsLight.caretRight,
                           size: 18,
                           color: AppColors.inkMuted,
                         ),
@@ -204,6 +180,57 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                   ),
                 ),
+                if (_friendCode != null) ...[
+                  const SizedBox(height: 12),
+                  InkWell(
+                    borderRadius: BorderRadius.circular(14),
+                    onTap: _copyFriendCode,
+                    child: Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: AppColors.surface,
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(
+                            PhosphorIconsLight.key,
+                            size: 18,
+                            color: AppColors.inkMuted,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  l10n.myFriendCode,
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    color: AppColors.inkMuted,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  _friendCode!,
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    color: AppColors.ink,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const Icon(
+                            PhosphorIconsLight.copy,
+                            size: 18,
+                            color: AppColors.inkMuted,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
               ],
             ],
           ),

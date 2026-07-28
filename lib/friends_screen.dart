@@ -11,7 +11,6 @@ import 'history_screen.dart';
 import 'l10n/app_localizations.dart';
 import 'main.dart';
 import 'photo_storage.dart';
-import 'profile_screen.dart';
 import 'style.dart';
 
 /// Скільки днів назад можна побачити й здогадати чек-іни друга.
@@ -633,20 +632,6 @@ class _FriendsScreenState extends State<FriendsScreen> {
     await SharePlus.instance.share(ShareParams(text: text));
   }
 
-  Future<void> _openProfile() async {
-    final updated = await Navigator.of(context).push<String>(
-      MaterialPageRoute(
-        builder: (_) => ProfileScreen(
-          displayName: _myDisplayName,
-          friendCode: _myFriendCode,
-        ),
-      ),
-    );
-    if (updated != null && mounted) {
-      setState(() => _myDisplayName = updated);
-    }
-  }
-
   Future<void> _enterFriendCode() async {
     final l10n = AppLocalizations.of(context);
     final controller = TextEditingController();
@@ -1035,11 +1020,6 @@ class _FriendsScreenState extends State<FriendsScreen> {
                   ),
                   const SizedBox(width: 4),
                   Expanded(child: Text(l10n.friends, style: appScreenTitle())),
-                  IconButton(
-                    onPressed: _openProfile,
-                    icon: const Icon(PhosphorIconsLight.userCircle, size: 20),
-                    tooltip: l10n.profile,
-                  ),
                   IconButton(
                     onPressed: _openAddFriendSheet,
                     icon: const Icon(PhosphorIconsLight.userPlus, size: 20),
