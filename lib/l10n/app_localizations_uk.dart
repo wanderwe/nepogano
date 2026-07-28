@@ -543,6 +543,14 @@ class AppLocalizationsUk extends AppLocalizations {
   String get addCoauthor => 'Додати співавтора';
 
   @override
+  String get someone => 'хтось';
+
+  @override
+  String coauthorInfoBody(String name) {
+    return 'Щоденник веде $name. Ти можеш писати й редагувати записи — перейменувати, поділитись чи видалити щоденник може лише $name.';
+  }
+
+  @override
   String coauthorsTitle(String name) {
     return 'Хто ще веде щоденник $name';
   }

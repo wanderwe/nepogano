@@ -230,6 +230,13 @@
     }
   },
   "addCoauthor": "Add co-author",
+  "someone": "someone",
+  "coauthorInfoBody": "This diary is kept by {name}. You can write and edit entries — only {name} can rename, share, or delete the diary.",
+  "@coauthorInfoBody": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
   "coauthorsTitle": "Who else writes {name}'s diary",
   "@coauthorsTitle": {
     "placeholders": {

@@ -597,12 +597,16 @@ class Subject {
   // Власник керує співавторами/колами-перегляду/перейменуванням/видаленням;
   // співавтор може лише читати й писати чек-іни.
   final bool isOwner;
+  // Тільки для співавторів — ім'я власника, щоб показати "хто веде щоденник"
+  // при довгому тапі замість порожньої, незрозумілої відсутності меню.
+  final String? ownerName;
 
   Subject({
     required this.id,
     required this.kind,
     required this.name,
     required this.isOwner,
+    this.ownerName,
   });
 }
 
@@ -694,11 +698,34 @@ class _CheckInScreenState extends State<CheckInScreen> {
         .order('created_at');
 
     // Сутності, де я не власник, а лише доданий співавтор — той самий
-    // перемикач нагорі, та сама можливість писати чек-іни.
+    // перемикач нагорі, та сама можливість писати чек-іни. Тягнемо ще й
+    // owner_id — довгий тап у співавтора показує інфо-шторку "хто веде",
+    // а не порожню відсутність меню.
     final coauthorRows = await _supabase
         .from('subject_coauthors')
-        .select('subjects(id, kind, name)')
+        .select('subjects(id, kind, name, owner_id)')
         .eq('coauthor_user_id', myId);
+
+    final coauthorSubjects = (coauthorRows as List)
+        .map((r) => r['subjects'] as Map<String, dynamic>?)
+        .whereType<Map<String, dynamic>>()
+        .toList();
+
+    final ownerIds = coauthorSubjects
+        .map((s) => s['owner_id'] as String)
+        .toSet()
+        .toList();
+    var ownerNameById = <String, String?>{};
+    if (ownerIds.isNotEmpty) {
+      final ownerRows = await _supabase
+          .from('profiles')
+          .select('user_id, display_name')
+          .inFilter('user_id', ownerIds);
+      ownerNameById = {
+        for (final row in ownerRows as List)
+          row['user_id'] as String: row['display_name'] as String?,
+      };
+    }
 
     if (!mounted) return;
     setState(() {
@@ -710,17 +737,15 @@ class _CheckInScreenState extends State<CheckInScreen> {
           isOwner: true,
         ),
       );
-      final coauthored = (coauthorRows as List)
-          .map((r) => r['subjects'] as Map<String, dynamic>?)
-          .whereType<Map<String, dynamic>>()
-          .map(
-            (s) => Subject(
-              id: s['id'],
-              kind: s['kind'],
-              name: s['name'],
-              isOwner: false,
-            ),
-          );
+      final coauthored = coauthorSubjects.map(
+        (s) => Subject(
+          id: s['id'],
+          kind: s['kind'],
+          name: s['name'],
+          isOwner: false,
+          ownerName: ownerNameById[s['owner_id']],
+        ),
+      );
       _subjects = [...own, ...coauthored];
     });
   }
@@ -883,6 +908,39 @@ class _CheckInScreenState extends State<CheckInScreen> {
 
   Future<void> _openSubjectMenu(Subject subject) async {
     final l10n = AppLocalizations.of(context);
+
+    // Співавтор не керує щоденником (перейменування/шер/видалення) — замість
+    // порожньої відсутності меню (як було раніше) показуємо, хто ним керує
+    // і що саме сам співавтор може робити, а не мовчки нічого.
+    if (!subject.isOwner) {
+      final ownerName = subject.ownerName ?? l10n.someone;
+      await showModalBottomSheet<void>(
+        context: context,
+        builder: (context) => SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(subject.name, style: appScreenTitle(fontSize: 18)),
+                const SizedBox(height: 8),
+                Text(
+                  l10n.coauthorInfoBody(ownerName),
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: AppColors.inkMuted,
+                    height: 1.4,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+      return;
+    }
+
     final choice = await showModalBottomSheet<String>(
       context: context,
       builder: (context) => SafeArea(
@@ -2048,9 +2106,7 @@ class _CheckInScreenState extends State<CheckInScreen> {
                               label: s.name,
                               selected: _activeSubjectId == s.id,
                               onTap: () => _switchSubject(s.id),
-                              onLongPress: s.isOwner
-                                  ? () => _openSubjectMenu(s)
-                                  : null,
+                              onLongPress: () => _openSubjectMenu(s),
                             ),
                           ),
                         ],

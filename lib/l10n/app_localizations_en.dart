@@ -545,6 +545,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get addCoauthor => 'Add co-author';
 
   @override
+  String get someone => 'someone';
+
+  @override
+  String coauthorInfoBody(String name) {
+    return 'This diary is kept by $name. You can write and edit entries — only $name can rename, share, or delete the diary.';
+  }
+
+  @override
   String coauthorsTitle(String name) {
     return 'Who else writes $name\'s diary';
   }

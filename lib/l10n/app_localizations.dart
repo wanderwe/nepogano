@@ -1082,6 +1082,18 @@ abstract class AppLocalizations {
   /// **'Додати співавтора'**
   String get addCoauthor;
 
+  /// No description provided for @someone.
+  ///
+  /// In uk, this message translates to:
+  /// **'хтось'**
+  String get someone;
+
+  /// No description provided for @coauthorInfoBody.
+  ///
+  /// In uk, this message translates to:
+  /// **'Щоденник веде {name}. Ти можеш писати й редагувати записи — перейменувати, поділитись чи видалити щоденник може лише {name}.'**
+  String coauthorInfoBody(String name);
+
   /// No description provided for @coauthorsTitle.
   ///
   /// In uk, this message translates to:

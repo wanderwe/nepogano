@@ -239,6 +239,13 @@
     }
   },
   "addCoauthor": "Додати співавтора",
+  "someone": "хтось",
+  "coauthorInfoBody": "Щоденник веде {name}. Ти можеш писати й редагувати записи — перейменувати, поділитись чи видалити щоденник може лише {name}.",
+  "@coauthorInfoBody": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
   "coauthorsTitle": "Хто ще веде щоденник {name}",
   "@coauthorsTitle": {
     "placeholders": {
