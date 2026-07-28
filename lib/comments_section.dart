@@ -103,23 +103,31 @@ class CheckinComment {
   });
 }
 
-/// Коментарі під конкретним чек-іном реальної людини — навмисно лише один
-/// рівень: друг лишає (кореневий) коментар, автор дня може відповісти на
-/// нього максимум один раз, і все. Необмежені треди пробували раніше —
-/// вже з 2-3 рівнями вкладеності це нечитабельно на телефоні, тож модель
-/// свідомо спрощена (і те саме гарантовано на рівні БД — унікальний індекс
-/// на parent_id в checkin-comments-simplify-migration.sql).
+/// Коментарі під конкретним чек-іном — навмисно лише один рівень вкладеності
+/// (корінь + максимум одна відповідь на нього, і все). Необмежені треди
+/// пробували раніше — вже з 2-3 рівнями вкладеності це нечитабельно на
+/// телефоні, тож модель свідомо спрощена (і те саме гарантовано на рівні
+/// БД — унікальний індекс на parent_id, checkin-comments-simplify-migration.sql
+/// / subject-guessing-comments-migration.sql).
 ///
-/// [canComment] вирішує викликач: друг — лише якщо вже вгадав саме цей
-/// день (той самий "спойлер"-принцип, що ховає настрій до вгадування).
-/// [isOwner] — це екран власника дня чи друга: визначає, чи можна лишати
-/// нові кореневі коментарі (тільки друг) чи тільки відповідати (тільки
-/// власник).
+/// [canComment] вирішує викликач: друг/учасник кола — лише якщо вже вгадав
+/// саме цей день (той самий "спойлер"-принцип, що ховає настрій до
+/// вгадування). Власник дня — завжди.
+///
+/// [isOwner] — це екран власника дня чи глядача. Для реальних людей
+/// (`isSubject: false`) асиметрично: власник дня лише відповідає на чужий
+/// кореневий коментар, друг лишає лише корінь (у власника й так є нотатка,
+/// повторний кореневий коментар на власний день не потрібен). Для сутності
+/// (`isSubject: true`) — інакше: власник/співавтор часто пише ЗАМІСТЬ
+/// дитини/улюбленця, тож і сам може лишати кореневі коментарі, не тільки
+/// відповідати (продуктове рішення, subject-comments-owner-root-migration.sql).
+/// Дивись [_canPostRoot].
 ///
 /// [showWhenEmpty] — чи показувати секцію взагалі без жодного коментаря.
 /// На чужому дні (друг щойно вгадав) це запрошення до розмови — доречно.
-/// На власному щойно збереженому пості пропозиція відповісти нікому — ні,
-/// тож там false: секція з'являється лише коли хтось інший уже щось написав.
+/// На власному щойно збереженому пості реальної людини — ні, нема кому
+/// відповідати. Для власника/співавтора сутності секція все одно
+/// показується (`_effectiveShowWhenEmpty`) — тепер і їм є що почати самим.
 class CommentsSection extends StatefulWidget {
   final String checkinId;
   final bool canComment;
@@ -498,10 +506,24 @@ class _CommentsSectionState extends State<CommentsSection> {
     }
   }
 
+  // Для реальних людей лишається як було: власник дня тільки відповідає,
+  // друг лишає корінь. Для сутності — інша ситуація: власник/співавтор
+  // часто пише ЗАМІСТЬ дитини/улюбленця, тож теж має право на власний
+  // кореневий коментар, не тільки відповідь (продуктове рішення).
+  bool get _canPostRoot => !widget.isOwner || widget.isSubject;
+
+  // Той самий випадок: якщо власник/співавтор сутності тепер може лишити
+  // перший коментар сам, секцію не можна ховати, поки коментарів іще нема
+  // (call site і далі передає showWhenEmpty: false — це правило про
+  // "не показувати запрошення до розмови на щойно збереженому власному
+  // дні", яке для сутності вже не застосовне).
+  bool get _effectiveShowWhenEmpty =>
+      widget.showWhenEmpty || (widget.isOwner && widget.isSubject);
+
   @override
   Widget build(BuildContext context) {
     if (!widget.canComment || _loading) return const SizedBox.shrink();
-    if (_visibleCount == 0 && !widget.showWhenEmpty) {
+    if (_visibleCount == 0 && !_effectiveShowWhenEmpty) {
       return const SizedBox.shrink();
     }
     final l10n = AppLocalizations.of(context);
@@ -548,7 +570,7 @@ class _CommentsSectionState extends State<CommentsSection> {
         if (_expanded) ...[
           const SizedBox(height: 10),
           ...topLevel.map((c) => _buildThread(c)),
-          if (!widget.isOwner) ...[
+          if (_canPostRoot) ...[
             if (!_composing)
               GestureDetector(
                 onTap: () => _startCompose(),
@@ -595,17 +617,25 @@ class _CommentsSectionState extends State<CommentsSection> {
             ),
           ),
           if (reply != null)
-            Padding(
-              padding: const EdgeInsets.only(left: 20, top: 10),
-              child: _buildCommentRow(reply, showReply: false),
-            ),
-          if (replying)
-            Padding(
-              padding: const EdgeInsets.only(left: 20, top: 10),
-              child: _buildComposer(),
-            ),
+            _buildNested(_buildCommentRow(reply, showReply: false)),
+          if (replying) _buildNested(_buildComposer()),
         ],
       ),
+    );
+  }
+
+  // Візуальний зв'язок "до чого відноситься" відповідь — вертикальна лінія
+  // зліва, той самий патерн, що тред-гайди в Slack/Reddit, а не просто
+  // відступ (з ним на око губилось, чия саме це відповідь, коли коментарів
+  // під днем декілька підряд).
+  Widget _buildNested(Widget child) {
+    return Container(
+      margin: const EdgeInsets.only(left: 10, top: 10),
+      padding: const EdgeInsets.only(left: 12),
+      decoration: const BoxDecoration(
+        border: Border(left: BorderSide(color: AppColors.divider, width: 2)),
+      ),
+      child: child,
     );
   }
 
@@ -651,45 +681,14 @@ class _CommentsSectionState extends State<CommentsSection> {
             fontStyle: comment.isDeleted ? FontStyle.italic : FontStyle.normal,
           ),
         ),
-        if (showReply || isMine) ...[
+        if (showReply) ...[
           const SizedBox(height: 4),
-          Row(
-            children: [
-              if (showReply)
-                GestureDetector(
-                  onTap: onReply,
-                  child: Text(
-                    l10n.reply,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: AppColors.accent,
-                    ),
-                  ),
-                ),
-              // Раніше тут завжди висіли два яскраві текстові лінки
-              // ("Редагувати"/"Видалити" червоним) — при кількох коментарях
-              // підряд вони відволікали від самого тексту розмови більше,
-              // ніж сам текст. Один приглушений "⋯" замість них, дії — у
-              // тому ж шторка-меню патерні, що й скрізь по застосунку
-              // (щоденники, друзі тощо).
-              if (isMine)
-                GestureDetector(
-                  onTap: () => _openCommentMenu(comment),
-                  behavior: HitTestBehavior.opaque,
-                  child: const Padding(
-                    // Раніше тут була лише вертикальна відступ-хітбокс
-                    // навколо 16px іконки — на реальному пальці регулярно
-                    // промахувались. Симетричний більший запас з усіх боків
-                    // дає ≈44px хітбокс без зміни видимого розміру іконки.
-                    padding: EdgeInsets.all(12),
-                    child: Icon(
-                      PhosphorIconsLight.dotsThreeVertical,
-                      size: 16,
-                      color: AppColors.inkMuted,
-                    ),
-                  ),
-                ),
-            ],
+          GestureDetector(
+            onTap: onReply,
+            child: Text(
+              l10n.reply,
+              style: const TextStyle(fontSize: 12, color: AppColors.accent),
+            ),
           ),
         ],
       ],
@@ -746,6 +745,11 @@ class _CommentsSectionState extends State<CommentsSection> {
       style: const TextStyle(fontSize: 14),
       decoration: InputDecoration(
         hintText: l10n.commentHint,
+        // Без цього підказка (не сам текст, а саме hint) переносилась на 2
+        // рядки на вузьких полях (відповідь під тредом-гайдом лінією зліва
+        // забирає ще трохи ширини) — і порожнє поле виглядало вдвічі вищим,
+        // ніж мало бути, поки нічого не написано.
+        hintMaxLines: 1,
         hintStyle: const TextStyle(fontSize: 14, color: AppColors.inkMuted),
         filled: true,
         fillColor: AppColors.surface,

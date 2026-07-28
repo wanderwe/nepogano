@@ -285,7 +285,12 @@ class _FriendsScreenState extends State<FriendsScreen> {
       }
 
       // Щоденники сутностей, які чиїсь власники відкрили колам, де я є
-      // учасником — суто перегляд, без вгадування.
+      // учасником — суто перегляд із вгадуванням (SubjectDetailScreen).
+      // Виключаємо ті, де я вже власник або співавтор: до них і так є повний
+      // прямий доступ через мій перемикач на головному екрані, а вгадувати
+      // настрій щоденника, який я сам можу редагувати, безглуздо — саме цей
+      // збіг (власника поділився з колом, де є і мій співавтор) і призводив
+      // до "навіщо мені вгадувати, я ж сам це записував".
       final myMembershipRows = await _supabase
           .from('friend_folder_members')
           .select('folder_id')
@@ -293,6 +298,21 @@ class _FriendsScreenState extends State<FriendsScreen> {
       final myFolderIds = (myMembershipRows as List)
           .map((r) => r['folder_id'] as String)
           .toList();
+
+      final myOwnedSubjectRows = await _supabase
+          .from('subjects')
+          .select('id')
+          .eq('owner_id', myId);
+      final myCoauthoredSubjectRows = await _supabase
+          .from('subject_coauthors')
+          .select('subject_id')
+          .eq('coauthor_user_id', myId);
+      final myOwnSubjectIds = <String>{
+        ...(myOwnedSubjectRows as List).map((r) => r['id'] as String),
+        ...(myCoauthoredSubjectRows as List).map(
+          (r) => r['subject_id'] as String,
+        ),
+      };
 
       final sharedSubjects = <SharedSubject>[];
       if (myFolderIds.isNotEmpty) {
@@ -305,6 +325,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
         for (final row in shareRows as List) {
           final subjectRow = row['subjects'] as Map<String, dynamic>?;
           if (subjectRow == null) continue;
+          if (myOwnSubjectIds.contains(subjectRow['id'] as String)) continue;
           byId[subjectRow['id'] as String] = subjectRow;
         }
 
