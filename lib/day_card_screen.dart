@@ -273,7 +273,7 @@ class _MultiShareSheetState extends State<_MultiShareSheet> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text(l10n.shareOnSocial, style: appSerif(fontSize: 18)),
+              Text(l10n.shareOnSocial, style: appScreenTitle(fontSize: 18)),
               const SizedBox(height: 4),
               Text(
                 l10n.shareEverywhereHint,

@@ -251,7 +251,7 @@ class _AppBootstrapState extends State<_AppBootstrap> {
                     Text(
                       l10n.connectionFailedTitle,
                       textAlign: TextAlign.center,
-                      style: appSerif(fontSize: 20),
+                      style: appScreenTitle(fontSize: 20),
                     ),
                     const SizedBox(height: 8),
                     Text(
@@ -1016,7 +1016,7 @@ class _CheckInScreenState extends State<CheckInScreen> {
               children: [
                 Text(
                   l10n.shareSubjectTitle(subject.name),
-                  style: appSerif(fontSize: 18),
+                  style: appScreenTitle(fontSize: 18),
                 ),
                 const SizedBox(height: 12),
                 ...folders.map((folder) {
@@ -1147,7 +1147,7 @@ class _CheckInScreenState extends State<CheckInScreen> {
                   children: [
                     Text(
                       l10n.coauthorsTitle(subject.name),
-                      style: appSerif(fontSize: 18),
+                      style: appScreenTitle(fontSize: 18),
                     ),
                     const SizedBox(height: 12),
                     TextField(

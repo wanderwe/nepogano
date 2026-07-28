@@ -930,7 +930,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(l10n.addToFolder, style: appSerif(fontSize: 18)),
+                Text(l10n.addToFolder, style: appScreenTitle(fontSize: 18)),
                 const SizedBox(height: 12),
                 if (_folders.isEmpty)
                   Padding(
@@ -1433,7 +1433,7 @@ class _PersonDetailScreenState extends State<PersonDetailScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(l10n.sharedDiaries, style: appSerif(fontSize: 18)),
+              Text(l10n.sharedDiaries, style: appScreenTitle(fontSize: 18)),
               const SizedBox(height: 12),
               Flexible(
                 child: ListView.separated(
