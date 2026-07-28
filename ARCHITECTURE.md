@@ -47,11 +47,14 @@
    рішення. `checkin_comments` — продовження тієї ж гри, тому та сама межа:
    тільки `checkins` (реальні люди), ніколи `subject_checkins`.
 
-4. **Старі `circles`/`circle_members` досі в БД, але код їх не використовує.**
-   Свідомо не видалені під час переходу на `friendships` (закрите тестування
-   вже йшло на них) — приберуться окремою міграцією, коли всі тестувальники
-   гарантовано перейдуть на новий білд. Не плутати зі старим `join_circle_by_code`
-   RPC — він теж мертвий, замінений на `add_friend_by_code`.
+4. **Стару модель `circles`/`circle_members` прибрано** (`circles-cleanup-migration.sql`)
+   — код нею вже не користувався з моменту переходу на `friendships`. `circle_guesses`
+   не займали — окрема, повністю жива таблиця гри-вгадування, просто випадково лежала
+   в тому самому старому `circles-migration.sql`. Ця ж міграція виправила справжню
+   прогалину, яку виявила перевірка перед видаленням: `checkin_photos_select`
+   (доступ до чужих фото чек-інів у сховищі) досі був побудований на `circle_members`
+   і ніколи не замінювався на `friendships`, коли решта застосунку перейшла —
+   замінено на `checkin_photos_select_friends`, що дзеркалить `checkins_select_friends`.
 
 5. **Особисті дані з `auth.users` не читаються напряму клієнтом.** Email
    інших людей зберігається дублюючись прямо в рядках (`friendships.requester_email`/
@@ -72,6 +75,7 @@
 6. `checkin-comments-migration.sql` — коментарі під днями реальних людей (залежить від #1: використовує `circle_guesses`)
 7. `photo-scale-migration.sql` — зум фото при кадруванні (залежить від #2 — чіпає `subject_checkins`)
 8. `subject-coauthors-migration.sql` — спільне редагування щоденника сутності (залежить від #5 — використовує `owns_subject`)
+9. `circles-cleanup-migration.sql` — прибирає стару модель `circles`/`circle_members`, замінює `checkin_photos_select` на friendships-версію (залежить від #1 — використовує `friendships`)
 
 ## Огляд фіч по екранах
 
