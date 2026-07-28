@@ -1764,12 +1764,13 @@ class _CheckInScreenState extends State<CheckInScreen> {
                 },
               ),
             ],
-            if (_activeSubjectId == null && _todayEntryId != null)
+            if (_todayEntryId != null)
               CommentsSection(
                 checkinId: _todayEntryId as String,
                 canComment: true,
                 isOwner: true,
                 showWhenEmpty: false,
+                isSubject: _activeSubjectId != null,
               ),
           ],
         ),

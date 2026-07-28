@@ -7,14 +7,11 @@ import 'package:share_plus/share_plus.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'comments_section.dart';
-import 'history_screen.dart';
 import 'l10n/app_localizations.dart';
 import 'main.dart';
 import 'photo_storage.dart';
 import 'style.dart';
-
-/// Скільки днів назад можна побачити й здогадати чек-іни друга.
-const kGuessWindowDays = 7;
+import 'subject_detail_screen.dart';
 
 /// Унікальний ключ для (друг, день) — щоб кожен день зберігав власний
 /// статус вгадування незалежно від інших днів того самого друга.
@@ -88,7 +85,8 @@ class FriendFolder {
 }
 
 /// Щоденник сутності (дитина/улюбленець) чужого власника, відкритий на
-/// перегляд колу, в якому я є учасником — лише читання, без вгадування.
+/// перегляд колу, в якому я є учасником — веде на SubjectDetailScreen, той
+/// самий ритуал вгадування, що з друзями.
 class SharedSubject {
   final String subjectId;
   final String subjectName;
@@ -1477,7 +1475,7 @@ class _PersonDetailScreenState extends State<PersonDetailScreen> {
                         selected: false,
                         onTap: () => Navigator.of(context).push(
                           MaterialPageRoute(
-                            builder: (_) => HistoryScreen(
+                            builder: (_) => SubjectDetailScreen(
                               subjectId: shared.subjectId,
                               subjectName: shared.subjectName,
                             ),

@@ -125,6 +125,10 @@ class CommentsSection extends StatefulWidget {
   final bool canComment;
   final bool isOwner;
   final bool showWhenEmpty;
+  // Той самий віджет обслуговує і checkin_comments (реальні люди), і
+  // subject_checkin_comments (сутності) — моделі й UI ідентичні, різниться
+  // лише таблиця й назва FK-колонки, тож не дублюємо весь файл.
+  final bool isSubject;
 
   const CommentsSection({
     super.key,
@@ -132,6 +136,7 @@ class CommentsSection extends StatefulWidget {
     required this.canComment,
     required this.isOwner,
     this.showWhenEmpty = true,
+    this.isSubject = false,
   });
 
   @override
@@ -140,6 +145,10 @@ class CommentsSection extends StatefulWidget {
 
 class _CommentsSectionState extends State<CommentsSection> {
   final _supabase = Supabase.instance.client;
+  String get _table =>
+      widget.isSubject ? 'subject_checkin_comments' : 'checkin_comments';
+  String get _idColumn =>
+      widget.isSubject ? 'subject_checkin_id' : 'checkin_id';
   final _inputController = TextEditingController();
   final _inputFocusNode = FocusNode();
   bool _loading = true;
@@ -175,11 +184,11 @@ class _CommentsSectionState extends State<CommentsSection> {
     setState(() => _loading = true);
     try {
       final rows = await _supabase
-          .from('checkin_comments')
+          .from(_table)
           .select(
-            'id, checkin_id, author_id, parent_id, body, created_at, edited_at, deleted_at',
+            'id, $_idColumn, author_id, parent_id, body, created_at, edited_at, deleted_at',
           )
-          .eq('checkin_id', widget.checkinId)
+          .eq(_idColumn, widget.checkinId)
           // За замовчуванням .order() у Supabase сортує ascending: false
           // (новіші перші) — без явного true коментарі йшли у зворотному,
           // заплутаному порядку.
@@ -203,7 +212,7 @@ class _CommentsSectionState extends State<CommentsSection> {
       final comments = rows.map((row) {
         return CheckinComment(
           id: row['id'] as String,
-          checkinId: row['checkin_id'] as String,
+          checkinId: row[_idColumn] as String,
           authorId: row['author_id'] as String,
           authorName: nameById[row['author_id'] as String],
           parentId: row['parent_id'] as String?,
@@ -238,8 +247,8 @@ class _CommentsSectionState extends State<CommentsSection> {
     if (body.isEmpty) return;
     setState(() => _sending = true);
     try {
-      await _supabase.from('checkin_comments').insert({
-        'checkin_id': widget.checkinId,
+      await _supabase.from(_table).insert({
+        _idColumn: widget.checkinId,
         'author_id': _supabase.auth.currentUser!.id,
         'parent_id': widget.isOwner ? _replyToId : null,
         'body': body,
@@ -379,7 +388,7 @@ class _CommentsSectionState extends State<CommentsSection> {
 
     try {
       await _supabase
-          .from('checkin_comments')
+          .from(_table)
           .update({
             'body': newBody,
             'edited_at': DateTime.now().toUtc().toIso8601String(),
@@ -418,7 +427,7 @@ class _CommentsSectionState extends State<CommentsSection> {
 
     try {
       await _supabase
-          .from('checkin_comments')
+          .from(_table)
           .update({'deleted_at': DateTime.now().toUtc().toIso8601String()})
           .eq('id', comment.id);
       await _load();
@@ -666,8 +675,13 @@ class _CommentsSectionState extends State<CommentsSection> {
               if (isMine)
                 GestureDetector(
                   onTap: () => _openCommentMenu(comment),
+                  behavior: HitTestBehavior.opaque,
                   child: const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 2),
+                    // Раніше тут була лише вертикальна відступ-хітбокс
+                    // навколо 16px іконки — на реальному пальці регулярно
+                    // промахувались. Симетричний більший запас з усіх боків
+                    // дає ≈44px хітбокс без зміни видимого розміру іконки.
+                    padding: EdgeInsets.all(12),
                     child: Icon(
                       PhosphorIconsLight.dotsThreeVertical,
                       size: 16,
