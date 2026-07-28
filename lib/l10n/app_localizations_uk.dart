@@ -68,28 +68,28 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get onboarding1Body =>
-      'Не кожен день має бути неймовірним — і це нормально. Просто чесно зафіксуй, як він минув.';
+      'Не кожен день має бути неймовірним, і це нормально. Просто чесно зафіксуй, як він минув.';
 
   @override
   String get onboarding2Headline => 'Ніяк. Непогано. Збс.';
 
   @override
   String get onboarding2Body =>
-      'Три прості слова — швидко й чесно, без тиску вигадувати щось \"грандіозне\", коли насправді просто \"так собі\".';
+      'Три прості слова: швидко й чесно, без тиску вигадувати щось \"грандіозне\", коли насправді просто \"так собі\".';
 
   @override
   String get onboarding4Headline => 'Близькі поруч';
 
   @override
   String get onboarding4Body =>
-      'Лише ті, кого ти справді знаєш — без нескінченної стрічки чужих людей. Додай друзів і спробуй вгадати, як минув їхній день.';
+      'Лише ті, кого ти справді знаєш, без нескінченної стрічки чужих людей. Додай друзів і спробуй вгадати, як минув їхній день.';
 
   @override
   String get onboarding5Headline => 'Погляд на місяць';
 
   @override
   String get onboarding5Body =>
-      'Записи складаються в спокійну ретроспективу — просто дзеркало твого місяця, без оцінок.';
+      'Записи складаються в спокійну ретроспективу: просто дзеркало твого місяця, без оцінок.';
 
   @override
   String get addPhoto => 'Додати фото';
@@ -187,7 +187,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get checkEmailToConfirm =>
-      'Перевір пошту — надіслали лист для підтвердження';
+      'Перевір пошту: надіслали лист для підтвердження';
 
   @override
   String get somethingWentWrong => 'Щось пішло не так. Спробуй ще раз.';
@@ -247,7 +247,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get shareEverywhereHint =>
-      'Тапни застосунок — після повернення тапни наступний.';
+      'Тапни застосунок, після повернення тапни наступний.';
 
   @override
   String get other => 'Інше';

@@ -68,28 +68,28 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get onboarding1Body =>
-      'Not every day has to be amazing — and that\'s fine. Just honestly note how it went.';
+      'Not every day has to be amazing, and that\'s fine. Just honestly note how it went.';
 
   @override
   String get onboarding2Headline => 'Meh. Not bad. Awesome.';
 
   @override
   String get onboarding2Body =>
-      'Three plain words, quick and honest — no pressure to dress it up as \"amazing\" when it was really just okay.';
+      'Three plain words: quick and honest, no pressure to dress it up as \"amazing\" when it was really just okay.';
 
   @override
   String get onboarding4Headline => 'Close ones, close by';
 
   @override
   String get onboarding4Body =>
-      'Just the people you actually know — no endless feed of strangers. Add friends and try to guess how their day went.';
+      'Just the people you actually know, no endless feed of strangers. Add friends and try to guess how their day went.';
 
   @override
   String get onboarding5Headline => 'A look back at your month';
 
   @override
   String get onboarding5Body =>
-      'Your entries add up into a quiet retrospective — just a mirror of your month, no scoring.';
+      'Your entries add up into a quiet retrospective: just a mirror of your month, no scoring.';
 
   @override
   String get addPhoto => 'Add photo';
@@ -188,7 +188,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get checkEmailToConfirm =>
-      'Check your email — we sent a confirmation link';
+      'Check your email: we sent a confirmation link';
 
   @override
   String get somethingWentWrong => 'Something went wrong. Try again.';

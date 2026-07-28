@@ -265,7 +265,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                     child: Text(
                       widget.subjectName == null
                           ? l10n.history
-                          : '${l10n.history} — ${widget.subjectName}',
+                          : '${l10n.history} · ${widget.subjectName}',
                       overflow: TextOverflow.ellipsis,
                       style: appScreenTitle(),
                     ),

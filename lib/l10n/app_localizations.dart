@@ -215,7 +215,7 @@ abstract class AppLocalizations {
   /// No description provided for @onboarding1Body.
   ///
   /// In uk, this message translates to:
-  /// **'Не кожен день має бути неймовірним — і це нормально. Просто чесно зафіксуй, як він минув.'**
+  /// **'Не кожен день має бути неймовірним, і це нормально. Просто чесно зафіксуй, як він минув.'**
   String get onboarding1Body;
 
   /// No description provided for @onboarding2Headline.
@@ -227,7 +227,7 @@ abstract class AppLocalizations {
   /// No description provided for @onboarding2Body.
   ///
   /// In uk, this message translates to:
-  /// **'Три прості слова — швидко й чесно, без тиску вигадувати щось \"грандіозне\", коли насправді просто \"так собі\".'**
+  /// **'Три прості слова: швидко й чесно, без тиску вигадувати щось \"грандіозне\", коли насправді просто \"так собі\".'**
   String get onboarding2Body;
 
   /// No description provided for @onboarding4Headline.
@@ -239,7 +239,7 @@ abstract class AppLocalizations {
   /// No description provided for @onboarding4Body.
   ///
   /// In uk, this message translates to:
-  /// **'Лише ті, кого ти справді знаєш — без нескінченної стрічки чужих людей. Додай друзів і спробуй вгадати, як минув їхній день.'**
+  /// **'Лише ті, кого ти справді знаєш, без нескінченної стрічки чужих людей. Додай друзів і спробуй вгадати, як минув їхній день.'**
   String get onboarding4Body;
 
   /// No description provided for @onboarding5Headline.
@@ -251,7 +251,7 @@ abstract class AppLocalizations {
   /// No description provided for @onboarding5Body.
   ///
   /// In uk, this message translates to:
-  /// **'Записи складаються в спокійну ретроспективу — просто дзеркало твого місяця, без оцінок.'**
+  /// **'Записи складаються в спокійну ретроспективу: просто дзеркало твого місяця, без оцінок.'**
   String get onboarding5Body;
 
   /// No description provided for @addPhoto.
@@ -431,7 +431,7 @@ abstract class AppLocalizations {
   /// No description provided for @checkEmailToConfirm.
   ///
   /// In uk, this message translates to:
-  /// **'Перевір пошту — надіслали лист для підтвердження'**
+  /// **'Перевір пошту: надіслали лист для підтвердження'**
   String get checkEmailToConfirm;
 
   /// No description provided for @somethingWentWrong.
@@ -545,7 +545,7 @@ abstract class AppLocalizations {
   /// No description provided for @shareEverywhereHint.
   ///
   /// In uk, this message translates to:
-  /// **'Тапни застосунок — після повернення тапни наступний.'**
+  /// **'Тапни застосунок, після повернення тапни наступний.'**
   String get shareEverywhereHint;
 
   /// No description provided for @other.
