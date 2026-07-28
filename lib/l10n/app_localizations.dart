@@ -1085,7 +1085,7 @@ abstract class AppLocalizations {
   /// No description provided for @coauthorsTitle.
   ///
   /// In uk, this message translates to:
-  /// **'Хто веде щоденник {name} разом з тобою'**
+  /// **'Хто ще веде щоденник {name}'**
   String coauthorsTitle(String name);
 
   /// No description provided for @searchFriendHint.

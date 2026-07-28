@@ -546,7 +546,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String coauthorsTitle(String name) {
-    return 'Who writes $name\'s diary with you';
+    return 'Who else writes $name\'s diary';
   }
 
   @override

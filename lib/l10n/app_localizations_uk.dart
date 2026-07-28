@@ -544,7 +544,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String coauthorsTitle(String name) {
-    return 'Хто веде щоденник $name разом з тобою';
+    return 'Хто ще веде щоденник $name';
   }
 
   @override

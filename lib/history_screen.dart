@@ -357,7 +357,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
             ),
             Text(
               '${monthName(_visibleMonth.month, locale)} ${_visibleMonth.year}',
-              style: appSerif(fontSize: 17),
+              style: appScreenTitle(fontSize: 17),
             ),
             IconButton(
               onPressed: _isCurrentMonth ? null : () => _changeMonth(1),

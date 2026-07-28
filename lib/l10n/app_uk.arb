@@ -239,7 +239,7 @@
     }
   },
   "addCoauthor": "Додати співавтора",
-  "coauthorsTitle": "Хто веде щоденник {name} разом з тобою",
+  "coauthorsTitle": "Хто ще веде щоденник {name}",
   "@coauthorsTitle": {
     "placeholders": {
       "name": { "type": "String" }

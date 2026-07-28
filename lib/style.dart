@@ -233,7 +233,7 @@ class AppDialog extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(title, style: appSerif(fontSize: 20, height: 1.25)),
+            Text(title, style: appScreenTitle(fontSize: 20)),
             if (content != null) ...[const SizedBox(height: 18), content!],
             const SizedBox(height: 26),
             SizedBox(

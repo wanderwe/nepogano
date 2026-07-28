@@ -230,7 +230,7 @@
     }
   },
   "addCoauthor": "Add co-author",
-  "coauthorsTitle": "Who writes {name}'s diary with you",
+  "coauthorsTitle": "Who else writes {name}'s diary",
   "@coauthorsTitle": {
     "placeholders": {
       "name": { "type": "String" }
