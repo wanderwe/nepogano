@@ -167,12 +167,13 @@ class _CommentsSectionState extends State<CommentsSection> {
   // днів. Кількість все одно вантажимо одразу, щоб показати "Коментарі (3)"
   // ще до розгортання.
   bool _expanded = false;
-  // Поле вводу теж не висить відкритим за замовчуванням — з'являється лише
-  // по тапу на "Додати коментар" (друг) чи "Відповісти" (власник), і
-  // ховається назад після відправки.
-  bool _composing = false;
-  // Кому саме відповідає власник дня — null означає "друг пише кореневий
-  // коментар", не використовується власником взагалі.
+  // Ціль поточної відповіді — null означає "пишу новий кореневий коментар".
+  // Раніше поле вводу ще й ховалось окремим прапорцем _composing, поки не
+  // тапнеш "Додати коментар"/"Відповісти" — це давало два джерела правди
+  // (чи видно поле, і кому воно адресовано) і плутало, коли розходились.
+  // Тепер поле завжди видно, щойно секція розгорнута — саме поле не
+  // фокусується (клавіатура не вилазить), поки не тапнути в нього, тож
+  // просто перегляд коментарів так само не інтрузивний.
   String? _replyToId;
   String? _replyToName;
 
@@ -263,7 +264,7 @@ class _CommentsSectionState extends State<CommentsSection> {
         'body': body,
       });
       _inputController.clear();
-      _closeCompose();
+      _clearReplyTarget();
       await _load();
     } catch (e) {
       if (mounted) {
@@ -278,29 +279,20 @@ class _CommentsSectionState extends State<CommentsSection> {
     }
   }
 
-  void _startCompose({String? replyToId, String? replyToName}) {
+  void _setReplyTarget(String replyToId, String replyToName) {
     setState(() {
       _replyToId = replyToId;
       _replyToName = replyToName;
-      _composing = true;
     });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) _inputFocusNode.requestFocus();
     });
   }
 
-  void _closeCompose() {
-    setState(() {
-      _composing = false;
-      _replyToId = null;
-      _replyToName = null;
-    });
-  }
-
-  // Перемикає композер із режиму "відповідь X" назад у звичайний кореневий
-  // коментар, не закриваючи саме поле вводу — раніше єдиним способом було
-  // згорнути й розгорнути всю секцію заново.
-  void _cancelReply() {
+  // Повертає поле вводу в режим нового кореневого коментаря — після
+  // відправки, і так само по "×" біля банера "Відповідаєш X" (сам компоузер
+  // при цьому лишається відкритим, не закривається).
+  void _clearReplyTarget() {
     setState(() {
       _replyToId = null;
       _replyToName = null;
@@ -496,24 +488,25 @@ class _CommentsSectionState extends State<CommentsSection> {
   }
 
   void _handleToggleTap() {
-    if (!_expanded && _visibleCount == 0) {
-      // Немає ще жодного коментаря — одразу відкриваємо поле вводу, а не
-      // змушуємо тапати двічі (спершу розгорнути, тоді ще раз "Додати
-      // коментар" всередині).
-      setState(() => _expanded = true);
-      _startCompose();
-    } else if (_expanded) {
+    if (_expanded) {
       // Згортання шевроном — єдиний спосіб "закрити" секцію, і він же
-      // відкидає незбережену чернетку (окрема "×" для цього була б
-      // дублюючим елементом керування).
+      // відкидає незбережену ціль відповіді (окрема "×" для цього була б
+      // дублюючим елементом керування — вона вже є, але лише для самої
+      // цілі відповіді, не для згортання).
       setState(() {
         _expanded = false;
-        _composing = false;
         _replyToId = null;
         _replyToName = null;
       });
-    } else {
-      setState(() => _expanded = true);
+      return;
+    }
+    setState(() => _expanded = true);
+    if (_visibleCount == 0) {
+      // Немає ще жодного коментаря — одразу фокусуємось у полі, а не
+      // змушуємо ще раз тапати саме поле, яке й так уже видно.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _inputFocusNode.requestFocus();
+      });
     }
   }
 
@@ -581,24 +574,12 @@ class _CommentsSectionState extends State<CommentsSection> {
           ...topLevel.map((c) => _buildThread(c)),
           // Єдине місце в усій секції, де рендериться поле вводу — і для
           // нового кореневого коментаря, і для відповіді (яку саме визначає
-          // [_replyToId], відображено банером "Відповідаєш X" усередині
-          // _buildComposer). Раніше поле дублювалось ще й прямо під
-          // коментарем, на який відповідали — це й спричиняло два однакових
-          // поля вводу на екрані одночасно.
-          if (!_composing)
-            GestureDetector(
-              onTap: () => _startCompose(),
-              behavior: HitTestBehavior.opaque,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 4),
-                child: Text(
-                  l10n.addComment,
-                  style: const TextStyle(fontSize: 13, color: AppColors.accent),
-                ),
-              ),
-            )
-          else
-            _buildComposer(),
+          // [_replyToId], видно з банера "Відповідаєш X" усередині
+          // _buildComposer). Завжди видно, щойно секція розгорнута — не
+          // ховається за окремим тапом "Додати коментар": поле саме по собі
+          // не фокусується, поки в нього не тапнути, тож перегляд без наміру
+          // писати лишається таким самим не інтрузивним.
+          _buildComposer(),
         ],
       ],
     );
@@ -606,7 +587,7 @@ class _CommentsSectionState extends State<CommentsSection> {
 
   Widget _buildThread(CheckinComment comment) {
     final reply = _replyFor(comment.id);
-    final replying = widget.isOwner && _composing && _replyToId == comment.id;
+    final replying = _replyToId == comment.id;
     final canReply =
         widget.isOwner &&
         !comment.isDeleted &&
@@ -621,10 +602,9 @@ class _CommentsSectionState extends State<CommentsSection> {
           _buildCommentRow(
             comment,
             showReply: canReply && !replying,
-            onReply: () => _startCompose(
-              replyToId: comment.id,
-              replyToName: comment.authorName ?? '',
-            ),
+            highlighted: replying,
+            onReply: () =>
+                _setReplyTarget(comment.id, comment.authorName ?? ''),
           ),
           if (reply != null)
             _buildNested(_buildCommentRow(reply, showReply: false)),
@@ -651,6 +631,7 @@ class _CommentsSectionState extends State<CommentsSection> {
   Widget _buildCommentRow(
     CheckinComment comment, {
     required bool showReply,
+    bool highlighted = false,
     VoidCallback? onReply,
   }) {
     final l10n = AppLocalizations.of(context);
@@ -703,7 +684,21 @@ class _CommentsSectionState extends State<CommentsSection> {
       ],
     );
 
-    if (!isMine) return content;
+    // Підсвітка — щоб було однозначно видно, ДО ЯКОГО коментаря відноситься
+    // банер "Відповідаєш X" унизу, а не лише читати ім'я в банері.
+    final wrapped = highlighted
+        ? Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+            margin: const EdgeInsets.symmetric(vertical: -6, horizontal: -8),
+            decoration: BoxDecoration(
+              color: AppColors.accent.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: content,
+          )
+        : content;
+
+    if (!isMine) return wrapped;
     // Довге натискання на весь коментар відкриває те саме меню, що й "⋯" —
     // той самий патерн, що вже скрізь у застосунку для власних елементів
     // списку (щоденники, кола): тап виконує основну дію, довге натискання
@@ -712,7 +707,7 @@ class _CommentsSectionState extends State<CommentsSection> {
     return GestureDetector(
       onLongPress: () => _openCommentMenu(comment),
       behavior: HitTestBehavior.opaque,
-      child: content,
+      child: wrapped,
     );
   }
 
@@ -741,7 +736,7 @@ class _CommentsSectionState extends State<CommentsSection> {
                   ),
                   const SizedBox(width: 6),
                   GestureDetector(
-                    onTap: _cancelReply,
+                    onTap: _clearReplyTarget,
                     behavior: HitTestBehavior.opaque,
                     child: const Padding(
                       padding: EdgeInsets.all(4),
