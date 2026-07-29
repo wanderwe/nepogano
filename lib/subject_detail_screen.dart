@@ -328,6 +328,7 @@ class _SubjectDetailScreenState extends State<SubjectDetailScreen> {
               ),
             ],
             CommentsSection(
+              key: ValueKey('comments-${entry.id}'),
               checkinId: entry.id,
               canComment: true,
               isOwner: false,

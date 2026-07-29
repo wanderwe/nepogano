@@ -660,6 +660,12 @@ class _HistoryScreenState extends State<HistoryScreen> {
                       ),
                     ],
                     CommentsSection(
+                      // Без власного ключа Flutter підбирав цей віджет за
+                      // позицією в Column, а не за конкретним записом — при
+                      // перебудові весь FocusNode/TextEditingController
+                      // composer'а міг "переїхати" на інший день, звідси
+                      // несподіваний скрол/фокус на чужому записі.
+                      key: ValueKey('comments-${entry.id}'),
                       checkinId: entry.id,
                       canComment: true,
                       isOwner: true,

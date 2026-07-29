@@ -1633,6 +1633,7 @@ class _PersonDetailScreenState extends State<PersonDetailScreen> {
               ),
             ],
             CommentsSection(
+              key: ValueKey('comments-${entry.id}'),
               checkinId: entry.id,
               canComment: true,
               isOwner: false,

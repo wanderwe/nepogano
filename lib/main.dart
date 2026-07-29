@@ -1766,6 +1766,10 @@ class _CheckInScreenState extends State<CheckInScreen> {
             ],
             if (_todayEntryId != null)
               CommentsSection(
+                // Без ключа перемикання між щоденниками (_todayEntryId
+                // міняється, той самий слот у дереві) могло лишити стару
+                // чернетку/ціль відповіді від попереднього щоденника.
+                key: ValueKey('comments-$_todayEntryId'),
                 checkinId: _todayEntryId as String,
                 canComment: true,
                 isOwner: true,
