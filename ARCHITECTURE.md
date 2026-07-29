@@ -110,6 +110,7 @@
 11. `subject-guessing-comments-migration.sql` — вгадування настрою й коментарі для щоденників сутностей (залежить від #5 і #8 — використовує `subject_shared_with_me`, `owns_subject`, `is_subject_coauthor`)
 12. `subject-comments-owner-root-migration.sql` — дозволяє власнику/співавтору сутності лишати й кореневі коментарі, не тільки відповіді (залежить від #11)
 13. `checkin-comments-owner-root-migration.sql` — те саме симетричне правило й для реальних людей: власник дня теж може лишати кореневий коментар, не тільки відповідь (залежить від #6, `checkin-comments-simplify-migration.sql`)
+14. `comments-parent-unique-exclude-deleted-migration.sql` — фікс: видалена (soft-delete) відповідь більше не займає слот "максимум одна відповідь" назавжди (залежить від #6 і #11 — перебудовує обидва унікальні індекси)
 
 ## Огляд фіч по екранах
 

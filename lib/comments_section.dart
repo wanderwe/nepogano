@@ -297,6 +297,16 @@ class _CommentsSectionState extends State<CommentsSection> {
     });
   }
 
+  // Перемикає композер із режиму "відповідь X" назад у звичайний кореневий
+  // коментар, не закриваючи саме поле вводу — раніше єдиним способом було
+  // згорнути й розгорнути всю секцію заново.
+  void _cancelReply() {
+    setState(() {
+      _replyToId = null;
+      _replyToName = null;
+    });
+  }
+
   Future<void> _openCommentMenu(CheckinComment comment) async {
     final l10n = AppLocalizations.of(context);
     final choice = await showModalBottomSheet<String>(
@@ -569,29 +579,26 @@ class _CommentsSectionState extends State<CommentsSection> {
         if (_expanded) ...[
           const SizedBox(height: 10),
           ...topLevel.map((c) => _buildThread(c)),
-          // Це поле — лише для НОВОГО кореневого коментаря. Коли _composing
-          // true через тап "Відповісти" на конкретному коментарі, поле
-          // вводу вже показано під ним у _buildThread (з _replyToId != null)
-          // — без цієї перевірки воно дублювалось тут ще раз.
-          if (_replyToId == null) ...[
-            if (!_composing)
-              GestureDetector(
-                onTap: () => _startCompose(),
-                behavior: HitTestBehavior.opaque,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 4),
-                  child: Text(
-                    l10n.addComment,
-                    style: const TextStyle(
-                      fontSize: 13,
-                      color: AppColors.accent,
-                    ),
-                  ),
+          // Єдине місце в усій секції, де рендериться поле вводу — і для
+          // нового кореневого коментаря, і для відповіді (яку саме визначає
+          // [_replyToId], відображено банером "Відповідаєш X" усередині
+          // _buildComposer). Раніше поле дублювалось ще й прямо під
+          // коментарем, на який відповідали — це й спричиняло два однакових
+          // поля вводу на екрані одночасно.
+          if (!_composing)
+            GestureDetector(
+              onTap: () => _startCompose(),
+              behavior: HitTestBehavior.opaque,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                child: Text(
+                  l10n.addComment,
+                  style: const TextStyle(fontSize: 13, color: AppColors.accent),
                 ),
-              )
-            else
-              _buildComposer(),
-          ],
+              ),
+            )
+          else
+            _buildComposer(),
         ],
       ],
     );
@@ -621,7 +628,6 @@ class _CommentsSectionState extends State<CommentsSection> {
           ),
           if (reply != null)
             _buildNested(_buildCommentRow(reply, showReply: false)),
-          if (replying) _buildNested(_buildComposer()),
         ],
       ),
     );
@@ -710,11 +716,10 @@ class _CommentsSectionState extends State<CommentsSection> {
     );
   }
 
-  // Спільний для обох сценаріїв (відповідь власника на конкретний коментар
-  // і новий коментар друга) — щоб банер "Відповідаєш X" не дублювався у
-  // двох місцях з ризиком розійтись. Закриття незбереженого чернетки —
-  // лише через той самий шеврон вгорі секції (не окрема "×" поруч, яка
-  // робила б те саме іншою іконкою).
+  // Єдиний композер на всю секцію — і для нового кореневого коментаря, і
+  // для відповіді. Банер "Відповідаєш X" має власний "×" — знімає лише
+  // ціль відповіді (назад у кореневий режим), не закриває поле вводу;
+  // повне закриття/скасування чернетки лишається за шевроном угорі секції.
   Widget _buildComposer() {
     final l10n = AppLocalizations.of(context);
     return Padding(
@@ -725,9 +730,29 @@ class _CommentsSectionState extends State<CommentsSection> {
           if (_replyToId != null)
             Padding(
               padding: const EdgeInsets.only(bottom: 6),
-              child: Text(
-                l10n.replyingTo(_replyToName ?? ''),
-                style: const TextStyle(fontSize: 12, color: AppColors.inkMuted),
+              child: Row(
+                children: [
+                  Text(
+                    l10n.replyingTo(_replyToName ?? ''),
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: AppColors.inkMuted,
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  GestureDetector(
+                    onTap: _cancelReply,
+                    behavior: HitTestBehavior.opaque,
+                    child: const Padding(
+                      padding: EdgeInsets.all(4),
+                      child: Icon(
+                        PhosphorIconsLight.x,
+                        size: 12,
+                        color: AppColors.inkMuted,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           _buildInputField(),
