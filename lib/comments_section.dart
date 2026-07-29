@@ -712,9 +712,13 @@ class _CommentsSectionState extends State<CommentsSection> {
   }
 
   // Єдиний композер на всю секцію — і для нового кореневого коментаря, і
-  // для відповіді. Банер "Відповідаєш X" має власний "×" — знімає лише
-  // ціль відповіді (назад у кореневий режим), не закриває поле вводу;
-  // повне закриття/скасування чернетки лишається за шевроном угорі секції.
+  // для відповіді. Банер над полем — завжди, в обох режимах: якщо показувати
+  // його лише під час відповіді, то поле в звичайному стані нічим не
+  // підказує, що звичайний ввід — це НЕ продовження щойно прочитаного
+  // коментаря вище (виглядало, ніби пишеш у відповідь на нього). "×" у
+  // банері відповіді знімає лише ціль відповіді (назад у кореневий режим),
+  // не закриває поле вводу; повне закриття/скасування чернетки лишається
+  // за шевроном угорі секції.
   Widget _buildComposer() {
     final l10n = AppLocalizations.of(context);
     return Padding(
@@ -722,34 +726,41 @@ class _CommentsSectionState extends State<CommentsSection> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (_replyToId != null)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 6),
-              child: Row(
-                children: [
-                  Text(
-                    l10n.replyingTo(_replyToName ?? ''),
+          Padding(
+            padding: const EdgeInsets.only(bottom: 6),
+            child: _replyToId == null
+                ? Text(
+                    l10n.addComment,
                     style: const TextStyle(
                       fontSize: 12,
                       color: AppColors.inkMuted,
                     ),
-                  ),
-                  const SizedBox(width: 6),
-                  GestureDetector(
-                    onTap: _clearReplyTarget,
-                    behavior: HitTestBehavior.opaque,
-                    child: const Padding(
-                      padding: EdgeInsets.all(4),
-                      child: Icon(
-                        PhosphorIconsLight.x,
-                        size: 12,
-                        color: AppColors.inkMuted,
+                  )
+                : Row(
+                    children: [
+                      Text(
+                        l10n.replyingTo(_replyToName ?? ''),
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: AppColors.inkMuted,
+                        ),
                       ),
-                    ),
+                      const SizedBox(width: 6),
+                      GestureDetector(
+                        onTap: _clearReplyTarget,
+                        behavior: HitTestBehavior.opaque,
+                        child: const Padding(
+                          padding: EdgeInsets.all(4),
+                          child: Icon(
+                            PhosphorIconsLight.x,
+                            size: 12,
+                            color: AppColors.inkMuted,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-            ),
+          ),
           _buildInputField(),
         ],
       ),
