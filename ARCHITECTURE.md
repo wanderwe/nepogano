@@ -91,6 +91,13 @@
    `addressee_email`), бо `auth.users` недоступна через PostgREST. Якщо
    знадобиться ще якесь поле "про іншу людину" — той самий трюк, або
    `profiles` + RLS-політика видимості (як `profiles_select_friends`).
+   `profiles_select_friends` — не єдине коло видимості display_name: два
+   різні друзі однієї людини не обов'язково друзі одне одному, але обидва
+   бачать коментарі одне одного під її днем — тому є ще
+   `profiles_select_co_commenters`
+   (`profiles-visible-to-co-commenters-migration.sql`): бачиш display_name
+   того, хто лишив коментар у треді, який ти сам маєш право коментувати
+   (`can_comment_on_checkin`/`can_comment_on_subject_checkin`), не ширше.
 
 ## SQL-міграції (виконувати саме в цьому порядку)
 
@@ -112,6 +119,7 @@
 13. `checkin-comments-owner-root-migration.sql` — те саме симетричне правило й для реальних людей: власник дня теж може лишати кореневий коментар, не тільки відповідь (залежить від #6, `checkin-comments-simplify-migration.sql`)
 14. `comments-parent-unique-exclude-deleted-migration.sql` — фікс: видалена (soft-delete) відповідь більше не займає слот "максимум одна відповідь" назавжди (залежить від #6 і #11 — перебудовує обидва унікальні індекси)
 15. `comments-insert-scoping-bugfix-migration.sql` — **критичний фікс**: неквалiфіковані parent_id/checkin_id усередині EXISTS-підзапиту політик *_insert резолвились у псевдонім підзапиту (p), а не в новий рядок — відповіді на коментарі не працювали ВЗАГАЛІ, відколи ця модель вперше з'явилась (залежить від #13 і #12, перезаписує обидві політики з явним кваліфікатором таблиці)
+16. `profiles-visible-to-co-commenters-migration.sql` — display_name видно й тим, хто лишив коментар у спільному з тобою треді, не тільки прямим друзям (залежить від #6 і #11 — використовує `can_comment_on_checkin`/`can_comment_on_subject_checkin`)
 
 ## Огляд фіч по екранах
 
