@@ -279,7 +279,7 @@ class AuthGate extends StatefulWidget {
 
 const _onboardingSeenKey = 'onboarding_seen';
 const _installReferrerCheckedKey = 'install_referrer_checked';
-const _dailyReminderScheduledKey = 'daily_reminder_scheduled';
+const _dailyReminderScheduledDateKey = 'daily_reminder_scheduled_date';
 
 class _AuthGateState extends State<AuthGate> {
   late final Stream<AuthState> _authStateStream;
@@ -306,28 +306,38 @@ class _AuthGateState extends State<AuthGate> {
     _checkInstallReferrer();
   }
 
-  /// Питає дозвіл і планує щоденне нагадування о 20:00 рівно один раз за час
-  /// життя застосунку на пристрої — і тільки коли вже є активна сесія
-  /// (питати дозвіл на сповіщення ще до логіну зарано, юзер ще навіть не
-  /// бачив застосунок).
+  /// Питає дозвіл і планує щоденне нагадування о 20:00 — і тільки коли вже є
+  /// активна сесія (питати дозвіл на сповіщення ще до логіну зарано, юзер
+  /// ще навіть не бачив застосунок).
+  ///
+  /// Раніше це робилось лише РАЗ за все життя застосунку на пристрої — але
+  /// flutter_local_notifications не реєструє власний receiver для
+  /// перепланування після перезавантаження телефону (Android стирає
+  /// заплановані через AlarmManager нагадування при кожному ребуті), а
+  /// "вже заплановано" ставилось назавжди. Тобто після першого ж ребуту
+  /// нагадування зникало з системи без жодного шансу відновитись. Тепер
+  /// перепланування самовідновлюване — раз на календарний день (не при
+  /// кожному відкритті застосунку чи oновленні токена, це було б
+  /// надлишково): якщо телефон перезавантажили, наступне ж відкриття
+  /// застосунку того самого дня знову освіжить alarm. Дозвіл повторно НЕ
+  /// перепитується — Android/iOS не показують діалог вдруге, якщо він уже
+  /// один раз вирішений.
   Future<void> _setupDailyReminder() async {
     final session = Supabase.instance.client.auth.currentSession;
     if (session == null || !mounted) return;
 
+    final today = DateTime.now().toIso8601String().split('T').first;
     final prefs = await SharedPreferences.getInstance();
-    if (prefs.getBool(_dailyReminderScheduledKey) == true) return;
+    if (prefs.getString(_dailyReminderScheduledDateKey) == today) return;
 
     if (!mounted) return;
     final l10n = AppLocalizations.of(context);
-    // Позначаємо "зроблено" лише після фактичного успіху — якщо дозвіл ще
-    // не надано зараз, наступний вхід у застосунок спробує ще раз, замість
-    // назавжди мовчки здаватись після першої невдалої спроби.
     final scheduled = await scheduleDailyReminder(
       title: l10n.dailyReminderTitle,
       body: l10n.dailyReminderBody,
     );
     if (scheduled) {
-      await prefs.setBool(_dailyReminderScheduledKey, true);
+      await prefs.setString(_dailyReminderScheduledDateKey, today);
     }
   }
 
