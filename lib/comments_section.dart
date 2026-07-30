@@ -490,8 +490,15 @@ class _CommentsSectionState extends State<CommentsSection> {
     return '${dt.day}.${dt.month} $hh:$mm';
   }
 
-  List<CheckinComment> get _topLevel =>
-      _comments.where((c) => c.parentId == null).toList();
+  // Видалений кореневий коментар без жодної відповіді нічого не тримає —
+  // ховаємо його повністю, а не показуємо порожнє "Коментар видалено".
+  // Лишаємо на екрані видалений корінь лише тоді, коли під ним є відповідь:
+  // без нього та відповідь виглядала б підвішеною, без контексту, до чого
+  // вона взагалі.
+  List<CheckinComment> get _topLevel => _comments
+      .where((c) => c.parentId == null)
+      .where((c) => !c.isDeleted || _replyFor(c.id) != null)
+      .toList();
 
   CheckinComment? _replyFor(String topLevelId) {
     for (final c in _comments) {
@@ -504,12 +511,15 @@ class _CommentsSectionState extends State<CommentsSection> {
   // нього) — а не всі рядки в базі. Стара модель дозволяла необмежену
   // глибину, тож у тестових даних могли лишитись відповіді-на-відповідь,
   // яких нова модель просто не показує; без цього лічильник розходився б
-  // із тим, що видно на екрані.
+  // із тим, що видно на екрані. Видалена відповідь теж ніде не рендериться
+  // (на відміну від видаленого кореня — під відповіддю нічого немає, тож
+  // ховати її повністю нічого не ламає), тож і в лічильник не йде.
   int get _visibleCount {
     final roots = _topLevel;
     var count = roots.length;
     for (final r in roots) {
-      if (_replyFor(r.id) != null) count++;
+      final reply = _replyFor(r.id);
+      if (reply != null && !reply.isDeleted) count++;
     }
     return count;
   }
@@ -618,11 +628,16 @@ class _CommentsSectionState extends State<CommentsSection> {
 
   Widget _buildThread(CheckinComment comment) {
     final reply = _replyFor(comment.id);
+    // Видалену відповідь ніде не показуємо (нижче), тож і слот під неї
+    // вважаємо вільним — власник/співавтор може відповісти знову (те саме
+    // тепер дозволяє й БД: comments-parent-unique-exclude-deleted-migration.sql
+    // виключає видалені рядки з обмеження "одна відповідь").
+    final hasLiveReply = reply != null && !reply.isDeleted;
     final replying = _replyToId == comment.id;
     final canReply =
         widget.isOwner &&
         !comment.isDeleted &&
-        reply == null &&
+        !hasLiveReply &&
         comment.authorId != _supabase.auth.currentUser!.id;
 
     return Padding(
@@ -637,7 +652,7 @@ class _CommentsSectionState extends State<CommentsSection> {
             onReply: () =>
                 _setReplyTarget(comment.id, comment.authorName ?? ''),
           ),
-          if (reply != null)
+          if (hasLiveReply)
             _buildNested(_buildCommentRow(reply, showReply: false)),
         ],
       ),
