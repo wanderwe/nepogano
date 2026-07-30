@@ -1,3 +1,5 @@
+import 'dart:io' show Platform;
+
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -9,6 +11,12 @@ import 'style.dart';
 // idToken, який Supabase зможе перевірити через signInWithIdToken.
 const _googleWebClientId =
     '850571671108-6fpmkc0lnspkela5avrb3qqndnjrpm22.apps.googleusercontent.com';
+
+// iOS OAuth Client ID з того ж проєкту Google Cloud Console (тип застосунку
+// "iOS") — на Android serverClientId сам добуває його через Google Play
+// Services, але на iOS google_sign_in вимагає його явно окремим полем.
+const _googleIosClientId =
+    '850571671108-f4fmglpu700jslvk8kqtq7vmaphjjud3.apps.googleusercontent.com';
 
 class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key});
@@ -83,6 +91,7 @@ class _AuthScreenState extends State<AuthScreen> {
       // пристроях провокував тривалі мережеві збої одразу після повернення.
       final googleUser = await GoogleSignIn(
         serverClientId: _googleWebClientId,
+        clientId: Platform.isIOS ? _googleIosClientId : null,
       ).signIn();
       if (googleUser == null) {
         // Юзер закрив вибір акаунта.
