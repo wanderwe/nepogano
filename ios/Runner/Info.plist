@@ -26,6 +26,31 @@
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<!-- OAuth/email-callback від Supabase (io.supabase.nepogano://login-callback)
+	     і запрошення в друзі (io.supabase.nepogano://join/<code>) — той самий
+	     custom scheme, що зареєстрований у android/app/src/main/AndroidManifest.xml. -->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>io.supabase.nepogano</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>io.supabase.nepogano</string>
+			</array>
+		</dict>
+		<!-- REVERSED_CLIENT_ID iOS OAuth Client ID з Google Cloud Console
+		     (дзеркальне написання Client ID). Без цього google_sign_in на iOS
+		     не зможе повернутися в застосунок з браузера після логіну. -->
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>google-signin</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.googleusercontent.apps.850571671108-f4fmglpu700jslvk8kqtq7vmaphjjud3</string>
+			</array>
+		</dict>
+	</array>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
