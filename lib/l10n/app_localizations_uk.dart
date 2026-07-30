@@ -399,7 +399,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String friendGuessStats(int correct, int total, int percent) {
-    return 'Вгадує тебе: $correct із $total ($percent%)';
+    return 'Вгадує $correct із $total ($percent%)';
   }
 
   @override

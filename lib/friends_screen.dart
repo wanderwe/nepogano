@@ -1300,31 +1300,42 @@ class _FriendsScreenState extends State<FriendsScreen> {
                     ],
                   ),
                   const SizedBox(height: 2),
-                  Text(
-                    friend.latestDate == null
-                        ? l10n.notCheckedInToday
-                        : _relativeDay(friend.latestDate!, l10n),
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: AppColors.inkMuted,
-                    ),
+                  Row(
+                    children: [
+                      Text(
+                        friend.latestDate == null
+                            ? l10n.notCheckedInToday
+                            : _relativeDay(friend.latestDate!, l10n),
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: AppColors.inkMuted,
+                        ),
+                      ),
+                      if ((friend.guessesTotal ?? 0) > 0) ...[
+                        const Text(
+                          ' · ',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: AppColors.inkMuted,
+                          ),
+                        ),
+                        Text(
+                          l10n.friendGuessStats(
+                            friend.guessesCorrect ?? 0,
+                            friend.guessesTotal!,
+                            (((friend.guessesCorrect ?? 0) /
+                                        friend.guessesTotal!) *
+                                    100)
+                                .round(),
+                          ),
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: AppColors.inkMuted,
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
-                  if ((friend.guessesTotal ?? 0) > 0) ...[
-                    const SizedBox(height: 2),
-                    Text(
-                      l10n.friendGuessStats(
-                        friend.guessesCorrect ?? 0,
-                        friend.guessesTotal!,
-                        (((friend.guessesCorrect ?? 0) / friend.guessesTotal!) *
-                                100)
-                            .round(),
-                      ),
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: AppColors.inkMuted,
-                      ),
-                    ),
-                  ],
                 ],
               ),
             ),
