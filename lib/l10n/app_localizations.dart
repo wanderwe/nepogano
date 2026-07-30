@@ -821,8 +821,14 @@ abstract class AppLocalizations {
   /// No description provided for @friendGuessStats.
   ///
   /// In uk, this message translates to:
-  /// **'Вгадує {correct} із {total} ({percent}%)'**
+  /// **'Вгадує тебе: {correct} із {total} ({percent}%)'**
   String friendGuessStats(int correct, int total, int percent);
+
+  /// No description provided for @friendNeverGuessed.
+  ///
+  /// In uk, this message translates to:
+  /// **'Ще не вгадував(ла)'**
+  String get friendNeverGuessed;
 
   /// No description provided for @commentHint.
   ///

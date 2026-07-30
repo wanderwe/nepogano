@@ -160,7 +160,7 @@
       "percent": { "type": "int" }
     }
   },
-  "friendGuessStats": "Вгадує {correct} із {total} ({percent}%)",
+  "friendGuessStats": "Вгадує тебе: {correct} із {total} ({percent}%)",
   "@friendGuessStats": {
     "placeholders": {
       "correct": { "type": "int" },
@@ -168,6 +168,7 @@
       "percent": { "type": "int" }
     }
   },
+  "friendNeverGuessed": "Ще не вгадував(ла)",
 
   "commentHint": "Напиши коментар...",
   "addComment": "Додати коментар",
