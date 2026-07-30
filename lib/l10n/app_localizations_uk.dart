@@ -43,6 +43,9 @@ class AppLocalizationsUk extends AppLocalizations {
   String get or => 'або';
 
   @override
+  String get search => 'Пошук';
+
+  @override
   String get moodNiyak => 'Ніяк';
 
   @override

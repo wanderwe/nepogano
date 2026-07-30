@@ -238,10 +238,44 @@ class _FriendsScreenState extends State<FriendsScreen> {
 
   List<SharedSubject> _sharedSubjects = [];
 
+  // Сума вгадувань від УСІХ друзів разом (на відміну від per-friend мап
+  // нижче, які лишаються для порівняння "хто вгадує краще") — null, поки
+  // ще жодної спроби не було: тоді рядок узагалі не рендериться, а не
+  // показує "0 із 0".
+  int? _guessesTotal;
+  int? _guessesCorrect;
+
+  final _searchController = TextEditingController();
+  final _searchFocusNode = FocusNode();
+  bool _searchOpen = false;
+  String _searchQuery = '';
+
   @override
   void initState() {
     super.initState();
     _load();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    _searchFocusNode.dispose();
+    super.dispose();
+  }
+
+  void _toggleSearch() {
+    if (_searchOpen) {
+      setState(() {
+        _searchOpen = false;
+        _searchQuery = '';
+        _searchController.clear();
+      });
+      return;
+    }
+    setState(() => _searchOpen = true);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _searchFocusNode.requestFocus();
+    });
   }
 
   Future<void> _load() async {
@@ -274,6 +308,12 @@ class _FriendsScreenState extends State<FriendsScreen> {
               as List;
       final guessesTotalByFriend = <String, int>{};
       final guessesCorrectByFriend = <String, int>{};
+      // Та сама вибірка, просто підсумована по всіх друзях разом — для
+      // рядка нагорі екрана "Друзі вгадали твій настрій X із Y".
+      final myGuessesTotal = myGuessRows.isEmpty ? null : myGuessRows.length;
+      final myGuessesCorrect = myGuessRows.isEmpty
+          ? null
+          : myGuessRows.where((r) => r['correct'] == true).length;
       for (final row in myGuessRows) {
         final guesserId = row['guesser_id'] as String;
         guessesTotalByFriend[guesserId] =
@@ -514,6 +554,8 @@ class _FriendsScreenState extends State<FriendsScreen> {
           _folders = folders;
           _folderMembership = membership;
           _sharedSubjects = sharedSubjects;
+          _guessesTotal = myGuessesTotal;
+          _guessesCorrect = myGuessesCorrect;
           _loading = false;
         });
       } else {
@@ -526,6 +568,8 @@ class _FriendsScreenState extends State<FriendsScreen> {
           _folders = folders;
           _folderMembership = membership;
           _sharedSubjects = sharedSubjects;
+          _guessesTotal = myGuessesTotal;
+          _guessesCorrect = myGuessesCorrect;
           _loading = false;
         });
       }
@@ -1012,13 +1056,25 @@ class _FriendsScreenState extends State<FriendsScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final visibleFriends = _selectedFolderId == null
+    final byFolder = _selectedFolderId == null
         ? _friends
         : _friends
               .where(
                 (f) => (_folderMembership[_selectedFolderId] ?? {}).contains(
                   f.userId,
                 ),
+              )
+              .toList();
+    // Пошук працює ПОВЕРХ вибраного кола, а не замість нього — фільтрує
+    // список, що вже звужений колом, а не весь список друзів одразу.
+    final query = _searchQuery.trim().toLowerCase();
+    final visibleFriends = query.isEmpty
+        ? byFolder
+        : byFolder
+              .where(
+                (f) =>
+                    f.name.toLowerCase().contains(query) ||
+                    f.displayEmail.toLowerCase().contains(query),
               )
               .toList();
 
@@ -1040,12 +1096,48 @@ class _FriendsScreenState extends State<FriendsScreen> {
                   const SizedBox(width: 4),
                   Expanded(child: Text(l10n.friends, style: appScreenTitle())),
                   IconButton(
+                    onPressed: _toggleSearch,
+                    icon: Icon(
+                      _searchOpen
+                          ? PhosphorIconsLight.x
+                          : PhosphorIconsLight.magnifyingGlass,
+                      size: 20,
+                    ),
+                    tooltip: l10n.search,
+                  ),
+                  IconButton(
                     onPressed: _openAddFriendSheet,
                     icon: const Icon(PhosphorIconsLight.userPlus, size: 20),
                     tooltip: l10n.addFriend,
                   ),
                 ],
               ),
+              if ((_guessesTotal ?? 0) > 0) ...[
+                const SizedBox(height: 4),
+                Text(
+                  l10n.guessStats(
+                    _guessesCorrect ?? 0,
+                    _guessesTotal!,
+                    (((_guessesCorrect ?? 0) / _guessesTotal!) * 100).round(),
+                  ),
+                  style: const TextStyle(fontSize: 13, color: AppColors.accent),
+                ),
+              ],
+              if (_searchOpen) ...[
+                const SizedBox(height: 12),
+                TextField(
+                  controller: _searchController,
+                  focusNode: _searchFocusNode,
+                  onChanged: (value) => setState(() => _searchQuery = value),
+                  decoration: appFieldDecoration(l10n.searchFriendHint)
+                      .copyWith(
+                        prefixIcon: const Icon(
+                          PhosphorIconsLight.magnifyingGlass,
+                          size: 18,
+                        ),
+                      ),
+                ),
+              ],
               const SizedBox(height: 8),
               if (_loading)
                 const Expanded(

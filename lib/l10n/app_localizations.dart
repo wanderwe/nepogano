@@ -164,6 +164,12 @@ abstract class AppLocalizations {
   /// **'або'**
   String get or;
 
+  /// No description provided for @search.
+  ///
+  /// In uk, this message translates to:
+  /// **'Пошук'**
+  String get search;
+
   /// No description provided for @moodNiyak.
   ///
   /// In uk, this message translates to:

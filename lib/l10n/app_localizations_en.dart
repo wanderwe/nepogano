@@ -43,6 +43,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get or => 'or';
 
   @override
+  String get search => 'Search';
+
+  @override
   String get moodNiyak => 'Meh';
 
   @override
