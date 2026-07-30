@@ -238,13 +238,6 @@ class _FriendsScreenState extends State<FriendsScreen> {
 
   List<SharedSubject> _sharedSubjects = [];
 
-  // Сума вгадувань від УСІХ друзів разом (на відміну від per-friend мап
-  // нижче, які лишаються для порівняння "хто вгадує краще") — null, поки
-  // ще жодної спроби не було: тоді рядок узагалі не рендериться, а не
-  // показує "0 із 0".
-  int? _guessesTotal;
-  int? _guessesCorrect;
-
   final _searchController = TextEditingController();
   final _searchFocusNode = FocusNode();
   bool _searchOpen = false;
@@ -308,12 +301,6 @@ class _FriendsScreenState extends State<FriendsScreen> {
               as List;
       final guessesTotalByFriend = <String, int>{};
       final guessesCorrectByFriend = <String, int>{};
-      // Та сама вибірка, просто підсумована по всіх друзях разом — для
-      // рядка нагорі екрана "Друзі вгадали твій настрій X із Y".
-      final myGuessesTotal = myGuessRows.isEmpty ? null : myGuessRows.length;
-      final myGuessesCorrect = myGuessRows.isEmpty
-          ? null
-          : myGuessRows.where((r) => r['correct'] == true).length;
       for (final row in myGuessRows) {
         final guesserId = row['guesser_id'] as String;
         guessesTotalByFriend[guesserId] =
@@ -554,8 +541,6 @@ class _FriendsScreenState extends State<FriendsScreen> {
           _folders = folders;
           _folderMembership = membership;
           _sharedSubjects = sharedSubjects;
-          _guessesTotal = myGuessesTotal;
-          _guessesCorrect = myGuessesCorrect;
           _loading = false;
         });
       } else {
@@ -568,8 +553,6 @@ class _FriendsScreenState extends State<FriendsScreen> {
           _folders = folders;
           _folderMembership = membership;
           _sharedSubjects = sharedSubjects;
-          _guessesTotal = myGuessesTotal;
-          _guessesCorrect = myGuessesCorrect;
           _loading = false;
         });
       }
@@ -1112,17 +1095,6 @@ class _FriendsScreenState extends State<FriendsScreen> {
                   ),
                 ],
               ),
-              if ((_guessesTotal ?? 0) > 0) ...[
-                const SizedBox(height: 4),
-                Text(
-                  l10n.guessStats(
-                    _guessesCorrect ?? 0,
-                    _guessesTotal!,
-                    (((_guessesCorrect ?? 0) / _guessesTotal!) * 100).round(),
-                  ),
-                  style: const TextStyle(fontSize: 13, color: AppColors.accent),
-                ),
-              ],
               if (_searchOpen) ...[
                 const SizedBox(height: 12),
                 TextField(
@@ -1349,7 +1321,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
                       ),
                       style: const TextStyle(
                         fontSize: 12,
-                        color: AppColors.accent,
+                        color: AppColors.inkMuted,
                       ),
                     ),
                   ],
