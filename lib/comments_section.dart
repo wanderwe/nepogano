@@ -8,33 +8,54 @@ import 'style.dart';
 
 const _commentsLastSeenKey = 'comments_last_seen';
 
-/// Чи є коментар на МОЇХ днях, новіший за останній перегляд власної Історії
-/// (локальна мітка часу в SharedPreferences — без окремої таблиці "read
-/// receipts"). Власні відповіді (author_id = я) не рахуються — це не "нове
-/// повідомлення від когось", хоч і лежать у тій самій таблиці.
-Future<bool> hasUnseenComments(SupabaseClient supabase) async {
+/// Окрема мітка "востаннє переглянуто" на кожну сутність — інакше позначення
+/// "переглянуто" на щоденнику "Амі" помилково приховало б непереглянуті
+/// коментарі на будь-якому іншому щоденнику (чи на власному). `subjectId ==
+/// null` — власний щоденник, той самий ключ, що був завжди.
+String _lastSeenKey(String? subjectId) => subjectId == null
+    ? _commentsLastSeenKey
+    : '${_commentsLastSeenKey}_$subjectId';
+
+/// Чи є коментар на днях сутності (`subjectId`) чи на власних (`subjectId ==
+/// null`), новіший за останній перегляд саме цього щоденника — та сама
+/// мітка часу з SharedPreferences, окрема на кожен щоденник (без окремої
+/// таблиці "read receipts"). Власні відповіді (author_id = я) не
+/// рахуються — це не "нове повідомлення від когось", хоч і лежать у тій
+/// самій таблиці. Для власника й співавтора поведінка однакова — обидва
+/// однаково "власники" цього дзвінка.
+Future<bool> hasUnseenComments(
+  SupabaseClient supabase, {
+  String? subjectId,
+}) async {
   final myId = supabase.auth.currentUser?.id;
   if (myId == null) return false;
 
+  final table = subjectId == null ? 'checkins' : 'subject_checkins';
+  final idColumn = subjectId == null ? 'user_id' : 'subject_id';
+  final commentsTable = subjectId == null
+      ? 'checkin_comments'
+      : 'subject_checkin_comments';
+  final fkColumn = subjectId == null ? 'checkin_id' : 'subject_checkin_id';
+
   final myCheckinRows = await supabase
-      .from('checkins')
+      .from(table)
       .select('id')
-      .eq('user_id', myId);
+      .eq(idColumn, subjectId ?? myId);
   final myCheckinIds = (myCheckinRows as List)
       .map((r) => r['id'] as String)
       .toList();
   if (myCheckinIds.isEmpty) return false;
 
   final prefs = await SharedPreferences.getInstance();
-  final lastSeenIso = prefs.getString(_commentsLastSeenKey);
+  final lastSeenIso = prefs.getString(_lastSeenKey(subjectId));
   final since = lastSeenIso != null
       ? DateTime.parse(lastSeenIso)
       : DateTime.fromMillisecondsSinceEpoch(0);
 
   final commentRows = await supabase
-      .from('checkin_comments')
+      .from(commentsTable)
       .select('id')
-      .inFilter('checkin_id', myCheckinIds)
+      .inFilter(fkColumn, myCheckinIds)
       .neq('author_id', myId)
       .gt('created_at', since.toUtc().toIso8601String())
       .limit(1);
@@ -43,38 +64,44 @@ Future<bool> hasUnseenComments(SupabaseClient supabase) async {
 }
 
 /// Той самий "новий коментар" запит, що [hasUnseenComments], але повертає
-/// **які саме** дні (checkin_id) мають непереглянутий коментар — щоб
-/// підсвітити конкретні дні на календарі, а не лише показати загальну
-/// крапку "є щось нове" на іконці.
+/// **які саме** дні (checkin_id/subject_checkin_id) мають непереглянутий
+/// коментар — щоб підсвітити конкретні дні на календарі, а не лише
+/// показати загальну крапку "є щось нове" на іконці.
 Future<Set<String>> unseenCommentCheckinIds(
   SupabaseClient supabase,
-  List<String> checkinIds,
-) async {
+  List<String> checkinIds, {
+  String? subjectId,
+}) async {
   final myId = supabase.auth.currentUser?.id;
   if (myId == null || checkinIds.isEmpty) return {};
 
   final prefs = await SharedPreferences.getInstance();
-  final lastSeenIso = prefs.getString(_commentsLastSeenKey);
+  final lastSeenIso = prefs.getString(_lastSeenKey(subjectId));
   final since = lastSeenIso != null
       ? DateTime.parse(lastSeenIso)
       : DateTime.fromMillisecondsSinceEpoch(0);
 
+  final commentsTable = subjectId == null
+      ? 'checkin_comments'
+      : 'subject_checkin_comments';
+  final fkColumn = subjectId == null ? 'checkin_id' : 'subject_checkin_id';
+
   final commentRows = await supabase
-      .from('checkin_comments')
-      .select('checkin_id')
-      .inFilter('checkin_id', checkinIds)
+      .from(commentsTable)
+      .select(fkColumn)
+      .inFilter(fkColumn, checkinIds)
       .neq('author_id', myId)
       .gt('created_at', since.toUtc().toIso8601String());
 
-  return (commentRows as List).map((r) => r['checkin_id'] as String).toSet();
+  return (commentRows as List).map((r) => r[fkColumn] as String).toSet();
 }
 
-/// Позначає всі поточні коментарі як переглянуті — викликати, коли юзер
-/// відкрив власну Історію (не чужу сутність), де коментарі й видно.
-Future<void> markCommentsSeen() async {
+/// Позначає всі поточні коментарі щоденника (`subjectId == null` — власний)
+/// як переглянуті — викликати, коли юзер відкрив саме цю Історію.
+Future<void> markCommentsSeen({String? subjectId}) async {
   final prefs = await SharedPreferences.getInstance();
   await prefs.setString(
-    _commentsLastSeenKey,
+    _lastSeenKey(subjectId),
     DateTime.now().toUtc().toIso8601String(),
   );
 }

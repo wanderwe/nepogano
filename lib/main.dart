@@ -769,7 +769,7 @@ class _CheckInScreenState extends State<CheckInScreen> {
   }
 
   Future<void> _checkUnseenComments() async {
-    final has = await hasUnseenComments(_supabase);
+    final has = await hasUnseenComments(_supabase, subjectId: _activeSubjectId);
     if (mounted) setState(() => _hasUnseenComments = has);
   }
 
@@ -794,6 +794,10 @@ class _CheckInScreenState extends State<CheckInScreen> {
     });
     _loadTodayEntry();
     _loadWeek();
+    // Бейдж на іконці "Історія" стосується того щоденника, який зараз
+    // активний — при перемиканні перевіряємо його заново, інакше крапка
+    // й далі показувала б стан попереднього (чи взагалі тільки власного).
+    _checkUnseenComments();
   }
 
   Future<void> _createSubject() async {
@@ -2103,7 +2107,6 @@ class _CheckInScreenState extends State<CheckInScreen> {
                         children: [
                           IconButton(
                             onPressed: () async {
-                              final wasOwnHistory = _activeSubjectId == null;
                               final activeName = _activeSubjectId == null
                                   ? null
                                   : _subjects
@@ -2119,10 +2122,14 @@ class _CheckInScreenState extends State<CheckInScreen> {
                                   ),
                                 ),
                               );
-                              // Крапка про нові коментарі стосується лише
-                              // власних днів — перегляд календаря сутності
-                              // її не знімає.
-                              if (wasOwnHistory) await markCommentsSeen();
+                              // Позначаємо переглянутим саме той щоденник,
+                              // календар якого щойно відкривали — окрема
+                              // мітка на кожен, тож перегляд сутності більше
+                              // не "з'їдає" непереглянуте на власному й
+                              // навпаки.
+                              await markCommentsSeen(
+                                subjectId: _activeSubjectId,
+                              );
                               _checkUnseenComments();
                             },
                             icon: const Icon(

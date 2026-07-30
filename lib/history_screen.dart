@@ -160,12 +160,11 @@ class _HistoryScreenState extends State<HistoryScreen> {
         );
       }).toList();
 
-      final unseenIds = widget.subjectId == null
-          ? await unseenCommentCheckinIds(
-              _supabase,
-              entries.map((e) => e.id).toList(),
-            )
-          : <String>{};
+      final unseenIds = await unseenCommentCheckinIds(
+        _supabase,
+        entries.map((e) => e.id).toList(),
+        subjectId: widget.subjectId,
+      );
 
       if (mounted) {
         setState(() {
