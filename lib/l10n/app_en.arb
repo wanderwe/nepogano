@@ -276,6 +276,23 @@
     }
   },
 
+  "nudgeButton": "Let them know you care",
+  "nudgeSent": "Sent",
+  "couldNotSendNudge": "Couldn't send. Try again.",
+  "nudgeBannerSolo": "{name} is wondering how you're doing",
+  "@nudgeBannerSolo": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+  "nudgeBannerMultiple": "{name} and {restCount, plural, one{{restCount} other friend} other{{restCount} other friends}} are wondering how you're doing",
+  "@nudgeBannerMultiple": {
+    "placeholders": {
+      "name": { "type": "String" },
+      "restCount": { "type": "int" }
+    }
+  },
+
   "language": "Language",
 
   "today": "today",

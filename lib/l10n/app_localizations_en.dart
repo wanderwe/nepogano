@@ -606,6 +606,31 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get nudgeButton => 'Let them know you care';
+
+  @override
+  String get nudgeSent => 'Sent';
+
+  @override
+  String get couldNotSendNudge => 'Couldn\'t send. Try again.';
+
+  @override
+  String nudgeBannerSolo(String name) {
+    return '$name is wondering how you\'re doing';
+  }
+
+  @override
+  String nudgeBannerMultiple(String name, int restCount) {
+    String _temp0 = intl.Intl.pluralLogic(
+      restCount,
+      locale: localeName,
+      other: '$restCount other friends',
+      one: '$restCount other friend',
+    );
+    return '$name and $_temp0 are wondering how you\'re doing';
+  }
+
+  @override
   String get language => 'Language';
 
   @override

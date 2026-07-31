@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'comments_section.dart';
@@ -182,6 +183,96 @@ Future<bool> hasUnseenFriendActivity(SupabaseClient supabase) async {
   }
 
   return latestByUser.isNotEmpty;
+}
+
+const _nudgesLastSeenKey = 'nudges_last_seen';
+// Скільки днів між поштовхами одному й тому самому другу — м'яке обмеження
+// на клієнті (той самий підхід, що й до інших не-критичних лімітів у
+// застосунку), щоб один настирливий друг не міг закидати поштовхами щодня.
+const kNudgeCooldownDays = 7;
+
+/// Хто й скільки людей "поштовхнули" мене з часу останнього перегляду —
+/// null, якщо нікого. Показується пасивно на головному екрані при
+/// наступному відкритті застосунку (немає push-інфраструктури, свідомо).
+class PendingNudges {
+  final int count;
+  final String latestFromName;
+
+  PendingNudges({required this.count, required this.latestFromName});
+}
+
+Future<PendingNudges?> loadPendingNudges(SupabaseClient supabase) async {
+  final myId = supabase.auth.currentUser?.id;
+  if (myId == null) return null;
+
+  final prefs = await SharedPreferences.getInstance();
+  final lastSeenIso = prefs.getString(_nudgesLastSeenKey);
+  final since = lastSeenIso != null
+      ? DateTime.parse(lastSeenIso)
+      : DateTime.fromMillisecondsSinceEpoch(0);
+
+  final rows = await supabase
+      .from('friend_nudges')
+      .select('from_user_id, created_at')
+      .eq('to_user_id', myId)
+      .gt('created_at', since.toUtc().toIso8601String())
+      .order('created_at', ascending: false);
+
+  final fromIds = (rows as List)
+      .map((r) => r['from_user_id'] as String)
+      .toSet()
+      .toList();
+  if (fromIds.isEmpty) return null;
+
+  final latestFromId = rows.first['from_user_id'] as String;
+  final nameRows = await supabase
+      .from('profiles')
+      .select('user_id, display_name')
+      .inFilter('user_id', fromIds);
+  final nameById = <String, String?>{
+    for (final row in nameRows as List)
+      row['user_id'] as String: row['display_name'] as String?,
+  };
+
+  return PendingNudges(
+    count: fromIds.length,
+    latestFromName: nameById[latestFromId] ?? '',
+  );
+}
+
+Future<void> markNudgesSeen() async {
+  final prefs = await SharedPreferences.getInstance();
+  await prefs.setString(
+    _nudgesLastSeenKey,
+    DateTime.now().toUtc().toIso8601String(),
+  );
+}
+
+/// Чи можна зараз поштовхнути саме цього друга — false, якщо я вже робив
+/// це протягом [kNudgeCooldownDays] днів.
+Future<bool> canNudge(SupabaseClient supabase, String friendUserId) async {
+  final myId = supabase.auth.currentUser?.id;
+  if (myId == null) return false;
+
+  final since = DateTime.now().subtract(
+    const Duration(days: kNudgeCooldownDays),
+  );
+  final rows = await supabase
+      .from('friend_nudges')
+      .select('id')
+      .eq('from_user_id', myId)
+      .eq('to_user_id', friendUserId)
+      .gt('created_at', since.toUtc().toIso8601String())
+      .limit(1);
+
+  return (rows as List).isEmpty;
+}
+
+Future<void> sendNudge(SupabaseClient supabase, String friendUserId) async {
+  await supabase.from('friend_nudges').insert({
+    'from_user_id': supabase.auth.currentUser!.id,
+    'to_user_id': friendUserId,
+  });
 }
 
 class _MenuRow extends StatelessWidget {
@@ -1397,11 +1488,43 @@ class _PersonDetailScreenState extends State<PersonDetailScreen> {
   bool _loading = true;
   List<_FriendDayEntry> _entries = [];
   final Map<String, String?> _myGuesses = {};
+  bool _canNudge = false;
 
   @override
   void initState() {
     super.initState();
     _load();
+    _checkCanNudge();
+  }
+
+  Future<void> _checkCanNudge() async {
+    final can = await canNudge(_supabase, widget.userId);
+    if (mounted) setState(() => _canNudge = can);
+  }
+
+  // "Не було свіжих записів" — та сама умова, що й показ поштовху: 7 днів
+  // тиші (весь показаний тут проміжок) або останній запис старший 3 днів.
+  bool get _friendHasBeenQuiet =>
+      _entries.isEmpty ||
+      DateTime.now().difference(_entries.first.date).inDays >= 3;
+
+  Future<void> _sendNudgeToFriend() async {
+    final l10n = AppLocalizations.of(context);
+    try {
+      await sendNudge(_supabase, widget.userId);
+      if (mounted) {
+        setState(() => _canNudge = false);
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(l10n.nudgeSent)));
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(l10n.couldNotSendNudge)));
+      }
+    }
   }
 
   Future<void> _load() async {
@@ -1534,6 +1657,17 @@ class _PersonDetailScreenState extends State<PersonDetailScreen> {
                   ),
                 ],
               ),
+              // Лише коли давно тиша (та сама умова, що ховає крапку
+              // "hasUnguessed") і я ще не робив цього нещодавно — щойно
+              // поштовхнув, кнопка ховається, а не показує "вже дав знати".
+              if (!_loading && _friendHasBeenQuiet && _canNudge) ...[
+                const SizedBox(height: 12),
+                OutlinedButton.icon(
+                  onPressed: _sendNudgeToFriend,
+                  icon: const Icon(PhosphorIconsLight.handWaving, size: 16),
+                  label: Text(l10n.nudgeButton),
+                ),
+              ],
               if (widget.sharedSubjects.isNotEmpty) ...[
                 const SizedBox(height: 16),
                 Text(

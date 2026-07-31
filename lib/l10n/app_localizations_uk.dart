@@ -606,6 +606,33 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
+  String get nudgeButton => 'Дати знати, що цікавишся';
+
+  @override
+  String get nudgeSent => 'Надіслано';
+
+  @override
+  String get couldNotSendNudge => 'Не вдалось надіслати. Спробуй ще раз.';
+
+  @override
+  String nudgeBannerSolo(String name) {
+    return '$name цікавиться, як ти';
+  }
+
+  @override
+  String nudgeBannerMultiple(String name, int restCount) {
+    String _temp0 = intl.Intl.pluralLogic(
+      restCount,
+      locale: localeName,
+      other: '$restCount друзів',
+      many: '$restCount друзів',
+      few: '$restCount друга',
+      one: '$restCount друг',
+    );
+    return '$name і ще $_temp0 цікавляться, як ти';
+  }
+
+  @override
   String get language => 'Мова';
 
   @override

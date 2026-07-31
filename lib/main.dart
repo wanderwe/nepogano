@@ -639,6 +639,7 @@ class _CheckInScreenState extends State<CheckInScreen> {
   List<CheckinEntry> _weekEntries = [];
   bool _hasCircleActivity = false;
   bool _hasUnseenComments = false;
+  PendingNudges? _pendingNudges;
   late DateTime _visibleWeekStart;
 
   // Фото: або вже збережений шлях (з попереднього завантаження цього дня),
@@ -699,6 +700,17 @@ class _CheckInScreenState extends State<CheckInScreen> {
     _checkCircleActivity();
     _checkUnseenComments();
     _loadSubjects();
+    _loadPendingNudges();
+  }
+
+  Future<void> _loadPendingNudges() async {
+    final nudges = await loadPendingNudges(_supabase);
+    if (mounted) setState(() => _pendingNudges = nudges);
+  }
+
+  Future<void> _dismissNudgeBanner() async {
+    setState(() => _pendingNudges = null);
+    await markNudgesSeen();
   }
 
   Future<void> _loadSubjects() async {
@@ -2164,6 +2176,55 @@ class _CheckInScreenState extends State<CheckInScreen> {
                   ),
                 ],
               ),
+              if (_pendingNudges != null) ...[
+                const SizedBox(height: 12),
+                GestureDetector(
+                  onTap: _dismissNudgeBanner,
+                  behavior: HitTestBehavior.opaque,
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 12,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.accent.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(
+                          PhosphorIconsLight.handWaving,
+                          size: 16,
+                          color: AppColors.accent,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            _pendingNudges!.count == 1
+                                ? l10n.nudgeBannerSolo(
+                                    _pendingNudges!.latestFromName,
+                                  )
+                                : l10n.nudgeBannerMultiple(
+                                    _pendingNudges!.latestFromName,
+                                    _pendingNudges!.count - 1,
+                                  ),
+                            style: const TextStyle(
+                              fontSize: 13,
+                              color: AppColors.accent,
+                            ),
+                          ),
+                        ),
+                        const Icon(
+                          PhosphorIconsLight.x,
+                          size: 14,
+                          color: AppColors.accent,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
               const SizedBox(height: 12),
               Row(
                 children: [

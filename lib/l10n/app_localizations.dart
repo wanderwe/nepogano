@@ -1166,6 +1166,36 @@ abstract class AppLocalizations {
   /// **'Оновлено {count, plural, one{{count} раз} few{{count} рази} many{{count} разів} other{{count} разів}}'**
   String updatedCount(int count);
 
+  /// No description provided for @nudgeButton.
+  ///
+  /// In uk, this message translates to:
+  /// **'Дати знати, що цікавишся'**
+  String get nudgeButton;
+
+  /// No description provided for @nudgeSent.
+  ///
+  /// In uk, this message translates to:
+  /// **'Надіслано'**
+  String get nudgeSent;
+
+  /// No description provided for @couldNotSendNudge.
+  ///
+  /// In uk, this message translates to:
+  /// **'Не вдалось надіслати. Спробуй ще раз.'**
+  String get couldNotSendNudge;
+
+  /// No description provided for @nudgeBannerSolo.
+  ///
+  /// In uk, this message translates to:
+  /// **'{name} цікавиться, як ти'**
+  String nudgeBannerSolo(String name);
+
+  /// No description provided for @nudgeBannerMultiple.
+  ///
+  /// In uk, this message translates to:
+  /// **'{name} і ще {restCount, plural, one{{restCount} друг} few{{restCount} друга} many{{restCount} друзів} other{{restCount} друзів}} цікавляться, як ти'**
+  String nudgeBannerMultiple(String name, int restCount);
+
   /// No description provided for @language.
   ///
   /// In uk, this message translates to:
