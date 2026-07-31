@@ -1502,12 +1502,6 @@ class _PersonDetailScreenState extends State<PersonDetailScreen> {
     if (mounted) setState(() => _canNudge = can);
   }
 
-  // "Не було свіжих записів" — та сама умова, що й показ поштовху: 7 днів
-  // тиші (весь показаний тут проміжок) або останній запис старший 3 днів.
-  bool get _friendHasBeenQuiet =>
-      _entries.isEmpty ||
-      DateTime.now().difference(_entries.first.date).inDays >= 3;
-
   Future<void> _sendNudgeToFriend() async {
     final l10n = AppLocalizations.of(context);
     try {
@@ -1657,10 +1651,11 @@ class _PersonDetailScreenState extends State<PersonDetailScreen> {
                   ),
                 ],
               ),
-              // Лише коли давно тиша (та сама умова, що ховає крапку
-              // "hasUnguessed") і я ще не робив цього нещодавно — щойно
-              // поштовхнув, кнопка ховається, а не показує "вже дав знати".
-              if (!_loading && _friendHasBeenQuiet && _canNudge) ...[
+              // Довіряємо юзеру самому вирішити, коли доречно — єдине
+              // обмеження лишається технічне (ліміт раз/тиждень на друга,
+              // _canNudge), не "чи друг досить довго мовчав". Щойно
+              // поштовхнув — кнопка ховається, а не показує "вже дав знати".
+              if (!_loading && _canNudge) ...[
                 const SizedBox(height: 12),
                 OutlinedButton.icon(
                   onPressed: _sendNudgeToFriend,
