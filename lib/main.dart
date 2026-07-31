@@ -147,6 +147,17 @@ class NepoganoApp extends StatelessWidget {
           borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
         ),
       ),
+      // Без цього довге натискання на IconButton.tooltip показує сирий
+      // Material-дефолт (простий білий/чорний прямокутник), який випадає з
+      // решти застосунку так само, як SnackBar до свого власного стилю вище.
+      tooltipTheme: TooltipThemeData(
+        decoration: BoxDecoration(
+          color: AppColors.surfaceRaised,
+          borderRadius: BorderRadius.circular(10),
+        ),
+        textStyle: const TextStyle(color: AppColors.ink, fontSize: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      ),
     );
 
     return ValueListenableBuilder<Locale>(

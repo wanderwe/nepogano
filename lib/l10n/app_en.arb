@@ -277,13 +277,13 @@
     }
   },
 
-  "nudgeButtonTooltip": "Let them know you care",
+  "nudgeButtonTooltip": "Not indifferent",
   "nudgeSent": "Sent, they'll see it.",
   "couldNotSendNudge": "Couldn't send. Try again.",
-  "nudgeDialogTitle": "Let them know you care",
-  "nudgeDialogBody": "Your friend will see a quiet sign that you're thinking of them. You can do this once a week.",
+  "nudgeDialogTitle": "Not indifferent",
+  "nudgeDialogBody": "Your friend will see that you care. You can do this once a week.",
   "nudgeDialogSend": "Send",
-  "nudgeAlreadySent": "You last nudged them {date}. Try again in a week.",
+  "nudgeAlreadySent": "You last sent this {date}. Try again in a week.",
   "@nudgeAlreadySent": {
     "placeholders": {
       "date": { "type": "String" }
