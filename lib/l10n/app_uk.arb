@@ -286,9 +286,18 @@
     }
   },
 
-  "nudgeButtonTooltip": "Дати знати, що цікавишся: можна раз на тиждень",
-  "nudgeSent": "Надіслано. Побачить, що тобі не байдуже, знову зможеш за тиждень.",
+  "nudgeButtonTooltip": "Дати знати, що цікавишся",
+  "nudgeSent": "Надіслано, друг побачить це.",
   "couldNotSendNudge": "Не вдалось надіслати. Спробуй ще раз.",
+  "nudgeDialogTitle": "Дати знати, що цікавишся",
+  "nudgeDialogBody": "Друг побачить тихий знак, що тобі не байдуже. Можна робити це раз на тиждень.",
+  "nudgeDialogSend": "Дати знати",
+  "nudgeAlreadySent": "Востаннє дав знати {date}. Спробуй ще раз за тиждень.",
+  "@nudgeAlreadySent": {
+    "placeholders": {
+      "date": { "type": "String" }
+    }
+  },
   "nudgeBannerSolo": "{name} цікавиться, як ти",
   "@nudgeBannerSolo": {
     "placeholders": {

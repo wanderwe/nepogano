@@ -609,15 +609,28 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String get nudgeButtonTooltip =>
-      'Дати знати, що цікавишся: можна раз на тиждень';
+  String get nudgeButtonTooltip => 'Дати знати, що цікавишся';
 
   @override
-  String get nudgeSent =>
-      'Надіслано. Побачить, що тобі не байдуже, знову зможеш за тиждень.';
+  String get nudgeSent => 'Надіслано, друг побачить це.';
 
   @override
   String get couldNotSendNudge => 'Не вдалось надіслати. Спробуй ще раз.';
+
+  @override
+  String get nudgeDialogTitle => 'Дати знати, що цікавишся';
+
+  @override
+  String get nudgeDialogBody =>
+      'Друг побачить тихий знак, що тобі не байдуже. Можна робити це раз на тиждень.';
+
+  @override
+  String get nudgeDialogSend => 'Дати знати';
+
+  @override
+  String nudgeAlreadySent(String date) {
+    return 'Востаннє дав знати $date. Спробуй ще раз за тиждень.';
+  }
 
   @override
   String nudgeBannerSolo(String name) {

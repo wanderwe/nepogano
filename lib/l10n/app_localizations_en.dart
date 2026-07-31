@@ -609,14 +609,28 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get nudgeButtonTooltip => 'Let them know you care — once a week';
+  String get nudgeButtonTooltip => 'Let them know you care';
 
   @override
-  String get nudgeSent =>
-      'Sent. They\'ll see you\'re thinking of them, and you can nudge again in a week.';
+  String get nudgeSent => 'Sent, they\'ll see it.';
 
   @override
   String get couldNotSendNudge => 'Couldn\'t send. Try again.';
+
+  @override
+  String get nudgeDialogTitle => 'Let them know you care';
+
+  @override
+  String get nudgeDialogBody =>
+      'Your friend will see a quiet sign that you\'re thinking of them. You can do this once a week.';
+
+  @override
+  String get nudgeDialogSend => 'Send';
+
+  @override
+  String nudgeAlreadySent(String date) {
+    return 'You last nudged them $date. Try again in a week.';
+  }
 
   @override
   String nudgeBannerSolo(String name) {

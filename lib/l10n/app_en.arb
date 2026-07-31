@@ -277,9 +277,18 @@
     }
   },
 
-  "nudgeButtonTooltip": "Let them know you care — once a week",
-  "nudgeSent": "Sent. They'll see you're thinking of them, and you can nudge again in a week.",
+  "nudgeButtonTooltip": "Let them know you care",
+  "nudgeSent": "Sent, they'll see it.",
   "couldNotSendNudge": "Couldn't send. Try again.",
+  "nudgeDialogTitle": "Let them know you care",
+  "nudgeDialogBody": "Your friend will see a quiet sign that you're thinking of them. You can do this once a week.",
+  "nudgeDialogSend": "Send",
+  "nudgeAlreadySent": "You last nudged them {date}. Try again in a week.",
+  "@nudgeAlreadySent": {
+    "placeholders": {
+      "date": { "type": "String" }
+    }
+  },
   "nudgeBannerSolo": "{name} is wondering how you're doing",
   "@nudgeBannerSolo": {
     "placeholders": {

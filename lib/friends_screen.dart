@@ -248,24 +248,43 @@ Future<void> markNudgesSeen() async {
   );
 }
 
-/// Чи можна зараз поштовхнути саме цього друга — false, якщо я вже робив
-/// це протягом [kNudgeCooldownDays] днів.
-Future<bool> canNudge(SupabaseClient supabase, String friendUserId) async {
-  final myId = supabase.auth.currentUser?.id;
-  if (myId == null) return false;
+class NudgeStatus {
+  final bool canSend;
+  final DateTime? lastSentAt;
 
-  final since = DateTime.now().subtract(
-    const Duration(days: kNudgeCooldownDays),
-  );
+  NudgeStatus({required this.canSend, required this.lastSentAt});
+}
+
+/// Чи можна зараз поштовхнути саме цього друга (false — вже робив це
+/// протягом [kNudgeCooldownDays] днів) і коли востаннє, якщо взагалі колись —
+/// іконка тепер завжди на екрані, і без цього тапнути на неї під час
+/// кулдауну не було б чим пояснити ("чому нічого не відбувається").
+Future<NudgeStatus> nudgeStatus(
+  SupabaseClient supabase,
+  String friendUserId,
+) async {
+  final myId = supabase.auth.currentUser?.id;
+  if (myId == null) return NudgeStatus(canSend: false, lastSentAt: null);
+
   final rows = await supabase
       .from('friend_nudges')
-      .select('id')
+      .select('created_at')
       .eq('from_user_id', myId)
       .eq('to_user_id', friendUserId)
-      .gt('created_at', since.toUtc().toIso8601String())
+      .order('created_at', ascending: false)
       .limit(1);
 
-  return (rows as List).isEmpty;
+  final list = rows as List;
+  if (list.isEmpty) return NudgeStatus(canSend: true, lastSentAt: null);
+
+  final lastSentAt = DateTime.parse(
+    list.first['created_at'] as String,
+  ).toLocal();
+  final cooldownEnds = lastSentAt.add(const Duration(days: kNudgeCooldownDays));
+  return NudgeStatus(
+    canSend: DateTime.now().isAfter(cooldownEnds),
+    lastSentAt: lastSentAt,
+  );
 }
 
 Future<void> sendNudge(SupabaseClient supabase, String friendUserId) async {
@@ -1488,7 +1507,7 @@ class _PersonDetailScreenState extends State<PersonDetailScreen> {
   bool _loading = true;
   List<_FriendDayEntry> _entries = [];
   final Map<String, String?> _myGuesses = {};
-  bool _canNudge = false;
+  NudgeStatus? _nudgeStatus;
 
   // RLS уже й так дає друзям повний доступ до всієї історії одне одного,
   // незалежно від дати — kGuessWindowDays лише клієнтське вікно першого
@@ -1502,12 +1521,47 @@ class _PersonDetailScreenState extends State<PersonDetailScreen> {
   void initState() {
     super.initState();
     _load();
-    _checkCanNudge();
+    _refreshNudgeStatus();
   }
 
-  Future<void> _checkCanNudge() async {
-    final can = await canNudge(_supabase, widget.userId);
-    if (mounted) setState(() => _canNudge = can);
+  Future<void> _refreshNudgeStatus() async {
+    final status = await nudgeStatus(_supabase, widget.userId);
+    if (mounted) setState(() => _nudgeStatus = status);
+  }
+
+  // Іконка тепер завжди на екрані (раніше зникала одразу після відправки —
+  // якщо тапнути її під час кулдауну, не було чим пояснити, чому нічого не
+  // відбувається). Тап відкриває діалог замість миттєвої відправки: коли
+  // можна — просить підтвердити, коли не можна — показує, коли востаннє
+  // штовхав і що спробувати можна за тиждень. Той самий діалог для обох
+  // станів, просто основна кнопка вимкнена під час кулдауну.
+  Future<void> _openNudgeDialog() async {
+    final l10n = AppLocalizations.of(context);
+    final status = _nudgeStatus;
+    if (status == null) return;
+
+    final bodyText = status.canSend
+        ? l10n.nudgeDialogBody
+        : l10n.nudgeAlreadySent(_relativeDay(status.lastSentAt!, l10n));
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AppDialog(
+        title: l10n.nudgeDialogTitle,
+        content: Text(
+          bodyText,
+          style: const TextStyle(color: AppColors.inkMuted),
+        ),
+        primaryLabel: l10n.nudgeDialogSend,
+        onPrimary: status.canSend
+            ? () => Navigator.of(context).pop(true)
+            : null,
+        secondaryLabel: status.canSend ? l10n.cancel : l10n.done,
+        onSecondary: () => Navigator.of(context).pop(false),
+      ),
+    );
+
+    if (confirmed == true) await _sendNudgeToFriend();
   }
 
   Future<void> _sendNudgeToFriend() async {
@@ -1515,11 +1569,11 @@ class _PersonDetailScreenState extends State<PersonDetailScreen> {
     try {
       await sendNudge(_supabase, widget.userId);
       if (mounted) {
-        setState(() => _canNudge = false);
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text(l10n.nudgeSent)));
       }
+      await _refreshNudgeStatus();
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(
@@ -1672,29 +1726,30 @@ class _PersonDetailScreenState extends State<PersonDetailScreen> {
                   ),
                   // Компактна іконка замість окремої кнопки на весь рядок —
                   // та раніше виглядала зайвим, відірваним блоком над усім
-                  // іншим. Довіряємо юзеру самому вирішити, коли доречно —
-                  // єдине обмеження лишається технічне (ліміт раз/тиждень на
-                  // друга, _canNudge), не "чи друг мовчав". Тултип на
-                  // довге натискання пояснює ліміт, снекбар після
-                  // відправки — нагадує ще раз.
-                  if (!_loading && _canNudge)
+                  // іншим. Завжди на екрані (навіть під час кулдауну) —
+                  // раніше зникала одразу після відправки, і тап під час
+                  // кулдауну не мав чим пояснити тишу. Тап відкриває діалог
+                  // із поясненням і, якщо кулдаун ще не минув, датою
+                  // останнього поштовху — не миттєва відправка одним тапом.
+                  if (_nudgeStatus != null)
                     IconButton(
-                      onPressed: _sendNudgeToFriend,
-                      icon: const Icon(PhosphorIconsLight.handWaving, size: 20),
+                      onPressed: _openNudgeDialog,
+                      icon: Icon(
+                        PhosphorIconsLight.handWaving,
+                        size: 20,
+                        color: _nudgeStatus!.canSend
+                            ? AppColors.ink
+                            : AppColors.inkMuted,
+                      ),
                       tooltip: l10n.nudgeButtonTooltip,
                     ),
                 ],
               ),
               if (widget.sharedSubjects.isNotEmpty) ...[
-                const SizedBox(height: 16),
-                Text(
-                  l10n.sharedDiaries,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    color: AppColors.inkMuted,
-                  ),
-                ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 12),
+                // Підпис "Відкрито для перегляду" тут прибрали — самі чіпи
+                // з назвами щоденників і так зрозумілі в контексті сторінки
+                // друга, підпис лише займав рядок без реальної користі.
                 // Ці щоденники завжди прив'язані до ОДНІЄЇ людини (цього
                 // екрана) — на відміну від кіл, тут реалістично не буде
                 // десятка позицій, тож горизонтальний свайп (той самий
