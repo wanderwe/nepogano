@@ -1490,6 +1490,14 @@ class _PersonDetailScreenState extends State<PersonDetailScreen> {
   final Map<String, String?> _myGuesses = {};
   bool _canNudge = false;
 
+  // RLS уже й так дає друзям повний доступ до всієї історії одне одного,
+  // незалежно від дати — kGuessWindowDays лише клієнтське вікно першого
+  // завантаження. "Показати ще" розширює його на стільки ж днів назад, той
+  // самий запит, просто ширше вікно — без окремої пагінації/курсора.
+  int _windowDays = kGuessWindowDays;
+  bool _loadingMore = false;
+  bool _hasMore = true;
+
   @override
   void initState() {
     super.initState();
@@ -1521,13 +1529,21 @@ class _PersonDetailScreenState extends State<PersonDetailScreen> {
     }
   }
 
-  Future<void> _load() async {
-    setState(() => _loading = true);
+  Future<void> _loadMoreEntries() async {
+    if (_loadingMore || !_hasMore) return;
+    setState(() {
+      _loadingMore = true;
+      _windowDays += kGuessWindowDays;
+    });
+    await _load(isLoadMore: true);
+  }
+
+  Future<void> _load({bool isLoadMore = false}) async {
+    if (!isLoadMore) setState(() => _loading = true);
+    final previousCount = _entries.length;
 
     final myId = _supabase.auth.currentUser!.id;
-    final since = DateTime.now().subtract(
-      const Duration(days: kGuessWindowDays),
-    );
+    final since = DateTime.now().subtract(Duration(days: _windowDays));
     final sinceUtc = DateTime(
       since.year,
       since.month,
@@ -1593,6 +1609,11 @@ class _PersonDetailScreenState extends State<PersonDetailScreen> {
         ..clear()
         ..addAll(guesses);
       _loading = false;
+      _loadingMore = false;
+      // Розширили вікно, а кількість записів не зросла — далі назад нічого
+      // немає, ховаємо "Показати ще" замість кнопки, що ніколи нічого не
+      // додає.
+      if (isLoadMore && entries.length == previousCount) _hasMore = false;
     });
   }
 
@@ -1649,20 +1670,21 @@ class _PersonDetailScreenState extends State<PersonDetailScreen> {
                       style: appScreenTitle(),
                     ),
                   ),
+                  // Компактна іконка замість окремої кнопки на весь рядок —
+                  // та раніше виглядала зайвим, відірваним блоком над усім
+                  // іншим. Довіряємо юзеру самому вирішити, коли доречно —
+                  // єдине обмеження лишається технічне (ліміт раз/тиждень на
+                  // друга, _canNudge), не "чи друг мовчав". Тултип на
+                  // довге натискання пояснює ліміт, снекбар після
+                  // відправки — нагадує ще раз.
+                  if (!_loading && _canNudge)
+                    IconButton(
+                      onPressed: _sendNudgeToFriend,
+                      icon: const Icon(PhosphorIconsLight.handWaving, size: 20),
+                      tooltip: l10n.nudgeButtonTooltip,
+                    ),
                 ],
               ),
-              // Довіряємо юзеру самому вирішити, коли доречно — єдине
-              // обмеження лишається технічне (ліміт раз/тиждень на друга,
-              // _canNudge), не "чи друг досить довго мовчав". Щойно
-              // поштовхнув — кнопка ховається, а не показує "вже дав знати".
-              if (!_loading && _canNudge) ...[
-                const SizedBox(height: 12),
-                OutlinedButton.icon(
-                  onPressed: _sendNudgeToFriend,
-                  icon: const Icon(PhosphorIconsLight.handWaving, size: 16),
-                  label: Text(l10n.nudgeButton),
-                ),
-              ],
               if (widget.sharedSubjects.isNotEmpty) ...[
                 const SizedBox(height: 16),
                 Text(
@@ -1719,7 +1741,27 @@ class _PersonDetailScreenState extends State<PersonDetailScreen> {
               else
                 Expanded(
                   child: ListView(
-                    children: _entries.map(_buildEntryCard).toList(),
+                    children: [
+                      ..._entries.map(_buildEntryCard),
+                      if (_hasMore)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          child: Center(
+                            child: _loadingMore
+                                ? const SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                : TextButton(
+                                    onPressed: _loadMoreEntries,
+                                    child: Text(l10n.showMore),
+                                  ),
+                          ),
+                        ),
+                    ],
                   ),
                 ),
             ],

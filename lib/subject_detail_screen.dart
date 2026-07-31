@@ -70,6 +70,14 @@ class _SubjectDetailScreenState extends State<SubjectDetailScreen> {
   List<_SubjectDayEntry> _entries = [];
   final Map<String, String?> _myGuesses = {};
 
+  // Те саме, що для друзів (PersonDetailScreen) — RLS уже дає повний доступ
+  // до всієї історії сутності незалежно від дати, kGuessWindowDays лише
+  // стартове вікно. Нема принципової різниці "чи це друг, чи родич, якому
+  // відкрили щоденник дитини" — обом однаково можна дивитись глибше.
+  int _windowDays = kGuessWindowDays;
+  bool _loadingMore = false;
+  bool _hasMore = true;
+
   @override
   void initState() {
     super.initState();
@@ -78,13 +86,21 @@ class _SubjectDetailScreenState extends State<SubjectDetailScreen> {
 
   String _dayKey(DateTime date) => '${date.year}-${date.month}-${date.day}';
 
-  Future<void> _load() async {
-    setState(() => _loading = true);
+  Future<void> _loadMoreEntries() async {
+    if (_loadingMore || !_hasMore) return;
+    setState(() {
+      _loadingMore = true;
+      _windowDays += kGuessWindowDays;
+    });
+    await _load(isLoadMore: true);
+  }
+
+  Future<void> _load({bool isLoadMore = false}) async {
+    if (!isLoadMore) setState(() => _loading = true);
+    final previousCount = _entries.length;
 
     final myId = _supabase.auth.currentUser!.id;
-    final since = DateTime.now().subtract(
-      const Duration(days: kGuessWindowDays),
-    );
+    final since = DateTime.now().subtract(Duration(days: _windowDays));
     final sinceUtc = DateTime(
       since.year,
       since.month,
@@ -148,6 +164,8 @@ class _SubjectDetailScreenState extends State<SubjectDetailScreen> {
         ..clear()
         ..addAll(guesses);
       _loading = false;
+      _loadingMore = false;
+      if (isLoadMore && entries.length == previousCount) _hasMore = false;
     });
   }
 
@@ -221,7 +239,27 @@ class _SubjectDetailScreenState extends State<SubjectDetailScreen> {
               else
                 Expanded(
                   child: ListView(
-                    children: _entries.map(_buildEntryCard).toList(),
+                    children: [
+                      ..._entries.map(_buildEntryCard),
+                      if (_hasMore)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          child: Center(
+                            child: _loadingMore
+                                ? const SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                : TextButton(
+                                    onPressed: _loadMoreEntries,
+                                    child: Text(l10n.showMore),
+                                  ),
+                          ),
+                        ),
+                    ],
                   ),
                 ),
             ],

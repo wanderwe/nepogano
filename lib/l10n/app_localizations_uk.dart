@@ -46,6 +46,9 @@ class AppLocalizationsUk extends AppLocalizations {
   String get search => 'Пошук';
 
   @override
+  String get showMore => 'Показати ще';
+
+  @override
   String get moodNiyak => 'Ніяк';
 
   @override
@@ -606,10 +609,12 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String get nudgeButton => 'Дати знати, що цікавишся';
+  String get nudgeButtonTooltip =>
+      'Дати знати, що цікавишся: можна раз на тиждень';
 
   @override
-  String get nudgeSent => 'Надіслано';
+  String get nudgeSent =>
+      'Надіслано. Побачить, що тобі не байдуже, знову зможеш за тиждень.';
 
   @override
   String get couldNotSendNudge => 'Не вдалось надіслати. Спробуй ще раз.';

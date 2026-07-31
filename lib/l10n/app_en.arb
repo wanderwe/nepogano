@@ -13,6 +13,7 @@
   "back": "Back",
   "or": "or",
   "search": "Search",
+  "showMore": "Show more",
 
   "moodNiyak": "Meh",
   "moodNepogano": "Not bad",
@@ -276,8 +277,8 @@
     }
   },
 
-  "nudgeButton": "Let them know you care",
-  "nudgeSent": "Sent",
+  "nudgeButtonTooltip": "Let them know you care — once a week",
+  "nudgeSent": "Sent. They'll see you're thinking of them, and you can nudge again in a week.",
   "couldNotSendNudge": "Couldn't send. Try again.",
   "nudgeBannerSolo": "{name} is wondering how you're doing",
   "@nudgeBannerSolo": {

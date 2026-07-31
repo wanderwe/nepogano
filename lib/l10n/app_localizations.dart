@@ -170,6 +170,12 @@ abstract class AppLocalizations {
   /// **'Пошук'**
   String get search;
 
+  /// No description provided for @showMore.
+  ///
+  /// In uk, this message translates to:
+  /// **'Показати ще'**
+  String get showMore;
+
   /// No description provided for @moodNiyak.
   ///
   /// In uk, this message translates to:
@@ -1166,16 +1172,16 @@ abstract class AppLocalizations {
   /// **'Оновлено {count, plural, one{{count} раз} few{{count} рази} many{{count} разів} other{{count} разів}}'**
   String updatedCount(int count);
 
-  /// No description provided for @nudgeButton.
+  /// No description provided for @nudgeButtonTooltip.
   ///
   /// In uk, this message translates to:
-  /// **'Дати знати, що цікавишся'**
-  String get nudgeButton;
+  /// **'Дати знати, що цікавишся: можна раз на тиждень'**
+  String get nudgeButtonTooltip;
 
   /// No description provided for @nudgeSent.
   ///
   /// In uk, this message translates to:
-  /// **'Надіслано'**
+  /// **'Надіслано. Побачить, що тобі не байдуже, знову зможеш за тиждень.'**
   String get nudgeSent;
 
   /// No description provided for @couldNotSendNudge.

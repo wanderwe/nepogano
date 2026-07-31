@@ -46,6 +46,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get search => 'Search';
 
   @override
+  String get showMore => 'Show more';
+
+  @override
   String get moodNiyak => 'Meh';
 
   @override
@@ -606,10 +609,11 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get nudgeButton => 'Let them know you care';
+  String get nudgeButtonTooltip => 'Let them know you care — once a week';
 
   @override
-  String get nudgeSent => 'Sent';
+  String get nudgeSent =>
+      'Sent. They\'ll see you\'re thinking of them, and you can nudge again in a week.';
 
   @override
   String get couldNotSendNudge => 'Couldn\'t send. Try again.';
