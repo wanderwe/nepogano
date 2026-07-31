@@ -52,7 +52,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get moodNiyak => 'Meh';
 
   @override
-  String get moodNepogano => 'Not bad';
+  String get moodNepogano => 'Fine';
 
   @override
   String get moodZbs => 'Awesome';
@@ -77,7 +77,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Not every day has to be amazing, and that\'s fine. Just honestly note how it went.';
 
   @override
-  String get onboarding2Headline => 'Meh. Not bad. Awesome.';
+  String get onboarding2Headline => 'Meh. Fine. Awesome.';
 
   @override
   String get onboarding2Body =>
@@ -385,10 +385,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get notCheckedInToday => 'No news in a while';
 
   @override
-  String get guessedRight => 'you got it';
+  String get guessedRight => 'Guessed';
 
   @override
-  String get guessedWrong => 'not quite';
+  String get guessedWrong => 'Missed';
 
   @override
   String get howAreTheyToday => 'How do you think they\'re doing?';
@@ -609,7 +609,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get nudgeButtonTooltip => 'Not indifferent';
+  String get nudgeButtonTooltip => 'Check in';
 
   @override
   String get nudgeSent => 'Sent, they\'ll see it.';
@@ -618,11 +618,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get couldNotSendNudge => 'Couldn\'t send. Try again.';
 
   @override
-  String get nudgeDialogTitle => 'Not indifferent';
+  String get nudgeDialogTitle => 'Check in';
 
   @override
   String get nudgeDialogBody =>
-      'Your friend will see that you care. You can do this once a week.';
+      'Your friend will see you\'re wondering how they\'re doing. You can do this once a week.';
 
   @override
   String get nudgeDialogSend => 'Send';

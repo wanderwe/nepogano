@@ -286,13 +286,13 @@
     }
   },
 
-  "nudgeButtonTooltip": "Не байдуже",
+  "nudgeButtonTooltip": "Поцікавитись",
   "nudgeSent": "Надіслано, друг побачить це.",
   "couldNotSendNudge": "Не вдалось надіслати. Спробуй ще раз.",
-  "nudgeDialogTitle": "Не байдуже",
-  "nudgeDialogBody": "Друг побачить, що тобі не байдуже. Можна раз на тиждень.",
+  "nudgeDialogTitle": "Поцікавитись",
+  "nudgeDialogBody": "Друг побачить, що тобі цікаво, як у нього справи. Можна раз на тиждень.",
   "nudgeDialogSend": "Надіслати",
-  "nudgeAlreadySent": "Востаннє надсилав {date}. Спробуй ще раз за тиждень.",
+  "nudgeAlreadySent": "Востаннє: {date}. Спробуй ще раз за тиждень.",
   "@nudgeAlreadySent": {
     "placeholders": {
       "date": { "type": "String" }

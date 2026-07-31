@@ -16,7 +16,7 @@
   "showMore": "Show more",
 
   "moodNiyak": "Meh",
-  "moodNepogano": "Not bad",
+  "moodNepogano": "Fine",
   "moodZbs": "Awesome",
   "todayWasPrefix": "Today was",
 
@@ -25,7 +25,7 @@
   "getStarted": "Get started",
   "onboarding1Headline": "Your day, no dressing it up",
   "onboarding1Body": "Not every day has to be amazing, and that's fine. Just honestly note how it went.",
-  "onboarding2Headline": "Meh. Not bad. Awesome.",
+  "onboarding2Headline": "Meh. Fine. Awesome.",
   "onboarding2Body": "Three plain words: quick and honest, no pressure to dress it up as \"amazing\" when it was really just okay.",
   "onboarding4Headline": "Close ones, close by",
   "onboarding4Body": "Just the people you actually know, no endless feed of strangers. Add friends and try to guess how their day went.",
@@ -140,8 +140,8 @@
   "setDisplayName": "Add your name",
   "couldNotSaveDisplayName": "Couldn't save your name.",
   "notCheckedInToday": "No news in a while",
-  "guessedRight": "you got it",
-  "guessedWrong": "not quite",
+  "guessedRight": "Guessed",
+  "guessedWrong": "Missed",
   "howAreTheyToday": "How do you think they're doing?",
   "couldNotSaveGuess": "Couldn't save the guess.",
   "guessStats": "Friends guessed your mood {correct} out of {total} ({percent}%)",
@@ -277,11 +277,11 @@
     }
   },
 
-  "nudgeButtonTooltip": "Not indifferent",
+  "nudgeButtonTooltip": "Check in",
   "nudgeSent": "Sent, they'll see it.",
   "couldNotSendNudge": "Couldn't send. Try again.",
-  "nudgeDialogTitle": "Not indifferent",
-  "nudgeDialogBody": "Your friend will see that you care. You can do this once a week.",
+  "nudgeDialogTitle": "Check in",
+  "nudgeDialogBody": "Your friend will see you're wondering how they're doing. You can do this once a week.",
   "nudgeDialogSend": "Send",
   "nudgeAlreadySent": "You last sent this {date}. Try again in a week.",
   "@nudgeAlreadySent": {

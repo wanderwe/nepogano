@@ -609,7 +609,7 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String get nudgeButtonTooltip => 'Не байдуже';
+  String get nudgeButtonTooltip => 'Поцікавитись';
 
   @override
   String get nudgeSent => 'Надіслано, друг побачить це.';
@@ -618,18 +618,18 @@ class AppLocalizationsUk extends AppLocalizations {
   String get couldNotSendNudge => 'Не вдалось надіслати. Спробуй ще раз.';
 
   @override
-  String get nudgeDialogTitle => 'Не байдуже';
+  String get nudgeDialogTitle => 'Поцікавитись';
 
   @override
   String get nudgeDialogBody =>
-      'Друг побачить, що тобі не байдуже. Можна раз на тиждень.';
+      'Друг побачить, що тобі цікаво, як у нього справи. Можна раз на тиждень.';
 
   @override
   String get nudgeDialogSend => 'Надіслати';
 
   @override
   String nudgeAlreadySent(String date) {
-    return 'Востаннє надсилав $date. Спробуй ще раз за тиждень.';
+    return 'Востаннє: $date. Спробуй ще раз за тиждень.';
   }
 
   @override
