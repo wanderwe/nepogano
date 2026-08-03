@@ -622,7 +622,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get nudgeDialogBody =>
-      'Next time your friend opens the app, they\'ll see a banner with your name: \"is wondering how you\'re doing.\" It\'s not a push notification, just a note inside the app. You can send it once a week.';
+      'Next time your friend opens the app, they\'ll see a banner with your name: \"is wondering how you\'re doing.\" You can send it once a week.';
 
   @override
   String get nudgeDialogSend => 'Send';

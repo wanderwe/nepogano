@@ -281,7 +281,7 @@
   "nudgeSent": "Sent, they'll see it.",
   "couldNotSendNudge": "Couldn't send. Try again.",
   "nudgeDialogTitle": "Wondering about you",
-  "nudgeDialogBody": "Next time your friend opens the app, they'll see a banner with your name: \"is wondering how you're doing.\" It's not a push notification, just a note inside the app. You can send it once a week.",
+  "nudgeDialogBody": "Next time your friend opens the app, they'll see a banner with your name: \"is wondering how you're doing.\" You can send it once a week.",
   "nudgeDialogSend": "Send",
   "nudgeAlreadySent": "Already sent. You can again on {date}.",
   "@nudgeAlreadySent": {
