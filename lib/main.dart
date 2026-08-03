@@ -1863,28 +1863,35 @@ class _CheckInScreenState extends State<CheckInScreen> {
         .toUtc()
         .toIso8601String();
 
-    final rows = await _supabase
-        .from(_table)
-        .select('mood, note, created_at')
-        .eq(_idColumn, _idValue)
-        .gte('created_at', start)
-        .lt('created_at', end)
-        .order('created_at');
+    try {
+      final rows = await _supabase
+          .from(_table)
+          .select('mood, note, created_at')
+          .eq(_idColumn, _idValue)
+          .gte('created_at', start)
+          .lt('created_at', end)
+          .order('created_at');
 
-    if (!mounted) return;
+      if (!mounted) return;
 
-    setState(() {
-      _weekEntries = (rows as List).map((row) {
-        return CheckinEntry(
-          // Лише для крапок тижневої стрічки — id тут ніде не читається
-          // (CommentsSection на цей список не підключений).
-          id: '',
-          createdAt: DateTime.parse(row['created_at'] as String).toLocal(),
-          mood: moodFromDbValue(row['mood'] as String),
-          note: row['note'] as String?,
-        );
-      }).toList();
-    });
+      setState(() {
+        _weekEntries = (rows as List).map((row) {
+          return CheckinEntry(
+            // Лише для крапок тижневої стрічки — id тут ніде не читається
+            // (CommentsSection на цей список не підключений).
+            id: '',
+            createdAt: DateTime.parse(row['created_at'] as String).toLocal(),
+            mood: moodFromDbValue(row['mood'] as String),
+            note: row['note'] as String?,
+          );
+        }).toList();
+      });
+    } catch (_) {
+      // Тиждень — лише декоративна стрічка на головному екрані, не
+      // критичний для чек-іну сам по собі; при збої просто лишаємо
+      // попередній стан замість непійманого винятку під час перемикання
+      // щоденників.
+    }
   }
 
   Future<void> _save() async {
