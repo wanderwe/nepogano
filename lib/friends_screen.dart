@@ -1365,18 +1365,21 @@ class _FriendsScreenState extends State<FriendsScreen> {
 
     return InkWell(
       borderRadius: BorderRadius.circular(16),
-      onTap: () => Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (_) => PersonDetailScreen(
-            userId: friend.userId,
-            displayEmail: friend.displayEmail,
-            displayName: friend.displayName,
-            sharedSubjects: _sharedSubjects
-                .where((s) => s.ownerId == friend.userId)
-                .toList(),
+      onTap: () async {
+        await Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => PersonDetailScreen(
+              userId: friend.userId,
+              displayEmail: friend.displayEmail,
+              displayName: friend.displayName,
+              sharedSubjects: _sharedSubjects
+                  .where((s) => s.ownerId == friend.userId)
+                  .toList(),
+            ),
           ),
-        ),
-      ),
+        );
+        if (mounted) _load();
+      },
       onLongPress: () => _assignToFolders(friend),
       child: Container(
         margin: const EdgeInsets.only(bottom: 10),
