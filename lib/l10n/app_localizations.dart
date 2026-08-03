@@ -1199,7 +1199,7 @@ abstract class AppLocalizations {
   /// No description provided for @nudgeDialogBody.
   ///
   /// In uk, this message translates to:
-  /// **'Коли друг відкриє застосунок, побачить банер із твоїм ім\'ям: «цікавиться, як ти». Це не пуш-сповіщення, просто позначка всередині застосунку. Можна раз на тиждень.'**
+  /// **'Коли друг відкриє застосунок, побачить банер із твоїм ім\'ям: «цікавиться, як ти». Можна раз на тиждень.'**
   String get nudgeDialogBody;
 
   /// No description provided for @nudgeDialogSend.
