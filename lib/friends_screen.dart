@@ -251,8 +251,13 @@ Future<void> markNudgesSeen() async {
 class NudgeStatus {
   final bool canSend;
   final DateTime? lastSentAt;
+  final DateTime? availableAgainAt;
 
-  NudgeStatus({required this.canSend, required this.lastSentAt});
+  NudgeStatus({
+    required this.canSend,
+    required this.lastSentAt,
+    required this.availableAgainAt,
+  });
 }
 
 /// Чи можна зараз поштовхнути саме цього друга (false — вже робив це
@@ -264,7 +269,13 @@ Future<NudgeStatus> nudgeStatus(
   String friendUserId,
 ) async {
   final myId = supabase.auth.currentUser?.id;
-  if (myId == null) return NudgeStatus(canSend: false, lastSentAt: null);
+  if (myId == null) {
+    return NudgeStatus(
+      canSend: false,
+      lastSentAt: null,
+      availableAgainAt: null,
+    );
+  }
 
   final rows = await supabase
       .from('friend_nudges')
@@ -275,7 +286,9 @@ Future<NudgeStatus> nudgeStatus(
       .limit(1);
 
   final list = rows as List;
-  if (list.isEmpty) return NudgeStatus(canSend: true, lastSentAt: null);
+  if (list.isEmpty) {
+    return NudgeStatus(canSend: true, lastSentAt: null, availableAgainAt: null);
+  }
 
   final lastSentAt = DateTime.parse(
     list.first['created_at'] as String,
@@ -284,6 +297,7 @@ Future<NudgeStatus> nudgeStatus(
   return NudgeStatus(
     canSend: DateTime.now().isAfter(cooldownEnds),
     lastSentAt: lastSentAt,
+    availableAgainAt: cooldownEnds,
   );
 }
 
@@ -1542,7 +1556,7 @@ class _PersonDetailScreenState extends State<PersonDetailScreen> {
 
     final bodyText = status.canSend
         ? l10n.nudgeDialogBody
-        : l10n.nudgeAlreadySent(_relativeDay(status.lastSentAt!, l10n));
+        : l10n.nudgeAlreadySent(_relativeDay(status.availableAgainAt!, l10n));
 
     final confirmed = await showDialog<bool>(
       context: context,

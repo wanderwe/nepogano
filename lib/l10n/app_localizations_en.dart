@@ -609,7 +609,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get nudgeButtonTooltip => 'Check in';
+  String get nudgeButtonTooltip => 'Wondering about you';
 
   @override
   String get nudgeSent => 'Sent, they\'ll see it.';
@@ -618,18 +618,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get couldNotSendNudge => 'Couldn\'t send. Try again.';
 
   @override
-  String get nudgeDialogTitle => 'Check in';
+  String get nudgeDialogTitle => 'Wondering about you';
 
   @override
   String get nudgeDialogBody =>
-      'Your friend will see you\'re wondering how they\'re doing. You can do this once a week.';
+      'Next time your friend opens the app, they\'ll see a banner with your name: \"is wondering how you\'re doing.\" It\'s not a push notification, just a note inside the app. You can send it once a week.';
 
   @override
   String get nudgeDialogSend => 'Send';
 
   @override
   String nudgeAlreadySent(String date) {
-    return 'You last sent this $date. Try again in a week.';
+    return 'Already sent. You can again on $date.';
   }
 
   @override

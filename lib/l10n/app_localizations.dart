@@ -1175,13 +1175,13 @@ abstract class AppLocalizations {
   /// No description provided for @nudgeButtonTooltip.
   ///
   /// In uk, this message translates to:
-  /// **'Поцікавитись'**
+  /// **'Цікаво, як ти'**
   String get nudgeButtonTooltip;
 
   /// No description provided for @nudgeSent.
   ///
   /// In uk, this message translates to:
-  /// **'Надіслано, друг побачить це.'**
+  /// **'Надіслано, друг побачить.'**
   String get nudgeSent;
 
   /// No description provided for @couldNotSendNudge.
@@ -1193,13 +1193,13 @@ abstract class AppLocalizations {
   /// No description provided for @nudgeDialogTitle.
   ///
   /// In uk, this message translates to:
-  /// **'Поцікавитись'**
+  /// **'Цікаво, як ти'**
   String get nudgeDialogTitle;
 
   /// No description provided for @nudgeDialogBody.
   ///
   /// In uk, this message translates to:
-  /// **'Друг побачить, що тобі цікаво, як у нього справи. Можна раз на тиждень.'**
+  /// **'Коли друг відкриє застосунок, побачить банер із твоїм ім\'ям: «цікавиться, як ти». Це не пуш-сповіщення, просто позначка всередині застосунку. Можна раз на тиждень.'**
   String get nudgeDialogBody;
 
   /// No description provided for @nudgeDialogSend.
@@ -1211,7 +1211,7 @@ abstract class AppLocalizations {
   /// No description provided for @nudgeAlreadySent.
   ///
   /// In uk, this message translates to:
-  /// **'Востаннє: {date}. Спробуй ще раз за тиждень.'**
+  /// **'Вже надіслано. Зможеш ще раз {date}.'**
   String nudgeAlreadySent(String date);
 
   /// No description provided for @nudgeBannerSolo.

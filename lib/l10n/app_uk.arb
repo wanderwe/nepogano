@@ -286,13 +286,13 @@
     }
   },
 
-  "nudgeButtonTooltip": "Поцікавитись",
-  "nudgeSent": "Надіслано, друг побачить це.",
+  "nudgeButtonTooltip": "Цікаво, як ти",
+  "nudgeSent": "Надіслано, друг побачить.",
   "couldNotSendNudge": "Не вдалось надіслати. Спробуй ще раз.",
-  "nudgeDialogTitle": "Поцікавитись",
-  "nudgeDialogBody": "Друг побачить, що тобі цікаво, як у нього справи. Можна раз на тиждень.",
+  "nudgeDialogTitle": "Цікаво, як ти",
+  "nudgeDialogBody": "Коли друг відкриє застосунок, побачить банер із твоїм ім'ям: «цікавиться, як ти». Це не пуш-сповіщення, просто позначка всередині застосунку. Можна раз на тиждень.",
   "nudgeDialogSend": "Надіслати",
-  "nudgeAlreadySent": "Востаннє: {date}. Спробуй ще раз за тиждень.",
+  "nudgeAlreadySent": "Вже надіслано. Зможеш ще раз {date}.",
   "@nudgeAlreadySent": {
     "placeholders": {
       "date": { "type": "String" }
