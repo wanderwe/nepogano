@@ -66,19 +66,21 @@ Future<bool> scheduleDailyReminder({
   return true;
 }
 
+// Навмисно НЕ tz.TZDateTime.now(tz.local) — якщо визначення часового поясу
+// в initDailyReminder провалилось (наприклад, tz.getLocation не впізнав
+// ідентифікатор від FlutterTimezone), tz.local тихо лишається дефолтним
+// UTC пакету timezone, і 20:00 рахувалось як 20:00 UTC, тобто 23:00 в
+// Києві влітку — саме так і трапилось на живому пристрої. DateTime.now()
+// натомість Dart завжди рахує вірно (системний локальний зсув), незалежно
+// від того, чи резолвнулась IANA-назва поясу — тому момент часу тут
+// беремо звідси, а tz.local лишається лише міткою для TZDateTime.
 tz.TZDateTime get _next20 {
-  final now = tz.TZDateTime.now(tz.local);
-  var scheduled = tz.TZDateTime(
-    tz.local,
-    now.year,
-    now.month,
-    now.day,
-    _reminderHour,
-  );
-  if (scheduled.isBefore(now)) {
-    scheduled = scheduled.add(const Duration(days: 1));
+  final now = DateTime.now();
+  var scheduledLocal = DateTime(now.year, now.month, now.day, _reminderHour);
+  if (scheduledLocal.isBefore(now)) {
+    scheduledLocal = scheduledLocal.add(const Duration(days: 1));
   }
-  return scheduled;
+  return tz.TZDateTime.from(scheduledLocal, tz.local);
 }
 
 Future<bool> _requestPermission() async {
