@@ -45,6 +45,10 @@
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>Nepogano потребує доступу до камери, щоб ви могли зробити фото до свого чек-іну.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Nepogano потребує доступу до фото, щоб ви могли додати наявне фото до свого чек-іну.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
