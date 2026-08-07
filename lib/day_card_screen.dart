@@ -146,8 +146,8 @@ class _DayCardScreenState extends State<DayCardScreen> {
                     decoration: BoxDecoration(boxShadow: AppShadows.soft),
                     child: _photoLoading
                         ? const SizedBox(
-                            width: 320,
-                            height: 320,
+                            width: _cardWidth,
+                            height: _cardHeight,
                             child: Center(child: CircularProgressIndicator()),
                           )
                         : RepaintBoundary(
@@ -356,6 +356,14 @@ class _ShareRow extends StatelessWidget {
   }
 }
 
+// 9:16 — той самий кадр, що й Instagram/TikTok Stories, куди картку
+// найчастіше й шерять. Раніше висота йшла "скільки контенту вистачить"
+// (без фото — приземкувата, з довгою нотаткою й фото — випадково витягнута
+// сильніше за сам формат історій), і в самих Stories це висіло маленьким
+// прямокутником посеред порожнього кадру замість заповнювати його.
+const _cardWidth = 320.0;
+const _cardHeight = _cardWidth * 16 / 9;
+
 class _DayCard extends StatelessWidget {
   final CheckinEntry entry;
   final Uint8List? photoBytes;
@@ -365,12 +373,44 @@ class _DayCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final locale = Localizations.localeOf(context);
+    final l10n = AppLocalizations.of(context);
     final d = entry.createdAt;
     final dateLabel = '${d.day} ${monthNameGenitive(d.month, locale)}';
     final weekdayName = weekdayNameFull(d.weekday, locale);
-    final moodIndex = MoodLevel.values.indexOf(entry.mood);
     final noteText = entry.note?.trim();
     final hasNote = noteText != null && noteText.isNotEmpty;
+    final hasPhoto = photoBytes != null;
+
+    // Тінь під текстом — і на заголовку, і на нотатці, і на даті — не дає
+    // тексту зливатись із фото незалежно від того, яке саме воно (світле
+    // небо, темний ліс, строкатий фон): скрім-градієнти покривають типовий
+    // випадок, тінь підстраховує на межах чи нетипово яскравих ділянках.
+    const photoTextShadow = [
+      Shadow(color: Color(0xB3000000), blurRadius: 6, offset: Offset(0, 1)),
+    ];
+
+    final headline = Text.rich(
+      TextSpan(
+        style: appSerif(
+          fontSize: hasPhoto ? 20 : 32,
+          fontWeight: FontWeight.w600,
+          color: Colors.white,
+          height: 1.2,
+        ).copyWith(shadows: hasPhoto ? photoTextShadow : null),
+        children: [
+          TextSpan(text: '${l10n.todayWasPrefix} '),
+          TextSpan(
+            text: entry.mood.label(context).toLowerCase(),
+            style: TextStyle(color: entry.mood.color),
+          ),
+        ],
+      ),
+      textAlign: hasPhoto ? TextAlign.left : TextAlign.center,
+    );
+
+    final updatedLabel = entry.updateCount > 0
+        ? l10n.updatedCount(entry.updateCount)
+        : null;
 
     return Container(
       // Навмисно без borderRadius/clip: це саме той віджет, що йде у
@@ -379,130 +419,196 @@ class _DayCard extends StatelessWidget {
       // де накладається чужий фон (сторіс, месенджер), не контрольована:
       // хост сам домальовує туди щось своє (тінь стікера тощо), і виходить
       // видима "виїмка" в кутах. Суцільний прямокутник цього не має.
-      width: 320,
-      color: const Color(0xFF1C1C1E),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (photoBytes != null)
-            AspectRatio(
-              aspectRatio: kPhotoAspectRatio,
-              child: ScaledPhoto(
-                scale: entry.photoScale,
-                child: Image.memory(
-                  photoBytes!,
-                  fit: BoxFit.cover,
-                  alignment: Alignment(0, entry.photoAlignY),
-                ),
-              ),
-            ),
-          Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
+      width: _cardWidth,
+      height: _cardHeight,
+      color: const Color(0xFF141414),
+      child: hasPhoto
+          ? Stack(
+              fit: StackFit.expand,
               children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      dateLabel,
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: Colors.grey.shade500,
-                      ),
-                    ),
-                    Text(
-                      weekdayName,
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: Colors.grey.shade500,
-                      ),
-                    ),
-                  ],
+                // Кадр картки завжди 9:16, а не kPhotoAspectRatio (квадрат
+                // у рамці позиціювання при чек-іні) — той квадрат обраний
+                // під місце для кнопок у формі, тут такого обмеження нема.
+                // Фото фізично не обрізане під квадрат, лиш показане в
+                // ньому — тому ширший кадр із тим самим photoAlignY/Scale
+                // просто розкриває більше того самого кадрування, а не
+                // показує щось інше, ніж юзер підбирав.
+                ScaledPhoto(
+                  scale: entry.photoScale,
+                  child: Image.memory(
+                    photoBytes!,
+                    fit: BoxFit.cover,
+                    alignment: Alignment(0, entry.photoAlignY),
+                  ),
                 ),
-                const SizedBox(height: 20),
-                Text.rich(
-                  TextSpan(
-                    style: appSerif(
-                      fontSize: 26,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.white,
+                // Знизу — темніший і вищий скрім (там основний текст,
+                // потребує найбільше контрасту), зверху — коротший і
+                // легший (там лише дата). Обидва тримають текст читабельним
+                // незалежно від того, яке саме фото — світле небо, темний
+                // ліс чи щось строкате.
+                const DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.bottomCenter,
+                      end: Alignment.topCenter,
+                      colors: [Color(0xE6000000), Color(0x00000000)],
+                      stops: [0, 0.55],
                     ),
+                  ),
+                ),
+                const DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [Color(0x99000000), Color(0x00000000)],
+                      stops: [0, 0.18],
+                    ),
+                  ),
+                ),
+                Positioned(
+                  top: 20,
+                  left: 20,
+                  child: Text(
+                    '$dateLabel · $weekdayName',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: Color(0xD9FFFFFF),
+                      shadows: photoTextShadow,
+                    ),
+                  ),
+                ),
+                Positioned(
+                  left: 20,
+                  right: 20,
+                  bottom: 20,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      TextSpan(
-                        text: '${AppLocalizations.of(context).todayWasPrefix} ',
-                      ),
-                      TextSpan(
-                        text: entry.mood.label(context).toLowerCase(),
-                        style: TextStyle(color: entry.mood.color),
+                      headline,
+                      if (hasNote) ...[
+                        const SizedBox(height: 8),
+                        Text(
+                          noteText,
+                          maxLines: 4,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            color: Color(0xD9FFFFFF),
+                            height: 1.4,
+                            shadows: photoTextShadow,
+                          ),
+                        ),
+                      ],
+                      const SizedBox(height: 14),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            updatedLabel ?? '',
+                            style: const TextStyle(
+                              fontSize: 11,
+                              color: Color(0x99FFFFFF),
+                            ),
+                          ),
+                          const Text(
+                            'nepogano.app',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: Color(0x99FFFFFF),
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
                 ),
-                if (hasNote) ...[
-                  const SizedBox(height: 12),
-                  Text(
-                    noteText,
-                    maxLines: 6,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 15,
-                      color: AppColors.ink,
-                      height: 1.4,
-                    ),
-                  ),
-                ],
-                const SizedBox(height: 24),
-                Row(
-                  children: List.generate(MoodLevel.values.length, (i) {
-                    final segmentMood = MoodLevel.values[i];
-                    return Expanded(
-                      child: Container(
-                        height: 4,
-                        margin: EdgeInsets.only(
-                          right: i == MoodLevel.values.length - 1 ? 0 : 8,
-                        ),
-                        decoration: BoxDecoration(
-                          color: i == moodIndex
-                              ? segmentMood.color
-                              : segmentMood.color.withValues(alpha: 0.25),
-                          borderRadius: BorderRadius.circular(2),
-                        ),
-                      ),
-                    );
-                  }),
+              ],
+            )
+          : DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: RadialGradient(
+                  center: const Alignment(0, -0.5),
+                  radius: 1.1,
+                  colors: [
+                    entry.mood.color.withValues(alpha: 0.32),
+                    const Color(0xFF141414),
+                  ],
+                  stops: const [0, 0.75],
                 ),
-                const SizedBox(height: 20),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      entry.updateCount > 0
-                          ? AppLocalizations.of(
-                              context,
-                            ).updatedCount(entry.updateCount)
-                          : '',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey.shade600,
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          dateLabel,
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Colors.grey.shade400,
+                          ),
+                        ),
+                        Text(
+                          weekdayName,
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Colors.grey.shade400,
+                          ),
+                        ),
+                      ],
+                    ),
+                    Expanded(
+                      child: Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            headline,
+                            if (hasNote) ...[
+                              const SizedBox(height: 16),
+                              Text(
+                                noteText,
+                                textAlign: TextAlign.center,
+                                maxLines: 6,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontSize: 15,
+                                  color: AppColors.ink,
+                                  height: 1.4,
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
                       ),
                     ),
-                    Text(
-                      'nepogano.app',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey.shade600,
-                      ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          updatedLabel ?? '',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey.shade600,
+                          ),
+                        ),
+                        Text(
+                          'nepogano.app',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey.shade600,
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
-              ],
+              ),
             ),
-          ),
-        ],
-      ),
     );
   }
 }
