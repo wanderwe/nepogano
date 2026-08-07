@@ -12,6 +12,8 @@ import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'auth_screen.dart';
+import 'comment_activity.dart';
+import 'comment_activity_screen.dart';
 import 'comments_section.dart';
 import 'daily_reminder.dart';
 import 'date_labels.dart';
@@ -649,7 +651,13 @@ class _CheckInScreenState extends State<CheckInScreen> {
   DateTime? _todayEntrySavedAt;
   List<CheckinEntry> _weekEntries = [];
   bool _hasCircleActivity = false;
-  bool _hasUnseenComments = false;
+  // Наскрізний сигнал — новий коментар на будь-якому МОЄМУ дні АБО
+  // відповідь на МІЙ коментар під чужим, тому й не прив'язаний до
+  // конкретного щоденника і не перераховується при перемиканні. Раніше
+  // тут ще був окремий _hasUnseenComments (крапка на іконці "Історія" +
+  // крапки на конкретних днях у календарі) — прибрано, бо стрічка
+  // "Коментарі" вже показує ці самі події, дублювати сигнал нема сенсу.
+  bool _hasCommentActivity = false;
   PendingNudges? _pendingNudges;
   late DateTime _visibleWeekStart;
 
@@ -708,8 +716,7 @@ class _CheckInScreenState extends State<CheckInScreen> {
     _visibleWeekStart = _mondayOf(DateTime.now());
     _loadTodayEntry();
     _loadWeek();
-    _checkCircleActivity();
-    _checkUnseenComments();
+    _checkAllActivityOnLoad();
     _loadSubjects();
     _loadPendingNudges();
   }
@@ -791,9 +798,28 @@ class _CheckInScreenState extends State<CheckInScreen> {
     if (mounted) setState(() => _hasCircleActivity = has);
   }
 
-  Future<void> _checkUnseenComments() async {
-    final has = await hasUnseenComments(_supabase, subjectId: _activeSubjectId);
-    if (mounted) setState(() => _hasUnseenComments = has);
+  Future<void> _checkCommentActivity() async {
+    final has = await hasUnseenCommentActivity(_supabase);
+    if (mounted) setState(() => _hasCommentActivity = has);
+  }
+
+  /// Лише для першого завантаження екрана — два незалежні бейджі-крапки
+  /// інакше з'являлись по черзі, коли готовий кожен окремий запит (і той,
+  /// що тягне коментарі, довше за інші), і це виглядало як "довантаження"
+  /// замість одного стабільного стану. Тут обидва чекаються разом і
+  /// показуються одним setState. Рефреш після повернення з конкретного
+  /// екрана (наприклад Друзів) лишається окремим викликом — там ефект
+  /// довантаження не заважає, бо це вже не перший кадр застосунку.
+  Future<void> _checkAllActivityOnLoad() async {
+    final results = await Future.wait([
+      hasUnseenFriendActivity(_supabase),
+      hasUnseenCommentActivity(_supabase),
+    ]);
+    if (!mounted) return;
+    setState(() {
+      _hasCircleActivity = results[0];
+      _hasCommentActivity = results[1];
+    });
   }
 
   /// Перемикає, за кого зараз ведеться чек-ін (null = я сам) — той самий
@@ -817,10 +843,6 @@ class _CheckInScreenState extends State<CheckInScreen> {
     });
     _loadTodayEntry();
     _loadWeek();
-    // Бейдж на іконці "Історія" стосується того щоденника, який зараз
-    // активний — при перемиканні перевіряємо його заново, інакше крапка
-    // й далі показувала б стан попереднього (чи взагалі тільки власного).
-    _checkUnseenComments();
   }
 
   Future<void> _createSubject() async {
@@ -2100,6 +2122,28 @@ class _CheckInScreenState extends State<CheckInScreen> {
                   ),
                   Row(
                     children: [
+                      IconButton(
+                        onPressed: () async {
+                          final activeName = _activeSubjectId == null
+                              ? null
+                              : _subjects
+                                    .firstWhere((s) => s.id == _activeSubjectId)
+                                    .name;
+                          await Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => HistoryScreen(
+                                subjectId: _activeSubjectId,
+                                subjectName: activeName,
+                              ),
+                            ),
+                          );
+                        },
+                        icon: const Icon(
+                          PhosphorIconsLight.calendarBlank,
+                          size: 20,
+                        ),
+                        tooltip: l10n.history,
+                      ),
                       Stack(
                         clipBehavior: Clip.none,
                         children: [
@@ -2137,38 +2181,20 @@ class _CheckInScreenState extends State<CheckInScreen> {
                         children: [
                           IconButton(
                             onPressed: () async {
-                              final activeName = _activeSubjectId == null
-                                  ? null
-                                  : _subjects
-                                        .firstWhere(
-                                          (s) => s.id == _activeSubjectId,
-                                        )
-                                        .name;
                               await Navigator.of(context).push(
                                 MaterialPageRoute(
-                                  builder: (_) => HistoryScreen(
-                                    subjectId: _activeSubjectId,
-                                    subjectName: activeName,
-                                  ),
+                                  builder: (_) => const CommentActivityScreen(),
                                 ),
                               );
-                              // Позначаємо переглянутим саме той щоденник,
-                              // календар якого щойно відкривали — окрема
-                              // мітка на кожен, тож перегляд сутності більше
-                              // не "з'їдає" непереглянуте на власному й
-                              // навпаки.
-                              await markCommentsSeen(
-                                subjectId: _activeSubjectId,
-                              );
-                              _checkUnseenComments();
+                              _checkCommentActivity();
                             },
                             icon: const Icon(
-                              PhosphorIconsLight.calendarBlank,
+                              PhosphorIconsLight.chatCircleDots,
                               size: 20,
                             ),
-                            tooltip: l10n.history,
+                            tooltip: l10n.commentsLabel,
                           ),
-                          if (_hasUnseenComments)
+                          if (_hasCommentActivity)
                             const Positioned(
                               top: 8,
                               right: 8,

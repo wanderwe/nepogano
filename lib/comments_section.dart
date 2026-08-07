@@ -1,110 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'l10n/app_localizations.dart';
 import 'style.dart';
-
-const _commentsLastSeenKey = 'comments_last_seen';
-
-/// Окрема мітка "востаннє переглянуто" на кожну сутність — інакше позначення
-/// "переглянуто" на щоденнику "Амі" помилково приховало б непереглянуті
-/// коментарі на будь-якому іншому щоденнику (чи на власному). `subjectId ==
-/// null` — власний щоденник, той самий ключ, що був завжди.
-String _lastSeenKey(String? subjectId) => subjectId == null
-    ? _commentsLastSeenKey
-    : '${_commentsLastSeenKey}_$subjectId';
-
-/// Чи є коментар на днях сутності (`subjectId`) чи на власних (`subjectId ==
-/// null`), новіший за останній перегляд саме цього щоденника — та сама
-/// мітка часу з SharedPreferences, окрема на кожен щоденник (без окремої
-/// таблиці "read receipts"). Власні відповіді (author_id = я) не
-/// рахуються — це не "нове повідомлення від когось", хоч і лежать у тій
-/// самій таблиці. Для власника й співавтора поведінка однакова — обидва
-/// однаково "власники" цього дзвінка.
-Future<bool> hasUnseenComments(
-  SupabaseClient supabase, {
-  String? subjectId,
-}) async {
-  final myId = supabase.auth.currentUser?.id;
-  if (myId == null) return false;
-
-  final table = subjectId == null ? 'checkins' : 'subject_checkins';
-  final idColumn = subjectId == null ? 'user_id' : 'subject_id';
-  final commentsTable = subjectId == null
-      ? 'checkin_comments'
-      : 'subject_checkin_comments';
-  final fkColumn = subjectId == null ? 'checkin_id' : 'subject_checkin_id';
-
-  final myCheckinRows = await supabase
-      .from(table)
-      .select('id')
-      .eq(idColumn, subjectId ?? myId);
-  final myCheckinIds = (myCheckinRows as List)
-      .map((r) => r['id'] as String)
-      .toList();
-  if (myCheckinIds.isEmpty) return false;
-
-  final prefs = await SharedPreferences.getInstance();
-  final lastSeenIso = prefs.getString(_lastSeenKey(subjectId));
-  final since = lastSeenIso != null
-      ? DateTime.parse(lastSeenIso)
-      : DateTime.fromMillisecondsSinceEpoch(0);
-
-  final commentRows = await supabase
-      .from(commentsTable)
-      .select('id')
-      .inFilter(fkColumn, myCheckinIds)
-      .neq('author_id', myId)
-      .gt('created_at', since.toUtc().toIso8601String())
-      .limit(1);
-
-  return (commentRows as List).isNotEmpty;
-}
-
-/// Той самий "новий коментар" запит, що [hasUnseenComments], але повертає
-/// **які саме** дні (checkin_id/subject_checkin_id) мають непереглянутий
-/// коментар — щоб підсвітити конкретні дні на календарі, а не лише
-/// показати загальну крапку "є щось нове" на іконці.
-Future<Set<String>> unseenCommentCheckinIds(
-  SupabaseClient supabase,
-  List<String> checkinIds, {
-  String? subjectId,
-}) async {
-  final myId = supabase.auth.currentUser?.id;
-  if (myId == null || checkinIds.isEmpty) return {};
-
-  final prefs = await SharedPreferences.getInstance();
-  final lastSeenIso = prefs.getString(_lastSeenKey(subjectId));
-  final since = lastSeenIso != null
-      ? DateTime.parse(lastSeenIso)
-      : DateTime.fromMillisecondsSinceEpoch(0);
-
-  final commentsTable = subjectId == null
-      ? 'checkin_comments'
-      : 'subject_checkin_comments';
-  final fkColumn = subjectId == null ? 'checkin_id' : 'subject_checkin_id';
-
-  final commentRows = await supabase
-      .from(commentsTable)
-      .select(fkColumn)
-      .inFilter(fkColumn, checkinIds)
-      .neq('author_id', myId)
-      .gt('created_at', since.toUtc().toIso8601String());
-
-  return (commentRows as List).map((r) => r[fkColumn] as String).toSet();
-}
-
-/// Позначає всі поточні коментарі щоденника (`subjectId == null` — власний)
-/// як переглянуті — викликати, коли юзер відкрив саме цю Історію.
-Future<void> markCommentsSeen({String? subjectId}) async {
-  final prefs = await SharedPreferences.getInstance();
-  await prefs.setString(
-    _lastSeenKey(subjectId),
-    DateTime.now().toUtc().toIso8601String(),
-  );
-}
 
 class CheckinComment {
   final String id;
@@ -165,6 +64,10 @@ class CommentsSection extends StatefulWidget {
   // subject_checkin_comments (сутності) — моделі й UI ідентичні, різниться
   // лише таблиця й назва FK-колонки, тож не дублюємо весь файл.
   final bool isSubject;
+  // Коли на цей тред переходять напряму (зі стрічки "Коментарі") — тред
+  // одразу розгорнутий, бо саме заради нього й прийшли, не треба зайвого
+  // тапу. За замовчуванням згорнуто (звичайний перегляд дня в списку).
+  final bool initiallyExpanded;
 
   const CommentsSection({
     super.key,
@@ -173,6 +76,7 @@ class CommentsSection extends StatefulWidget {
     required this.isOwner,
     this.showWhenEmpty = true,
     this.isSubject = false,
+    this.initiallyExpanded = false,
   });
 
   @override
@@ -193,7 +97,7 @@ class _CommentsSectionState extends State<CommentsSection> {
   // Згорнуто за замовчуванням — інакше тред роздуває кожен запис у списку
   // днів. Кількість все одно вантажимо одразу, щоб показати "Коментарі (3)"
   // ще до розгортання.
-  bool _expanded = false;
+  late bool _expanded = widget.initiallyExpanded;
   // Ціль поточної відповіді — null означає "пишу новий кореневий коментар".
   // Раніше поле вводу ще й ховалось окремим прапорцем _composing, поки не
   // тапнеш "Додати коментар"/"Відповісти" — це давало два джерела правди

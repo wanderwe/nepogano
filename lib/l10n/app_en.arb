@@ -188,6 +188,20 @@
   "couldNotEditComment": "Couldn't save the changes.",
   "couldNotDeleteComment": "Couldn't delete the comment.",
 
+  "commentActivityEmpty": "Nothing here yet",
+  "commentActivityNewComment": "New comment from {name}",
+  "@commentActivityNewComment": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+  "commentActivityReply": "Reply from {name}",
+  "@commentActivityReply": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+
   "allFriends": "All",
   "newFolder": "New circle",
   "folderNameHint": "e.g. Family",

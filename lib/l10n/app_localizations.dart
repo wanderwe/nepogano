@@ -926,6 +926,24 @@ abstract class AppLocalizations {
   /// **'Не вдалось видалити коментар.'**
   String get couldNotDeleteComment;
 
+  /// No description provided for @commentActivityEmpty.
+  ///
+  /// In uk, this message translates to:
+  /// **'Поки що нічого немає'**
+  String get commentActivityEmpty;
+
+  /// No description provided for @commentActivityNewComment.
+  ///
+  /// In uk, this message translates to:
+  /// **'Новий коментар від {name}'**
+  String commentActivityNewComment(String name);
+
+  /// No description provided for @commentActivityReply.
+  ///
+  /// In uk, this message translates to:
+  /// **'Відповідь від {name}'**
+  String commentActivityReply(String name);
+
   /// No description provided for @allFriends.
   ///
   /// In uk, this message translates to:

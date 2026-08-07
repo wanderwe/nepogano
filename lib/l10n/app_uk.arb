@@ -197,6 +197,20 @@
   "couldNotEditComment": "Не вдалось зберегти зміни.",
   "couldNotDeleteComment": "Не вдалось видалити коментар.",
 
+  "commentActivityEmpty": "Поки що нічого немає",
+  "commentActivityNewComment": "Новий коментар від {name}",
+  "@commentActivityNewComment": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+  "commentActivityReply": "Відповідь від {name}",
+  "@commentActivityReply": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+
   "allFriends": "Усі",
   "newFolder": "Нове коло",
   "folderNameHint": "Наприклад, Родина",

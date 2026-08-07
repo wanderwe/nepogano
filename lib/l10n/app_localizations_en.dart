@@ -459,6 +459,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get couldNotDeleteComment => 'Couldn\'t delete the comment.';
 
   @override
+  String get commentActivityEmpty => 'Nothing here yet';
+
+  @override
+  String commentActivityNewComment(String name) {
+    return 'New comment from $name';
+  }
+
+  @override
+  String commentActivityReply(String name) {
+    return 'Reply from $name';
+  }
+
+  @override
   String get allFriends => 'All';
 
   @override

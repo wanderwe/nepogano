@@ -458,6 +458,19 @@ class AppLocalizationsUk extends AppLocalizations {
   String get couldNotDeleteComment => 'Не вдалось видалити коментар.';
 
   @override
+  String get commentActivityEmpty => 'Поки що нічого немає';
+
+  @override
+  String commentActivityNewComment(String name) {
+    return 'Новий коментар від $name';
+  }
+
+  @override
+  String commentActivityReply(String name) {
+    return 'Відповідь від $name';
+  }
+
+  @override
   String get allFriends => 'Усі';
 
   @override
