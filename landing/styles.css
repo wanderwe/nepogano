@@ -51,6 +51,21 @@ h1, h2, .wordmark, .scale-word {
   font-weight: 700;
 }
 
+.lang-switch {
+  margin-left: auto;
+  color: var(--ink-muted);
+  font-size: 13px;
+  text-decoration: none;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  padding: 6px 12px;
+}
+
+.lang-switch:hover {
+  color: var(--ink);
+  border-color: rgba(255, 255, 255, 0.24);
+}
+
 .hero {
   padding: 72px 0 56px;
   text-align: center;
