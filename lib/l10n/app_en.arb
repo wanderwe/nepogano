@@ -66,6 +66,7 @@
   "checkEmailToConfirm": "Check your email: we sent a confirmation link",
   "somethingWentWrong": "Something went wrong. Try again.",
   "googleSignInFailed": "Couldn't sign in with Google.",
+  "appleSignInFailed": "Couldn't sign in with Apple.",
   "createAccount": "Create an account",
   "signInToAccount": "Sign in to your account",
   "emailHint": "Email",
@@ -75,6 +76,7 @@
   "alreadyHaveAccount": "Already have an account? Sign in",
   "noAccountYet": "No account yet? Sign up",
   "continueWithGoogle": "Continue with Google",
+  "signInWithApple": "Sign in with Apple",
 
   "couldNotLoadHistory": "Couldn't load history.",
   "couldNotLoadTodayEntry": "Couldn't check today's entry. Try again to avoid creating a duplicate.",

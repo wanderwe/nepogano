@@ -202,6 +202,9 @@ class AppLocalizationsUk extends AppLocalizations {
   String get googleSignInFailed => 'Не вдалось увійти через Google.';
 
   @override
+  String get appleSignInFailed => 'Не вдалось увійти через Apple.';
+
+  @override
   String get createAccount => 'Створи акаунт';
 
   @override
@@ -227,6 +230,9 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get continueWithGoogle => 'Продовжити з Google';
+
+  @override
+  String get signInWithApple => 'Увійти через Apple';
 
   @override
   String get couldNotLoadHistory => 'Не вдалось завантажити історію.';

@@ -203,6 +203,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get googleSignInFailed => 'Couldn\'t sign in with Google.';
 
   @override
+  String get appleSignInFailed => 'Couldn\'t sign in with Apple.';
+
+  @override
   String get createAccount => 'Create an account';
 
   @override
@@ -228,6 +231,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get continueWithGoogle => 'Continue with Google';
+
+  @override
+  String get signInWithApple => 'Sign in with Apple';
 
   @override
   String get couldNotLoadHistory => 'Couldn\'t load history.';

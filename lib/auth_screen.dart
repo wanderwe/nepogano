@@ -1,7 +1,11 @@
+import 'dart:convert';
 import 'dart:io' show Platform;
+import 'dart:math';
 
+import 'package:crypto/crypto.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'l10n/app_localizations.dart';
 import 'style.dart';
@@ -17,6 +21,24 @@ const _googleWebClientId =
 // Services, але на iOS google_sign_in вимагає його явно окремим полем.
 const _googleIosClientId =
     '850571671108-f4fmglpu700jslvk8kqtq7vmaphjjud3.apps.googleusercontent.com';
+
+// Apple вимагає nonce у Sign in with Apple, щоб id-токен не можна було
+// перевикористати в атаці типу replay — генеруємо сирий nonce тут, а Apple
+// отримує лише його SHA256-хеш, звіряючи потім, що сирий nonce, який
+// повернувся в токені, дає той самий хеш.
+String _generateNonce([int length = 32]) {
+  const charset =
+      '0123456789ABCDEFGHIJKLMNOPQRSTUVXYZabcdefghijklmnopqrstuvwxyz-._';
+  final random = Random.secure();
+  return List.generate(
+    length,
+    (_) => charset[random.nextInt(charset.length)],
+  ).join();
+}
+
+String _sha256Hex(String input) {
+  return sha256.convert(utf8.encode(input)).toString();
+}
 
 class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key});
@@ -113,6 +135,43 @@ class _AuthScreenState extends State<AuthScreen> {
       if (mounted) {
         setState(
           () => _errorMessage = AppLocalizations.of(context).googleSignInFailed,
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  Future<void> _signInWithApple() async {
+    setState(() {
+      _loading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final rawNonce = _generateNonce();
+      final credential = await SignInWithApple.getAppleIDCredential(
+        scopes: [
+          AppleIDAuthorizationScopes.email,
+          AppleIDAuthorizationScopes.fullName,
+        ],
+        nonce: _sha256Hex(rawNonce),
+      );
+
+      final idToken = credential.identityToken;
+      if (idToken == null) {
+        throw const AuthException('No ID Token found.');
+      }
+
+      await _supabase.auth.signInWithIdToken(
+        provider: OAuthProvider.apple,
+        idToken: idToken,
+        nonce: rawNonce,
+      );
+    } catch (e) {
+      if (mounted) {
+        setState(
+          () => _errorMessage = AppLocalizations.of(context).appleSignInFailed,
         );
       }
     } finally {
@@ -246,6 +305,19 @@ class _AuthScreenState extends State<AuthScreen> {
                     ),
                     child: Text(l10n.continueWithGoogle),
                   ),
+
+                  // Apple вимагає рівноцінну альтернативу для будь-якого
+                  // стороннього логіну (Guideline 4.8) — тому тільки на iOS,
+                  // на Android Google Sign-In лишається єдиним варіантом.
+                  if (Platform.isIOS) ...[
+                    const SizedBox(height: 12),
+                    SignInWithAppleButton(
+                      onPressed: _loading ? () {} : _signInWithApple,
+                      text: l10n.signInWithApple,
+                      height: 48,
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                  ],
                 ],
               ),
             ),
