@@ -458,6 +458,12 @@ abstract class AppLocalizations {
   /// **'Не вдалось увійти через Google.'**
   String get googleSignInFailed;
 
+  /// No description provided for @appleSignInFailed.
+  ///
+  /// In uk, this message translates to:
+  /// **'Не вдалось увійти через Apple.'**
+  String get appleSignInFailed;
+
   /// No description provided for @createAccount.
   ///
   /// In uk, this message translates to:
@@ -511,6 +517,12 @@ abstract class AppLocalizations {
   /// In uk, this message translates to:
   /// **'Продовжити з Google'**
   String get continueWithGoogle;
+
+  /// No description provided for @signInWithApple.
+  ///
+  /// In uk, this message translates to:
+  /// **'Увійти через Apple'**
+  String get signInWithApple;
 
   /// No description provided for @couldNotLoadHistory.
   ///

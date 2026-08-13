@@ -72,6 +72,7 @@
   "checkEmailToConfirm": "Перевір пошту: надіслали лист для підтвердження",
   "somethingWentWrong": "Щось пішло не так. Спробуй ще раз.",
   "googleSignInFailed": "Не вдалось увійти через Google.",
+  "appleSignInFailed": "Не вдалось увійти через Apple.",
   "createAccount": "Створи акаунт",
   "signInToAccount": "Увійди в акаунт",
   "emailHint": "Email",
@@ -81,6 +82,7 @@
   "alreadyHaveAccount": "Вже є акаунт? Увійти",
   "noAccountYet": "Немає акаунту? Зареєструватись",
   "continueWithGoogle": "Продовжити з Google",
+  "signInWithApple": "Увійти через Apple",
 
   "couldNotLoadHistory": "Не вдалось завантажити історію.",
   "couldNotLoadTodayEntry": "Не вдалось перевірити сьогоднішній запис. Спробуй ще раз, щоб не створити дублікат.",

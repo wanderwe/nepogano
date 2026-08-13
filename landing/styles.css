@@ -121,6 +121,7 @@ h1 {
   color: var(--ink);
   font-size: 15px;
   font-weight: 500;
+  text-decoration: none;
 }
 
 .download-btn.is-disabled {
