@@ -13,6 +13,7 @@ import 'history_screen.dart';
 import 'l10n/app_localizations.dart';
 import 'main.dart';
 import 'photo_storage.dart';
+import 'share_utils.dart';
 import 'social_share.dart';
 import 'style.dart';
 
@@ -77,8 +78,13 @@ class _DayCardScreenState extends State<DayCardScreen> {
     final shareText = _shareText;
     try {
       final path = await _renderCardToFile();
+      if (!mounted) return;
       await SharePlus.instance.share(
-        ShareParams(files: [XFile(path)], text: shareText),
+        ShareParams(
+          files: [XFile(path)],
+          text: shareText,
+          sharePositionOrigin: shareOriginFrom(context),
+        ),
       );
     } catch (e) {
       if (mounted) {
@@ -250,10 +256,22 @@ class _MultiShareSheetState extends State<_MultiShareSheet> {
   }
 
   Future<void> _shareOther() async {
-    await SharePlus.instance.share(
-      ShareParams(files: [XFile(widget.imagePath)], text: widget.shareText),
-    );
-    if (mounted) setState(() => _done.add('other'));
+    try {
+      await SharePlus.instance.share(
+        ShareParams(
+          files: [XFile(widget.imagePath)],
+          text: widget.shareText,
+          sharePositionOrigin: shareOriginFrom(context),
+        ),
+      );
+      if (mounted) setState(() => _done.add('other'));
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(AppLocalizations.of(context).shareFailed)),
+        );
+      }
+    }
   }
 
   void _showNotInstalled(String app) {

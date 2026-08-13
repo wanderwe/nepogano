@@ -11,6 +11,7 @@ import 'comments_section.dart';
 import 'l10n/app_localizations.dart';
 import 'main.dart';
 import 'photo_storage.dart';
+import 'share_utils.dart';
 import 'style.dart';
 import 'subject_detail_screen.dart';
 
@@ -799,7 +800,17 @@ class _FriendsScreenState extends State<FriendsScreen> {
       code,
       Uri.encodeComponent(myName),
     );
-    await SharePlus.instance.share(ShareParams(text: text));
+    try {
+      await SharePlus.instance.share(
+        ShareParams(text: text, sharePositionOrigin: shareOriginFrom(context)),
+      );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.somethingWentWrong)),
+        );
+      }
+    }
   }
 
   Future<void> _enterFriendCode() async {
