@@ -387,6 +387,9 @@ class AppLocalizationsUk extends AppLocalizations {
   String get couldNotSaveDisplayName => 'Не вдалось зберегти ім\'я.';
 
   @override
+  String get couldNotSaveAvatar => 'Не вдалось зберегти аватарку.';
+
+  @override
   String get notCheckedInToday => 'Давно не було новин';
 
   @override

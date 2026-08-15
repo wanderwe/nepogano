@@ -150,6 +150,7 @@
   "displayNameHint": "Як тебе підписати для друзів",
   "setDisplayName": "Додати своє ім'я",
   "couldNotSaveDisplayName": "Не вдалось зберегти ім'я.",
+  "couldNotSaveAvatar": "Не вдалось зберегти аватарку.",
   "notCheckedInToday": "Давно не було новин",
   "guessedRight": "вгадав(ла)",
   "guessedWrong": "не вгадав(ла)",

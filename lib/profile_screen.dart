@@ -1,11 +1,14 @@
-import 'dart:io' show Platform;
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'avatar_storage.dart';
 import 'l10n/app_localizations.dart';
+import 'photo_reposition_screen.dart';
 import 'style.dart';
 
 /// Особистий профіль — ім'я, яке бачать друзі, і код для додавання в друзі.
@@ -24,6 +27,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
   bool _loading = true;
   String? _displayName;
   String? _friendCode;
+  String? _avatarPath;
+  Uint8List? _avatarBytes;
+  double _avatarAlignY = 0;
+  double _avatarScale = 1;
+  bool _uploadingAvatar = false;
 
   @override
   void initState() {
@@ -34,15 +42,155 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Future<void> _load() async {
     final row = await _supabase
         .from('profiles')
-        .select('display_name, friend_code')
+        .select(
+          'display_name, friend_code, avatar_path, avatar_align_y, avatar_scale',
+        )
         .eq('user_id', _supabase.auth.currentUser!.id)
         .maybeSingle();
     if (!mounted) return;
     setState(() {
       _displayName = row?['display_name'] as String?;
       _friendCode = row?['friend_code'] as String?;
+      _avatarPath = row?['avatar_path'] as String?;
+      _avatarAlignY = (row?['avatar_align_y'] as num?)?.toDouble() ?? 0;
+      _avatarScale = (row?['avatar_scale'] as num?)?.toDouble() ?? 1;
       _loading = false;
     });
+    final path = _avatarPath;
+    if (path != null) {
+      final bytes = await downloadAvatar(path);
+      if (mounted) setState(() => _avatarBytes = bytes);
+    }
+  }
+
+  Future<void> _changeAvatar() async {
+    final l10n = AppLocalizations.of(context);
+    final action = await showModalBottomSheet<_AvatarAction>(
+      context: context,
+      backgroundColor: AppColors.surfaceRaised,
+      builder: (context) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(8, 12, 8, 8),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _MenuRow(
+                icon: PhosphorIconsLight.camera,
+                label: l10n.takePhoto,
+                onTap: () => Navigator.of(context).pop(_AvatarAction.camera),
+              ),
+              _MenuRow(
+                icon: PhosphorIconsLight.images,
+                label: l10n.chooseFromGallery,
+                onTap: () => Navigator.of(context).pop(_AvatarAction.gallery),
+              ),
+              if (_avatarBytes != null)
+                _MenuRow(
+                  icon: PhosphorIconsLight.arrowsOutCardinal,
+                  label: l10n.repositionPhoto,
+                  onTap: () =>
+                      Navigator.of(context).pop(_AvatarAction.reposition),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+    if (action == null || !mounted) return;
+
+    if (action == _AvatarAction.reposition) {
+      await _repositionExistingAvatar();
+      return;
+    }
+
+    final picked = await ImagePicker().pickImage(
+      source: action == _AvatarAction.camera
+          ? ImageSource.camera
+          : ImageSource.gallery,
+      maxWidth: 800,
+      imageQuality: 85,
+    );
+    if (picked == null || !mounted) return;
+
+    final file = File(picked.path);
+    final result = await Navigator.of(context).push<(double, double)>(
+      MaterialPageRoute(
+        builder: (_) => PhotoRepositionScreen(image: FileImage(file)),
+      ),
+    );
+    if (!mounted) return;
+    final alignY = result?.$1 ?? 0;
+    final scale = result?.$2 ?? 1;
+
+    setState(() => _uploadingAvatar = true);
+    try {
+      final path = await uploadAvatar(file);
+      await _supabase
+          .from('profiles')
+          .update({
+            'avatar_path': path,
+            'avatar_align_y': alignY,
+            'avatar_scale': scale,
+          })
+          .eq('user_id', _supabase.auth.currentUser!.id);
+      final bytes = await file.readAsBytes();
+      if (mounted) {
+        setState(() {
+          _avatarPath = path;
+          _avatarBytes = bytes;
+          _avatarAlignY = alignY;
+          _avatarScale = scale;
+          _uploadingAvatar = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _uploadingAvatar = false);
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(l10n.couldNotSaveAvatar)));
+      }
+    }
+  }
+
+  /// Той самий файл, лише нове кадрування — на відміну від вибору нового
+  /// фото, тут не треба нічого перезавантажувати в Storage.
+  Future<void> _repositionExistingAvatar() async {
+    final bytes = _avatarBytes;
+    if (bytes == null) return;
+    final result = await Navigator.of(context).push<(double, double)>(
+      MaterialPageRoute(
+        builder: (_) => PhotoRepositionScreen(
+          image: MemoryImage(bytes),
+          initialAlignY: _avatarAlignY,
+          initialScale: _avatarScale,
+        ),
+      ),
+    );
+    if (result == null || !mounted) return;
+
+    final alignY = result.$1;
+    final scale = result.$2;
+    try {
+      await _supabase
+          .from('profiles')
+          .update({'avatar_align_y': alignY, 'avatar_scale': scale})
+          .eq('user_id', _supabase.auth.currentUser!.id);
+      if (mounted) {
+        setState(() {
+          _avatarAlignY = alignY;
+          _avatarScale = scale;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(AppLocalizations.of(context).couldNotSaveAvatar),
+          ),
+        );
+      }
+    }
   }
 
   Future<void> _editDisplayName() async {
@@ -132,6 +280,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   child: Center(child: CircularProgressIndicator()),
                 )
               else ...[
+                Center(child: _buildAvatarPicker()),
+                const SizedBox(height: 24),
                 InkWell(
                   borderRadius: BorderRadius.circular(14),
                   onTap: _editDisplayName,
@@ -234,6 +384,97 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ],
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAvatarPicker() {
+    final initial =
+        (_displayName?.trim().isNotEmpty == true
+                ? _displayName!.trim()
+                : (_supabase.auth.currentUser?.email ?? '?'))[0]
+            .toUpperCase();
+
+    return GestureDetector(
+      onTap: _uploadingAvatar ? null : _changeAvatar,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          ClipOval(
+            child: Container(
+              width: 88,
+              height: 88,
+              color: AppColors.surface,
+              child: _avatarBytes != null
+                  ? ScaledPhoto(
+                      scale: _avatarScale,
+                      child: Image.memory(
+                        _avatarBytes!,
+                        fit: BoxFit.cover,
+                        alignment: Alignment(0, _avatarAlignY),
+                      ),
+                    )
+                  : Center(child: Text(initial, style: appSerif(fontSize: 32))),
+            ),
+          ),
+          if (_uploadingAvatar)
+            const SizedBox(
+              width: 88,
+              height: 88,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
+          Positioned(
+            bottom: 0,
+            right: 0,
+            child: Container(
+              padding: const EdgeInsets.all(6),
+              decoration: const BoxDecoration(
+                color: AppColors.accent,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                PhosphorIconsLight.camera,
+                size: 14,
+                color: AppColors.accentInk,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+enum _AvatarAction { camera, gallery, reposition }
+
+class _MenuRow extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  const _MenuRow({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(14),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+        child: Row(
+          children: [
+            Icon(icon, size: 20, color: AppColors.ink),
+            const SizedBox(width: 16),
+            Text(
+              label,
+              style: const TextStyle(fontSize: 16, color: AppColors.ink),
+            ),
+          ],
         ),
       ),
     );

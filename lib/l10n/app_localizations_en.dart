@@ -388,6 +388,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get couldNotSaveDisplayName => 'Couldn\'t save your name.';
 
   @override
+  String get couldNotSaveAvatar => 'Couldn\'t save your avatar.';
+
+  @override
   String get notCheckedInToday => 'No news in a while';
 
   @override

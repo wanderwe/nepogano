@@ -7,6 +7,7 @@ import 'package:share_plus/share_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'avatar_storage.dart';
 import 'comments_section.dart';
 import 'l10n/app_localizations.dart';
 import 'main.dart';
@@ -55,6 +56,9 @@ class Friend {
   final String userId;
   final String displayEmail;
   final String? displayName;
+  final String? avatarPath;
+  final double avatarAlignY;
+  final double avatarScale;
   final MoodLevel? latestMood;
   final DateTime? latestDate;
   final bool hasUnguessed;
@@ -69,6 +73,9 @@ class Friend {
     required this.userId,
     required this.displayEmail,
     required this.displayName,
+    required this.avatarPath,
+    this.avatarAlignY = 0,
+    this.avatarScale = 1,
     required this.latestMood,
     required this.latestDate,
     required this.hasUnguessed,
@@ -356,6 +363,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
   String? _myFriendCode;
   String? _myDisplayName;
   List<Friend> _friends = [];
+  Map<String, Uint8List> _friendAvatars = {};
   List<Map<String, dynamic>> _pendingInvites = [];
   List<FriendFolder> _folders = [];
   Map<String, Set<String>> _folderMembership = {};
@@ -595,11 +603,27 @@ class _FriendsScreenState extends State<FriendsScreen> {
 
         final nameRows = await _supabase
             .from('profiles')
-            .select('user_id, display_name')
+            .select(
+              'user_id, display_name, avatar_path, avatar_align_y, avatar_scale',
+            )
             .inFilter('user_id', friendIds);
         final displayNameByUser = <String, String?>{
           for (final row in nameRows as List)
             row['user_id'] as String: row['display_name'] as String?,
+        };
+        final avatarPathByUser = <String, String?>{
+          for (final row in nameRows)
+            row['user_id'] as String: row['avatar_path'] as String?,
+        };
+        final avatarAlignYByUser = <String, double>{
+          for (final row in nameRows)
+            row['user_id'] as String:
+                (row['avatar_align_y'] as num?)?.toDouble() ?? 0,
+        };
+        final avatarScaleByUser = <String, double>{
+          for (final row in nameRows)
+            row['user_id'] as String:
+                (row['avatar_scale'] as num?)?.toDouble() ?? 1,
         };
 
         final guessedKeys = <String>{};
@@ -642,6 +666,9 @@ class _FriendsScreenState extends State<FriendsScreen> {
               userId: friendUserId,
               displayEmail: friendBasics[friendUserId] ?? '',
               displayName: displayNameByUser[friendUserId],
+              avatarPath: avatarPathByUser[friendUserId],
+              avatarAlignY: avatarAlignYByUser[friendUserId] ?? 0,
+              avatarScale: avatarScaleByUser[friendUserId] ?? 1,
               latestMood: latestMoodByUser[friendUserId],
               latestDate: latestDateByUser[friendUserId],
               hasUnguessed: hasUnguessed,
@@ -657,11 +684,16 @@ class _FriendsScreenState extends State<FriendsScreen> {
           return b.latestDate!.compareTo(a.latestDate!);
         });
 
+        final avatars = await downloadAvatars(
+          friends.map((f) => f.avatarPath).whereType<String>(),
+        );
+
         if (!mounted) return;
         setState(() {
           _myFriendCode = profileRow?['friend_code'] as String?;
           _myDisplayName = profileRow?['display_name'] as String?;
           _friends = friends;
+          _friendAvatars = avatars;
           _pendingInvites = (inviteRows as List).cast<Map<String, dynamic>>();
           _folders = folders;
           _folderMembership = membership;
@@ -1370,6 +1402,34 @@ class _FriendsScreenState extends State<FriendsScreen> {
     );
   }
 
+  Widget _buildFriendAvatar(Friend friend, String displayName) {
+    final bytes = friend.avatarPath == null
+        ? null
+        : _friendAvatars[friend.avatarPath];
+    return ClipOval(
+      child: Container(
+        width: 36,
+        height: 36,
+        color: AppColors.surfaceRaised,
+        child: bytes != null
+            ? ScaledPhoto(
+                scale: friend.avatarScale,
+                child: Image.memory(
+                  bytes,
+                  fit: BoxFit.cover,
+                  alignment: Alignment(0, friend.avatarAlignY),
+                ),
+              )
+            : Center(
+                child: Text(
+                  displayName.isNotEmpty ? displayName[0].toUpperCase() : '?',
+                  style: appSerif(fontSize: 14),
+                ),
+              ),
+      ),
+    );
+  }
+
   Widget _buildFriendRow(Friend friend) {
     final l10n = AppLocalizations.of(context);
     final displayName = friend.name;
@@ -1401,17 +1461,8 @@ class _FriendsScreenState extends State<FriendsScreen> {
         ),
         child: Row(
           children: [
-            if (friend.latestMood != null) ...[
-              Container(
-                width: 10,
-                height: 10,
-                decoration: BoxDecoration(
-                  color: friend.latestMood!.color,
-                  shape: BoxShape.circle,
-                ),
-              ),
-              const SizedBox(width: 10),
-            ],
+            _buildFriendAvatar(friend, displayName),
+            const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,

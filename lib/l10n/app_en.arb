@@ -141,6 +141,7 @@
   "displayNameHint": "How friends will see you",
   "setDisplayName": "Add your name",
   "couldNotSaveDisplayName": "Couldn't save your name.",
+  "couldNotSaveAvatar": "Couldn't save your avatar.",
   "notCheckedInToday": "No news in a while",
   "guessedRight": "Guessed",
   "guessedWrong": "Missed",

@@ -800,6 +800,12 @@ abstract class AppLocalizations {
   /// **'Не вдалось зберегти ім\'я.'**
   String get couldNotSaveDisplayName;
 
+  /// No description provided for @couldNotSaveAvatar.
+  ///
+  /// In uk, this message translates to:
+  /// **'Не вдалось зберегти аватарку.'**
+  String get couldNotSaveAvatar;
+
   /// No description provided for @notCheckedInToday.
   ///
   /// In uk, this message translates to:
