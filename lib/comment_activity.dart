@@ -1,12 +1,9 @@
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-const _seenIdsKeyPrefix = 'comment_activity_seen_ids';
-
-// SharedPreferences — сховище на ПРИСТРІЙ, не на акаунт: без user_id у
-// ключі другий акаунт, залогінений на тому самому пристрої (типово під час
-// тестування), підхопив би чужі "переглянуті" й миттєво вважав би свіжі
-// події вже баченими.
+// Сховище на АКАУНТ (таблиця comment_activity_seen), не на пристрій —
+// SharedPreferences тут навмисно НЕ використовується: локальне сховище не
+// синхронізується між пристроями, тож заходячи з іншого телефону юзер бачив
+// би всі раніше переглянуті коментарі знову як нові.
 //
 // Мітка "переглянуто" — множина конкретних id коментарів, а не єдина мітка
 // часу "останній перегляд списку": один спільний курсор не може коректно
@@ -14,13 +11,14 @@ const _seenIdsKeyPrefix = 'comment_activity_seen_ids';
 // непрочитаним" (часова мітка монотонна, id-шники — ні). Позначається не
 // при відкритті самого списку, а коли юзер справді відкрив конкретний день
 // ([SingleEntryScreen]) і побачив тред.
-String _seenIdsKey(String userId) => '${_seenIdsKeyPrefix}_$userId';
-
 Future<Set<String>> _loadSeenIds(SupabaseClient supabase) async {
   final myId = supabase.auth.currentUser?.id;
   if (myId == null) return {};
-  final prefs = await SharedPreferences.getInstance();
-  return (prefs.getStringList(_seenIdsKey(myId)) ?? const []).toSet();
+  final rows = await supabase
+      .from('comment_activity_seen')
+      .select('comment_id')
+      .eq('user_id', myId);
+  return (rows as List).map((r) => r['comment_id'] as String).toSet();
 }
 
 /// Скільки подій підвантажувати за раз у [loadCommentActivityPage] — той
@@ -356,9 +354,7 @@ Future<void> markCommentsSeen(
 ) async {
   final myId = supabase.auth.currentUser?.id;
   if (myId == null || commentIds.isEmpty) return;
-  final prefs = await SharedPreferences.getInstance();
-  final key = _seenIdsKey(myId);
-  final seen = (prefs.getStringList(key) ?? const []).toSet()
-    ..addAll(commentIds);
-  await prefs.setStringList(key, seen.toList());
+  await supabase.from('comment_activity_seen').upsert([
+    for (final id in commentIds) {'user_id': myId, 'comment_id': id},
+  ]);
 }
