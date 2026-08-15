@@ -806,9 +806,9 @@ class _FriendsScreenState extends State<FriendsScreen> {
       );
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(l10n.somethingWentWrong)),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(l10n.somethingWentWrong)));
       }
     }
   }
@@ -1622,7 +1622,6 @@ class _PersonDetailScreenState extends State<PersonDetailScreen> {
 
   Future<void> _load({bool isLoadMore = false}) async {
     if (!isLoadMore) setState(() => _loading = true);
-    final previousCount = _entries.length;
 
     final myId = _supabase.auth.currentUser!.id;
     final since = DateTime.now().subtract(Duration(days: _windowDays));
@@ -1631,6 +1630,18 @@ class _PersonDetailScreenState extends State<PersonDetailScreen> {
       since.month,
       since.day,
     ).toUtc().toIso8601String();
+
+    // Чи є хоч один чек-ін СТАРШИЙ за поточне вікно — пряма перевірка,
+    // а не порівняння кількості записів між викликами (те раніше
+    // рахувалось лише при "Показати ще", тож кнопка завжди висіла після
+    // першого відкриття екрана, навіть коли підвантажувати вже нічого).
+    final olderRows = await _supabase
+        .from('checkins')
+        .select('id')
+        .eq('user_id', widget.userId)
+        .lt('created_at', sinceUtc)
+        .limit(1);
+    final hasMore = (olderRows as List).isNotEmpty;
 
     final checkinRows = await _supabase
         .from('checkins')
@@ -1692,10 +1703,7 @@ class _PersonDetailScreenState extends State<PersonDetailScreen> {
         ..addAll(guesses);
       _loading = false;
       _loadingMore = false;
-      // Розширили вікно, а кількість записів не зросла — далі назад нічого
-      // немає, ховаємо "Показати ще" замість кнопки, що ніколи нічого не
-      // додає.
-      if (isLoadMore && entries.length == previousCount) _hasMore = false;
+      _hasMore = hasMore;
     });
   }
 

@@ -97,7 +97,6 @@ class _SubjectDetailScreenState extends State<SubjectDetailScreen> {
 
   Future<void> _load({bool isLoadMore = false}) async {
     if (!isLoadMore) setState(() => _loading = true);
-    final previousCount = _entries.length;
 
     final myId = _supabase.auth.currentUser!.id;
     final since = DateTime.now().subtract(Duration(days: _windowDays));
@@ -106,6 +105,18 @@ class _SubjectDetailScreenState extends State<SubjectDetailScreen> {
       since.month,
       since.day,
     ).toUtc().toIso8601String();
+
+    // Пряма перевірка "чи є щось старше за вікно" замість порівняння
+    // кількості записів між викликами — те раніше рахувалось лише при
+    // "Показати ще", тож кнопка завжди висіла після першого відкриття
+    // екрана, навіть коли підвантажувати вже нічого.
+    final olderRows = await _supabase
+        .from('subject_checkins')
+        .select('id')
+        .eq('subject_id', widget.subjectId)
+        .lt('created_at', sinceUtc)
+        .limit(1);
+    final hasMore = (olderRows as List).isNotEmpty;
 
     final checkinRows = await _supabase
         .from('subject_checkins')
@@ -165,7 +176,7 @@ class _SubjectDetailScreenState extends State<SubjectDetailScreen> {
         ..addAll(guesses);
       _loading = false;
       _loadingMore = false;
-      if (isLoadMore && entries.length == previousCount) _hasMore = false;
+      _hasMore = hasMore;
     });
   }
 
