@@ -174,9 +174,7 @@ class _CommentActivityScreenState extends State<CommentActivityScreen> {
                           ? const SizedBox(
                               width: 18,
                               height: 18,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                              ),
+                              child: CircularProgressIndicator(strokeWidth: 2),
                             )
                           : const Icon(PhosphorIconsLight.checks, size: 20),
                     ),
@@ -304,13 +302,21 @@ class _CommentActivityScreenState extends State<CommentActivityScreen> {
                     ),
                   ),
                   const SizedBox(height: 4),
-                  Text(
-                    item.body,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 13,
-                      color: AppColors.inkMuted,
+                  // Фіксована висота під 2 рядки незалежно від довжини
+                  // тексту — інакше короткі коментарі (1 рядок) робили
+                  // рядок нижчим за довші (2 рядки), і список виглядав
+                  // нерівним. Повний текст — лише після переходу на день.
+                  SizedBox(
+                    height: 34,
+                    child: Text(
+                      item.body,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: AppColors.inkMuted,
+                        height: 1.3,
+                      ),
                     ),
                   ),
                 ],
