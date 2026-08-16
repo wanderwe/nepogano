@@ -130,10 +130,18 @@ class _TimeCapsulesScreenState extends State<TimeCapsulesScreen> {
     setState(() => _loading = true);
     try {
       final myId = _supabase.auth.currentUser!.id;
+      // "Видалено для мене" фільтрується тут, не в RLS SELECT-політиці —
+      // якщо RLS сама звіряє author_deleted_at/recipient_deleted_at, Postgres
+      // починає відхиляти сам UPDATE, що ставить цю позначку (WITH CHECK
+      // нового рядка перестає проходити ту саму SELECT-політику).
       final rows = await _supabase
           .from('future_letters')
           .select(
             'id, author_id, recipient_id, unlock_at, opened_at, recipient_seen_at, future_letter_bodies(body)',
+          )
+          .or(
+            'and(author_id.eq.$myId,author_deleted_at.is.null),'
+            'and(recipient_id.eq.$myId,recipient_deleted_at.is.null)',
           )
           .order('created_at', ascending: false);
 
