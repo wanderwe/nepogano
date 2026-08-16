@@ -470,6 +470,9 @@ class AppLocalizationsUk extends AppLocalizations {
   String get commentActivityEmpty => 'Поки що нічого немає';
 
   @override
+  String get commentActivityMarkAllRead => 'Позначити все переглянутим';
+
+  @override
   String commentActivityNewComment(String name) {
     return 'Новий коментар від $name';
   }

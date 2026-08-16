@@ -48,11 +48,29 @@ class _CommentActivityScreenState extends State<CommentActivityScreen> {
   // зникла без повторного запиту), і незалежно перечитується при
   // наступному відкритті цього екрана.
   Set<String> _seenIds = {};
+  bool _markingAllRead = false;
+
+  bool get _hasUnseen =>
+      _items.any((item) => !_seenIds.contains(item.commentId));
 
   @override
   void initState() {
     super.initState();
     _load();
+  }
+
+  Future<void> _markAllRead() async {
+    setState(() => _markingAllRead = true);
+    try {
+      await markAllCommentsSeen(_supabase);
+      if (!mounted) return;
+      setState(() {
+        _seenIds = {..._seenIds, ..._items.map((i) => i.commentId)};
+        _markingAllRead = false;
+      });
+    } catch (e) {
+      if (mounted) setState(() => _markingAllRead = false);
+    }
   }
 
   Future<void> _load() async {
@@ -123,6 +141,21 @@ class _CommentActivityScreenState extends State<CommentActivityScreen> {
                   ),
                   const SizedBox(width: 4),
                   Text(l10n.commentsLabel, style: appScreenTitle()),
+                  const Spacer(),
+                  if (!_loading && _hasUnseen)
+                    IconButton(
+                      onPressed: _markingAllRead ? null : _markAllRead,
+                      tooltip: l10n.commentActivityMarkAllRead,
+                      icon: _markingAllRead
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                              ),
+                            )
+                          : const Icon(PhosphorIconsLight.checks, size: 20),
+                    ),
                 ],
               ),
               const SizedBox(height: 16),

@@ -201,6 +201,7 @@
   "couldNotDeleteComment": "Не вдалось видалити коментар.",
 
   "commentActivityEmpty": "Поки що нічого немає",
+  "commentActivityMarkAllRead": "Позначити все переглянутим",
   "commentActivityNewComment": "Новий коментар від {name}",
   "@commentActivityNewComment": {
     "placeholders": {

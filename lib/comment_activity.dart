@@ -358,3 +358,19 @@ Future<void> markCommentsSeen(
     for (final id in commentIds) {'user_id': myId, 'comment_id': id},
   ]);
 }
+
+/// Позначає переглянутою ВСЮ стрічку одразу (кнопка "Позначити все
+/// переглянутим") — не лише завантажену сторінку, а справді все, що коли-
+/// небудь адресовано юзеру, тому [rowLimit] тут навмисно не заданий, на
+/// відміну від [hasUnseenCommentActivity]. Аварійний вихід для юзера, якщо
+/// крапка "нове" з якоїсь причини не зникає при звичайному перегляді дня.
+Future<void> markAllCommentsSeen(SupabaseClient supabase) async {
+  final myId = supabase.auth.currentUser?.id;
+  if (myId == null) return;
+  final result = await _fetchRaw(
+    supabase,
+    myId: myId,
+    since: DateTime.fromMillisecondsSinceEpoch(0),
+  );
+  await markCommentsSeen(supabase, result.raw.map((r) => r.commentId));
+}

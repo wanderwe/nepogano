@@ -192,6 +192,7 @@
   "couldNotDeleteComment": "Couldn't delete the comment.",
 
   "commentActivityEmpty": "Nothing here yet",
+  "commentActivityMarkAllRead": "Mark all as read",
   "commentActivityNewComment": "New comment from {name}",
   "@commentActivityNewComment": {
     "placeholders": {

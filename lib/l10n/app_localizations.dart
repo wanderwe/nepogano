@@ -950,6 +950,12 @@ abstract class AppLocalizations {
   /// **'Поки що нічого немає'**
   String get commentActivityEmpty;
 
+  /// No description provided for @commentActivityMarkAllRead.
+  ///
+  /// In uk, this message translates to:
+  /// **'Позначити все переглянутим'**
+  String get commentActivityMarkAllRead;
+
   /// No description provided for @commentActivityNewComment.
   ///
   /// In uk, this message translates to:

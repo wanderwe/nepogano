@@ -471,6 +471,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get commentActivityEmpty => 'Nothing here yet';
 
   @override
+  String get commentActivityMarkAllRead => 'Mark all as read';
+
+  @override
   String commentActivityNewComment(String name) {
     return 'New comment from $name';
   }

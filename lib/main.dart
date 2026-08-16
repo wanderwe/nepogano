@@ -2420,6 +2420,7 @@ class _CheckInScreenState extends State<CheckInScreen> {
                             children: [
                               Text(
                                 l10n.howAreThingsToday,
+                                textAlign: TextAlign.center,
                                 style: appSerif(fontSize: 28),
                               ),
                               if (_todayEntrySavedAt != null) ...[
@@ -2438,6 +2439,7 @@ class _CheckInScreenState extends State<CheckInScreen> {
                                     if (_authorName != null)
                                       l10n.authorLabel(_authorName!),
                                   ].join(' · '),
+                                  textAlign: TextAlign.center,
                                   style: const TextStyle(
                                     fontSize: 13,
                                     color: AppColors.inkMuted,
