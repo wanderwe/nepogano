@@ -192,6 +192,11 @@
   "couldNotDeleteComment": "Couldn't delete the comment.",
 
   "commentActivityEmpty": "Nothing here yet",
+  "commentActivityMarkAllRead": "Mark all as read",
+  "commentActivityMarkedAllRead": "All comments marked as read",
+  "commentActivityMarkAllReadConfirmTitle": "Mark all as read?",
+  "commentActivityMarkAllReadConfirmBody": "All unread comments will be marked as read, this can't be undone.",
+  "commentActivityMarkAllReadConfirmYes": "Yes, mark them",
   "commentActivityNewComment": "New comment from {name}",
   "@commentActivityNewComment": {
     "placeholders": {
@@ -325,5 +330,53 @@
   "today": "today",
   "yesterday": "yesterday",
 
-  "thisMonth": "This month"
+  "thisMonth": "This month",
+
+  "timeCapsulesMenuLabel": "Time capsules",
+  "timeCapsulesRecipientSelf": "Myself",
+  "timeCapsulesEmptyTitle": "A letter that opens later",
+  "timeCapsulesEmptySubtitle": "Choose when: a month, half a year, or a year from now. Until then it's sealed, no peeking.",
+  "timeCapsulesWriteFirst": "Write your first letter",
+  "timeCapsulesWriteNew": "Write a new letter",
+  "timeCapsulesComposeHint": "Write your letter...",
+  "timeCapsulesDelayMonth": "In a month",
+  "timeCapsulesDelayHalfYear": "In half a year",
+  "timeCapsulesDelayYear": "In a year",
+  "timeCapsulesSeal": "Seal it",
+  "timeCapsuleToSelfLabel": "Letter to yourself",
+  "timeCapsuleToFriendLabel": "Letter for {name}",
+  "@timeCapsuleToFriendLabel": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+  "timeCapsuleFromFriendLabel": "Letter from {name}",
+  "@timeCapsuleFromFriendLabel": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+  "timeCapsulesRecipientLabel": "To",
+  "timeCapsulesLockedUntil": "unlocks {date}",
+  "@timeCapsulesLockedUntil": {
+    "placeholders": {
+      "date": { "type": "String" }
+    }
+  },
+  "timeCapsulesOpenedOn": "opened {date}",
+  "@timeCapsulesOpenedOn": {
+    "placeholders": {
+      "date": { "type": "String" }
+    }
+  },
+  "timeCapsulesStillLocked": "Still sealed, opens {date}",
+  "@timeCapsulesStillLocked": {
+    "placeholders": {
+      "date": { "type": "String" }
+    }
+  },
+  "timeCapsulesDeleteConfirmTitle": "Delete letter?",
+  "timeCapsulesDeleteConfirmBody": "The letter will be deleted for good.",
+  "timeCapsulesSealedConfirmation": "Letter sealed",
+  "timeCapsulesBannerReady": "You have a letter that's unlocked"
 }

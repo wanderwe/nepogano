@@ -48,11 +48,53 @@ class _CommentActivityScreenState extends State<CommentActivityScreen> {
   // зникла без повторного запиту), і незалежно перечитується при
   // наступному відкритті цього екрана.
   Set<String> _seenIds = {};
+  bool _markingAllRead = false;
+
+  bool get _hasUnseen =>
+      _items.any((item) => !_seenIds.contains(item.commentId));
 
   @override
   void initState() {
     super.initState();
     _load();
+  }
+
+  Future<void> _markAllRead() async {
+    final l10n = AppLocalizations.of(context);
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AppDialog(
+        title: l10n.commentActivityMarkAllReadConfirmTitle,
+        content: Text(
+          l10n.commentActivityMarkAllReadConfirmBody,
+          style: const TextStyle(color: AppColors.inkMuted),
+        ),
+        primaryLabel: l10n.no,
+        onPrimary: () => Navigator.of(context).pop(false),
+        secondaryLabel: l10n.commentActivityMarkAllReadConfirmYes,
+        onSecondary: () => Navigator.of(context).pop(true),
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
+    setState(() => _markingAllRead = true);
+    try {
+      await markAllCommentsSeen(_supabase);
+      if (!mounted) return;
+      setState(() {
+        _seenIds = {..._seenIds, ..._items.map((i) => i.commentId)};
+        _markingAllRead = false;
+      });
+      scaffoldMessengerKey.currentState?.showSnackBar(
+        SnackBar(content: Text(l10n.commentActivityMarkedAllRead)),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _markingAllRead = false);
+      scaffoldMessengerKey.currentState?.showSnackBar(
+        SnackBar(content: Text(l10n.somethingWentWrong)),
+      );
+    }
   }
 
   Future<void> _load() async {
@@ -123,6 +165,21 @@ class _CommentActivityScreenState extends State<CommentActivityScreen> {
                   ),
                   const SizedBox(width: 4),
                   Text(l10n.commentsLabel, style: appScreenTitle()),
+                  const Spacer(),
+                  if (!_loading && _hasUnseen)
+                    IconButton(
+                      onPressed: _markingAllRead ? null : _markAllRead,
+                      tooltip: l10n.commentActivityMarkAllRead,
+                      icon: _markingAllRead
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                              ),
+                            )
+                          : const Icon(PhosphorIconsLight.checks, size: 20),
+                    ),
                 ],
               ),
               const SizedBox(height: 16),

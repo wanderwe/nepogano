@@ -28,6 +28,7 @@ import 'photo_reposition_screen.dart';
 import 'photo_storage.dart';
 import 'profile_screen.dart';
 import 'style.dart';
+import 'time_capsules_screen.dart';
 
 // TODO: встав сюди свій Project URL і anon key з Supabase (Settings → API)
 const supabaseUrl = 'https://wxxvqscmalcuurhvzufl.supabase.co';
@@ -643,7 +644,8 @@ class CheckInScreen extends StatefulWidget {
   State<CheckInScreen> createState() => _CheckInScreenState();
 }
 
-class _CheckInScreenState extends State<CheckInScreen> {
+class _CheckInScreenState extends State<CheckInScreen>
+    with WidgetsBindingObserver {
   MoodLevel? _selected;
   final TextEditingController _noteController = TextEditingController();
   bool _saving = false;
@@ -659,6 +661,13 @@ class _CheckInScreenState extends State<CheckInScreen> {
   // "Коментарі" вже показує ці самі події, дублювати сигнал нема сенсу.
   bool _hasCommentActivity = false;
   PendingNudges? _pendingNudges;
+  // На відміну від _pendingNudges це не "востаннє бачене", а справжній
+  // стан (unlock_at минув, opened_at ще null) — тому немає окремого
+  // "позначити побаченим назавжди": закриття банера ховає його лише на
+  // цю сесію, він з'явиться знову при наступному відкритті, поки юзер
+  // реально не відкриє лист.
+  int _pendingUnlockedLetters = 0;
+  bool _lettersBannerDismissed = false;
   late DateTime _visibleWeekStart;
 
   // Фото: або вже збережений шлях (з попереднього завантаження цього дня),
@@ -713,12 +722,14 @@ class _CheckInScreenState extends State<CheckInScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _visibleWeekStart = _mondayOf(DateTime.now());
     _loadTodayEntry();
     _loadWeek();
     _checkAllActivityOnLoad();
     _loadSubjects();
     _loadPendingNudges();
+    _loadPendingUnlockedLetters();
   }
 
   Future<void> _loadPendingNudges() async {
@@ -729,6 +740,16 @@ class _CheckInScreenState extends State<CheckInScreen> {
   Future<void> _dismissNudgeBanner() async {
     setState(() => _pendingNudges = null);
     await markNudgesSeen();
+  }
+
+  Future<void> _loadPendingUnlockedLetters() async {
+    final now = DateTime.now().toUtc().toIso8601String();
+    final rows = await _supabase
+        .from('future_letters')
+        .select('id')
+        .lte('unlock_at', now)
+        .isFilter('opened_at', null);
+    if (mounted) setState(() => _pendingUnlockedLetters = (rows as List).length);
   }
 
   Future<void> _loadSubjects() async {
@@ -1385,8 +1406,19 @@ class _CheckInScreenState extends State<CheckInScreen> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _noteController.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // Юзер міг отримати новий коментар чи вгадування друга, поки застосунок
+    // був у фоні — обидва індикатори інакше оновлюються лише при холодному
+    // старті чи поверненні саме з екрана Друзів/Коментарів, не живо.
+    if (state == AppLifecycleState.resumed) {
+      _checkAllActivityOnLoad();
+    }
   }
 
   Widget _buildTodayLoadError(AppLocalizations l10n) {
@@ -2024,6 +2056,12 @@ class _CheckInScreenState extends State<CheckInScreen> {
             context,
           ).push(MaterialPageRoute(builder: (_) => const ProfileScreen()));
         },
+        onTimeCapsules: () {
+          Navigator.of(sheetContext).pop();
+          Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => const TimeCapsulesScreen()),
+          );
+        },
         onLanguage: () {
           Navigator.of(sheetContext).pop();
           setAppLocale(
@@ -2208,13 +2246,34 @@ class _CheckInScreenState extends State<CheckInScreen> {
                             ),
                         ],
                       ),
-                      IconButton(
-                        onPressed: _openMoreMenu,
-                        icon: const Icon(
-                          PhosphorIconsLight.dotsThreeVertical,
-                          size: 20,
-                        ),
-                        tooltip: l10n.moreTooltip,
+                      Stack(
+                        clipBehavior: Clip.none,
+                        children: [
+                          IconButton(
+                            onPressed: _openMoreMenu,
+                            icon: const Icon(
+                              PhosphorIconsLight.dotsThreeVertical,
+                              size: 20,
+                            ),
+                            tooltip: l10n.moreTooltip,
+                          ),
+                          // Дублює банер вище (там же "Капсули часу") —
+                          // навіть якщо банер закрили на сесію, ця крапка
+                          // лишається, поки лист реально не відкриють, і
+                          // вказує прямо на пункт меню, де його шукати.
+                          if (_pendingUnlockedLetters > 0)
+                            const Positioned(
+                              top: 8,
+                              right: 8,
+                              child: DecoratedBox(
+                                decoration: BoxDecoration(
+                                  color: AppColors.notification,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: SizedBox(width: 8, height: 8),
+                              ),
+                            ),
+                        ],
                       ),
                     ],
                   ),
@@ -2266,6 +2325,59 @@ class _CheckInScreenState extends State<CheckInScreen> {
                         ),
                       ],
                     ),
+                  ),
+                ),
+              ],
+              if (_pendingUnlockedLetters > 0 && !_lettersBannerDismissed) ...[
+                const SizedBox(height: 12),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 12,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.accent.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        PhosphorIconsLight.envelopeSimpleOpen,
+                        size: 16,
+                        color: AppColors.accent,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: GestureDetector(
+                          behavior: HitTestBehavior.opaque,
+                          onTap: () {
+                            setState(() => _lettersBannerDismissed = true);
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => const TimeCapsulesScreen(),
+                              ),
+                            );
+                          },
+                          child: Text(
+                            l10n.timeCapsulesBannerReady,
+                            style: const TextStyle(
+                              fontSize: 13,
+                              color: AppColors.accent,
+                            ),
+                          ),
+                        ),
+                      ),
+                      GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        onTap: () => setState(() => _lettersBannerDismissed = true),
+                        child: const Icon(
+                          PhosphorIconsLight.x,
+                          size: 14,
+                          color: AppColors.accent,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
@@ -2321,6 +2433,7 @@ class _CheckInScreenState extends State<CheckInScreen> {
                             children: [
                               Text(
                                 l10n.howAreThingsToday,
+                                textAlign: TextAlign.center,
                                 style: appSerif(fontSize: 28),
                               ),
                               if (_todayEntrySavedAt != null) ...[
@@ -2339,6 +2452,7 @@ class _CheckInScreenState extends State<CheckInScreen> {
                                     if (_authorName != null)
                                       l10n.authorLabel(_authorName!),
                                   ].join(' · '),
+                                  textAlign: TextAlign.center,
                                   style: const TextStyle(
                                     fontSize: 13,
                                     color: AppColors.inkMuted,
@@ -2454,12 +2568,14 @@ class _CheckInScreenState extends State<CheckInScreen> {
 
 class _MoreMenuSheet extends StatelessWidget {
   final VoidCallback onProfile;
+  final VoidCallback onTimeCapsules;
   final VoidCallback onLanguage;
   final VoidCallback onSignOut;
   final VoidCallback onDeleteAccount;
 
   const _MoreMenuSheet({
     required this.onProfile,
+    required this.onTimeCapsules,
     required this.onLanguage,
     required this.onSignOut,
     required this.onDeleteAccount,
@@ -2478,6 +2594,11 @@ class _MoreMenuSheet extends StatelessWidget {
               icon: PhosphorIconsLight.userCircle,
               label: l10n.profile,
               onTap: onProfile,
+            ),
+            _MenuRow(
+              icon: PhosphorIconsLight.envelopeSimple,
+              label: l10n.timeCapsulesMenuLabel,
+              onTap: onTimeCapsules,
             ),
             _MenuRow(
               icon: PhosphorIconsLight.globe,

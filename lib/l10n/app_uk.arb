@@ -201,6 +201,11 @@
   "couldNotDeleteComment": "Не вдалось видалити коментар.",
 
   "commentActivityEmpty": "Поки що нічого немає",
+  "commentActivityMarkAllRead": "Позначити всі переглянутими",
+  "commentActivityMarkedAllRead": "Усі коментарі позначено переглянутими",
+  "commentActivityMarkAllReadConfirmTitle": "Позначити всі переглянутими?",
+  "commentActivityMarkAllReadConfirmBody": "Усі непрочитані коментарі стануть позначеними переглянутими, це не можна скасувати.",
+  "commentActivityMarkAllReadConfirmYes": "Так, позначити",
   "commentActivityNewComment": "Новий коментар від {name}",
   "@commentActivityNewComment": {
     "placeholders": {
@@ -334,5 +339,53 @@
   "today": "сьогодні",
   "yesterday": "вчора",
 
-  "thisMonth": "Цей місяць"
+  "thisMonth": "Цей місяць",
+
+  "timeCapsulesMenuLabel": "Капсули часу",
+  "timeCapsulesRecipientSelf": "Собі",
+  "timeCapsulesEmptyTitle": "Лист, який відкриється пізніше",
+  "timeCapsulesEmptySubtitle": "Обери коли: за місяць, півроку чи рік. До того часу він запечатаний, підглянути не вийде.",
+  "timeCapsulesWriteFirst": "Написати перший лист",
+  "timeCapsulesWriteNew": "Написати новий лист",
+  "timeCapsulesComposeHint": "Напиши свій лист...",
+  "timeCapsulesDelayMonth": "За місяць",
+  "timeCapsulesDelayHalfYear": "За півроку",
+  "timeCapsulesDelayYear": "За рік",
+  "timeCapsulesSeal": "Запечатати",
+  "timeCapsuleToSelfLabel": "Лист собі",
+  "timeCapsuleToFriendLabel": "Лист для {name}",
+  "@timeCapsuleToFriendLabel": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+  "timeCapsuleFromFriendLabel": "Лист від {name}",
+  "@timeCapsuleFromFriendLabel": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+  "timeCapsulesRecipientLabel": "Кому",
+  "timeCapsulesLockedUntil": "розкриється {date}",
+  "@timeCapsulesLockedUntil": {
+    "placeholders": {
+      "date": { "type": "String" }
+    }
+  },
+  "timeCapsulesOpenedOn": "відкрито {date}",
+  "@timeCapsulesOpenedOn": {
+    "placeholders": {
+      "date": { "type": "String" }
+    }
+  },
+  "timeCapsulesStillLocked": "Ще запечатано, відкриється {date}",
+  "@timeCapsulesStillLocked": {
+    "placeholders": {
+      "date": { "type": "String" }
+    }
+  },
+  "timeCapsulesDeleteConfirmTitle": "Видалити лист?",
+  "timeCapsulesDeleteConfirmBody": "Лист буде видалено назавжди.",
+  "timeCapsulesSealedConfirmation": "Лист запечатано",
+  "timeCapsulesBannerReady": "У тебе є лист, що розкрився"
 }
