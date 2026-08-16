@@ -165,6 +165,11 @@ Future<_RawResult> _fetchRaw(
         .from('checkin_comments')
         .select('id, checkin_id, author_id, parent_id, body, created_at')
         .neq('author_id', myId)
+        // Видалений (soft-delete) коментар не чіпає body в БД — лише
+        // deleted_at, UI сам підставляє "Коментар видалено" замість тексту
+        // (comments_section.dart). Без цього фільтра стрічка показувала б
+        // реальний текст уже видаленого коментаря назавжди.
+        .isFilter('deleted_at', null)
         .gt('created_at', sinceIso);
     if (beforeIso != null) query = query.lt('created_at', beforeIso);
     var ordered = query.order('created_at', ascending: false);
@@ -202,6 +207,7 @@ Future<_RawResult> _fetchRaw(
           'id, subject_checkin_id, author_id, parent_id, body, created_at',
         )
         .neq('author_id', myId)
+        .isFilter('deleted_at', null)
         .gt('created_at', sinceIso);
     if (beforeIso != null) query = query.lt('created_at', beforeIso);
     var ordered = query.order('created_at', ascending: false);
