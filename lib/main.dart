@@ -2233,13 +2233,34 @@ class _CheckInScreenState extends State<CheckInScreen> {
                             ),
                         ],
                       ),
-                      IconButton(
-                        onPressed: _openMoreMenu,
-                        icon: const Icon(
-                          PhosphorIconsLight.dotsThreeVertical,
-                          size: 20,
-                        ),
-                        tooltip: l10n.moreTooltip,
+                      Stack(
+                        clipBehavior: Clip.none,
+                        children: [
+                          IconButton(
+                            onPressed: _openMoreMenu,
+                            icon: const Icon(
+                              PhosphorIconsLight.dotsThreeVertical,
+                              size: 20,
+                            ),
+                            tooltip: l10n.moreTooltip,
+                          ),
+                          // Дублює банер вище (там же "Капсули часу") —
+                          // навіть якщо банер закрили на сесію, ця крапка
+                          // лишається, поки лист реально не відкриють, і
+                          // вказує прямо на пункт меню, де його шукати.
+                          if (_pendingUnlockedLetters > 0)
+                            const Positioned(
+                              top: 8,
+                              right: 8,
+                              child: DecoratedBox(
+                                decoration: BoxDecoration(
+                                  color: AppColors.notification,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: SizedBox(width: 8, height: 8),
+                              ),
+                            ),
+                        ],
                       ),
                     ],
                   ),
