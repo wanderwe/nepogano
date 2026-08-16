@@ -743,11 +743,13 @@ class _CheckInScreenState extends State<CheckInScreen>
   }
 
   // Три різні приводи для індикатора на "Капсули часу": лист розкрився і
-  // чекає на прочитання (unlock_at минув, МІЙ *_opened_at ще null — окремо
-  // для автора й отримувача, бо перегляд автором власного надісланого
-  // листа не повинен позначати його прочитаним для отримувача), АБО друг
-  // щойно надіслав новий запечатаний лист, який я ще не бачив у списку
-  // (recipient_seen_at null) — це може статись задовго до unlock_at.
+  // чекає на прочитання (unlock_at минув, МІЙ *_opened_at ще null), АБО
+  // друг щойно надіслав новий запечатаний лист, який я ще не бачив у
+  // списку (recipient_seen_at null) — це може статись задовго до unlock_at.
+  // Гілка "автор не прочитав" звужена лише до листів СОБІ (recipient_id
+  // null) — інакше автор, що просто не перечитує вже НАДІСЛАНИЙ другові
+  // лист (той однаково більше не зміниться і не потребує його уваги),
+  // назавжди тримав би бейдж увімкненим на власних старих листах.
   Future<void> _loadPendingUnlockedLetters() async {
     final now = DateTime.now().toUtc().toIso8601String();
     final myId = _supabase.auth.currentUser?.id;
@@ -756,7 +758,7 @@ class _CheckInScreenState extends State<CheckInScreen>
         .from('future_letters')
         .select('id')
         .or(
-          'and(unlock_at.lte.$now,author_id.eq.$myId,author_opened_at.is.null),'
+          'and(unlock_at.lte.$now,author_id.eq.$myId,recipient_id.is.null,author_opened_at.is.null),'
           'and(unlock_at.lte.$now,recipient_id.eq.$myId,recipient_opened_at.is.null),'
           'and(recipient_id.eq.$myId,recipient_seen_at.is.null)',
         );

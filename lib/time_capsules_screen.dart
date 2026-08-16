@@ -378,9 +378,14 @@ class _TimeCapsulesScreenState extends State<TimeCapsulesScreen> {
                   myId: myId,
                   onTap: () => _openLetter(letter),
                   onDelete: canDelete ? () => _confirmDelete(letter) : null,
+                  // "Новий" для щойно розкритого — той самий виняток, що й
+                  // бейдж на меню: не для автора, що просто не перечитує
+                  // вже надісланий другові лист (не потребує його уваги).
                   showNewDot:
                       _newlyReceivedIds.contains(letter.id) ||
-                      myState == _LetterState.unlockedUnread,
+                      (myState == _LetterState.unlockedUnread &&
+                          (letter.recipientId == null ||
+                              letter.authorId != myId)),
                 );
               },
             ),
