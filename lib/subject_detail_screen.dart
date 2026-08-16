@@ -86,13 +86,19 @@ class _SubjectDetailScreenState extends State<SubjectDetailScreen> {
 
   String _dayKey(DateTime date) => '${date.year}-${date.month}-${date.day}';
 
+  /// Розширює вікно кроками по [kGuessWindowDays], поки не з'явиться хоч
+  /// один новий запис (або поки старших записів не лишиться взагалі) —
+  /// без цього кожен клік розширював вікно рівно на тиждень, і порожній
+  /// тиждень виглядав так, ніби "Показати ще" нічого не робить.
   Future<void> _loadMoreEntries() async {
     if (_loadingMore || !_hasMore) return;
-    setState(() {
-      _loadingMore = true;
+    setState(() => _loadingMore = true);
+    final previousCount = _entries.length;
+    do {
       _windowDays += kGuessWindowDays;
-    });
-    await _load(isLoadMore: true);
+      await _load(isLoadMore: true);
+    } while (_hasMore && _entries.length == previousCount);
+    if (mounted) setState(() => _loadingMore = false);
   }
 
   Future<void> _load({bool isLoadMore = false}) async {
@@ -175,7 +181,6 @@ class _SubjectDetailScreenState extends State<SubjectDetailScreen> {
         ..clear()
         ..addAll(guesses);
       _loading = false;
-      _loadingMore = false;
       _hasMore = hasMore;
     });
   }
