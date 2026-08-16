@@ -289,23 +289,43 @@ class _TimeCapsulesScreenState extends State<TimeCapsulesScreen> {
     );
     if (confirmed != true) return;
 
-    final myId = _supabase.auth.currentUser!.id;
-    final isAuthor = letter.authorId == myId;
-    final isSelfLetter = letter.recipientId == null;
-    if (isSelfLetter || (isAuthor && letter.openedAt == null)) {
-      // Втрачати нічого — інша сторона або не існує, або ще навіть не
-      // бачила текст, тому стираємо рядок повністю.
-      await _supabase.from('future_letters').delete().eq('id', letter.id);
-    } else {
-      // М'яке видалення — ховаємо лише зі свого боку, інша сторона (яка
-      // вже читала або є автором) зберігає свою копію.
-      final column = isAuthor ? 'author_deleted_at' : 'recipient_deleted_at';
-      await _supabase
-          .from('future_letters')
-          .update({column: DateTime.now().toUtc().toIso8601String()})
-          .eq('id', letter.id);
+    try {
+      final myId = _supabase.auth.currentUser!.id;
+      final isAuthor = letter.authorId == myId;
+      final isSelfLetter = letter.recipientId == null;
+      if (isSelfLetter || (isAuthor && letter.openedAt == null)) {
+        // Втрачати нічого — інша сторона або не існує, або ще навіть не
+        // бачила текст, тому стираємо рядок повністю. RETURNING тут
+        // безпечний для перевірки — DELETE-політика звіряється зі старим
+        // рядком, який ще існував і був видимий нам.
+        final affected = await _supabase
+            .from('future_letters')
+            .delete()
+            .eq('id', letter.id)
+            .select('id');
+        if (affected.isEmpty) throw Exception('RLS blocked the delete');
+      } else {
+        // М'яке видалення — ховаємо лише зі свого боку, інша сторона (яка
+        // вже читала або є автором) зберігає свою копію. Без .select() тут
+        // навмисно: після встановлення recipient_deleted_at/author_deleted_at
+        // рядок одразу перестає проходити SELECT-політику для НАС САМИХ,
+        // тож RETURNING легітимно повернув би порожньо навіть при успіху —
+        // покладаємось на те, що WITH CHECK кидає реальний виняток при
+        // фактичній відмові.
+        final column = isAuthor ? 'author_deleted_at' : 'recipient_deleted_at';
+        await _supabase
+            .from('future_letters')
+            .update({column: DateTime.now().toUtc().toIso8601String()})
+            .eq('id', letter.id);
+      }
+      _load();
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(AppLocalizations.of(context).somethingWentWrong)),
+        );
+      }
     }
-    _load();
   }
 
   @override
@@ -332,7 +352,9 @@ class _TimeCapsulesScreenState extends State<TimeCapsulesScreen> {
                   letter: letter,
                   onTap: () => _openLetter(letter),
                   onDelete: canDelete ? () => _confirmDelete(letter) : null,
-                  showNewDot: _newlyReceivedIds.contains(letter.id),
+                  showNewDot:
+                      _newlyReceivedIds.contains(letter.id) ||
+                      letter.state == _LetterState.unlockedUnread,
                 );
               },
             ),
@@ -402,7 +424,9 @@ class _LetterRow extends StatelessWidget {
   // Тільки для ще незапечатаних листів — видима кнопка замість прихованого
   // long-press, який ніхто сам не здогадався б спробувати.
   final VoidCallback? onDelete;
-  // Щойно отриманий лист від друга, ще не бачений у списку раніше.
+  // Або щойно отриманий лист від друга (ще не бачений у списку раніше),
+  // або щойно розкрився і чекає на прочитання — той самий привід, що й для
+  // бейджа на меню/банері, лише вказаний на конкретному рядку.
   final bool showNewDot;
 
   const _LetterRow({
@@ -446,35 +470,29 @@ class _LetterRow extends StatelessWidget {
           ),
           child: Row(
             children: [
+              if (showNewDot) ...[
+                const DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: AppColors.notification,
+                    shape: BoxShape.circle,
+                  ),
+                  child: SizedBox(width: 8, height: 8),
+                ),
+                const SizedBox(width: 10),
+              ],
               Icon(icon, color: AppColors.inkMuted, size: 22),
               const SizedBox(width: 14),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      children: [
-                        Flexible(
-                          child: Text(
-                            _letterLabel(
-                              letter,
-                              Supabase.instance.client.auth.currentUser!.id,
-                              l10n,
-                            ),
-                            style: const TextStyle(color: AppColors.ink),
-                          ),
-                        ),
-                        if (showNewDot) ...[
-                          const SizedBox(width: 6),
-                          const DecoratedBox(
-                            decoration: BoxDecoration(
-                              color: AppColors.notification,
-                              shape: BoxShape.circle,
-                            ),
-                            child: SizedBox(width: 7, height: 7),
-                          ),
-                        ],
-                      ],
+                    Text(
+                      _letterLabel(
+                        letter,
+                        Supabase.instance.client.auth.currentUser!.id,
+                        l10n,
+                      ),
+                      style: const TextStyle(color: AppColors.ink),
                     ),
                     const SizedBox(height: 2),
                     Text(status, style: const TextStyle(color: AppColors.inkMuted, fontSize: 12)),
