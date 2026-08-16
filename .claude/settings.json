@@ -2,9 +2,25 @@
   "permissions": {
     "allow": [
       "Bash(flutter analyze *)",
+      "Bash(flutter build ios *)",
+      "Bash(flutter run *)",
+      "Bash(flutter gen-l10n)",
+      "Bash(flutter devices)",
+      "Bash(flutter pub get)",
       "Bash(xcrun devicectl list devices)",
       "Bash(xcrun devicectl device info *)",
-      "Bash(git fetch *)"
+      "Bash(xcrun devicectl device install app *)",
+      "Bash(xcrun devicectl device process launch *)",
+      "Bash(git fetch *)",
+      "Bash(git status)",
+      "Bash(git diff *)",
+      "Bash(git log *)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git push)",
+      "Bash(tail *)",
+      "Bash(grep *)",
+      "Bash(sleep *)"
     ]
   }
 }

@@ -1403,7 +1403,7 @@ abstract class AppLocalizations {
   /// No description provided for @timeCapsulesDeleteConfirmBody.
   ///
   /// In uk, this message translates to:
-  /// **'Незапечатаний лист можна видалити назавжди.'**
+  /// **'Лист буде видалено назавжди.'**
   String get timeCapsulesDeleteConfirmBody;
 
   /// No description provided for @timeCapsulesSealedConfirmation.
