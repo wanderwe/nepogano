@@ -683,4 +683,79 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get thisMonth => 'Цей місяць';
+
+  @override
+  String get timeCapsulesMenuLabel => 'Капсули часу';
+
+  @override
+  String get timeCapsulesEmptyTitle => 'Лист, який відкриється пізніше';
+
+  @override
+  String get timeCapsulesEmptySubtitle =>
+      'Обери коли: за місяць, півроку чи рік. До того часу він запечатаний, підглянути не вийде.';
+
+  @override
+  String get timeCapsulesWriteFirst => 'Написати перший лист';
+
+  @override
+  String get timeCapsulesWriteNew => 'Написати новий лист';
+
+  @override
+  String get timeCapsulesComposeHint => 'Напиши свій лист...';
+
+  @override
+  String get timeCapsulesDelayMonth => 'За місяць';
+
+  @override
+  String get timeCapsulesDelayHalfYear => 'За півроку';
+
+  @override
+  String get timeCapsulesDelayYear => 'За рік';
+
+  @override
+  String get timeCapsulesSeal => 'Запечатати';
+
+  @override
+  String get timeCapsuleToSelfLabel => 'Лист собі';
+
+  @override
+  String timeCapsuleToFriendLabel(String name) {
+    return 'Лист для $name';
+  }
+
+  @override
+  String timeCapsuleFromFriendLabel(String name) {
+    return 'Лист від $name';
+  }
+
+  @override
+  String get timeCapsulesRecipientLabel => 'Кому';
+
+  @override
+  String timeCapsulesLockedUntil(String date) {
+    return 'розкриється $date';
+  }
+
+  @override
+  String timeCapsulesOpenedOn(String date) {
+    return 'відкрито $date';
+  }
+
+  @override
+  String timeCapsulesStillLocked(String date) {
+    return 'Ще запечатано, відкриється $date';
+  }
+
+  @override
+  String get timeCapsulesDeleteConfirmTitle => 'Видалити лист?';
+
+  @override
+  String get timeCapsulesDeleteConfirmBody =>
+      'Незапечатаний лист можна видалити назавжди.';
+
+  @override
+  String get timeCapsulesSealedConfirmation => 'Лист запечатано';
+
+  @override
+  String get timeCapsulesBannerReady => 'У тебе є лист, що розкрився';
 }

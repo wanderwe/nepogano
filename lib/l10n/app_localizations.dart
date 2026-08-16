@@ -1285,6 +1285,132 @@ abstract class AppLocalizations {
   /// In uk, this message translates to:
   /// **'Цей місяць'**
   String get thisMonth;
+
+  /// No description provided for @timeCapsulesMenuLabel.
+  ///
+  /// In uk, this message translates to:
+  /// **'Капсули часу'**
+  String get timeCapsulesMenuLabel;
+
+  /// No description provided for @timeCapsulesEmptyTitle.
+  ///
+  /// In uk, this message translates to:
+  /// **'Лист, який відкриється пізніше'**
+  String get timeCapsulesEmptyTitle;
+
+  /// No description provided for @timeCapsulesEmptySubtitle.
+  ///
+  /// In uk, this message translates to:
+  /// **'Обери коли: за місяць, півроку чи рік. До того часу він запечатаний, підглянути не вийде.'**
+  String get timeCapsulesEmptySubtitle;
+
+  /// No description provided for @timeCapsulesWriteFirst.
+  ///
+  /// In uk, this message translates to:
+  /// **'Написати перший лист'**
+  String get timeCapsulesWriteFirst;
+
+  /// No description provided for @timeCapsulesWriteNew.
+  ///
+  /// In uk, this message translates to:
+  /// **'Написати новий лист'**
+  String get timeCapsulesWriteNew;
+
+  /// No description provided for @timeCapsulesComposeHint.
+  ///
+  /// In uk, this message translates to:
+  /// **'Напиши свій лист...'**
+  String get timeCapsulesComposeHint;
+
+  /// No description provided for @timeCapsulesDelayMonth.
+  ///
+  /// In uk, this message translates to:
+  /// **'За місяць'**
+  String get timeCapsulesDelayMonth;
+
+  /// No description provided for @timeCapsulesDelayHalfYear.
+  ///
+  /// In uk, this message translates to:
+  /// **'За півроку'**
+  String get timeCapsulesDelayHalfYear;
+
+  /// No description provided for @timeCapsulesDelayYear.
+  ///
+  /// In uk, this message translates to:
+  /// **'За рік'**
+  String get timeCapsulesDelayYear;
+
+  /// No description provided for @timeCapsulesSeal.
+  ///
+  /// In uk, this message translates to:
+  /// **'Запечатати'**
+  String get timeCapsulesSeal;
+
+  /// No description provided for @timeCapsuleToSelfLabel.
+  ///
+  /// In uk, this message translates to:
+  /// **'Лист собі'**
+  String get timeCapsuleToSelfLabel;
+
+  /// No description provided for @timeCapsuleToFriendLabel.
+  ///
+  /// In uk, this message translates to:
+  /// **'Лист для {name}'**
+  String timeCapsuleToFriendLabel(String name);
+
+  /// No description provided for @timeCapsuleFromFriendLabel.
+  ///
+  /// In uk, this message translates to:
+  /// **'Лист від {name}'**
+  String timeCapsuleFromFriendLabel(String name);
+
+  /// No description provided for @timeCapsulesRecipientLabel.
+  ///
+  /// In uk, this message translates to:
+  /// **'Кому'**
+  String get timeCapsulesRecipientLabel;
+
+  /// No description provided for @timeCapsulesLockedUntil.
+  ///
+  /// In uk, this message translates to:
+  /// **'розкриється {date}'**
+  String timeCapsulesLockedUntil(String date);
+
+  /// No description provided for @timeCapsulesOpenedOn.
+  ///
+  /// In uk, this message translates to:
+  /// **'відкрито {date}'**
+  String timeCapsulesOpenedOn(String date);
+
+  /// No description provided for @timeCapsulesStillLocked.
+  ///
+  /// In uk, this message translates to:
+  /// **'Ще запечатано, відкриється {date}'**
+  String timeCapsulesStillLocked(String date);
+
+  /// No description provided for @timeCapsulesDeleteConfirmTitle.
+  ///
+  /// In uk, this message translates to:
+  /// **'Видалити лист?'**
+  String get timeCapsulesDeleteConfirmTitle;
+
+  /// No description provided for @timeCapsulesDeleteConfirmBody.
+  ///
+  /// In uk, this message translates to:
+  /// **'Незапечатаний лист можна видалити назавжди.'**
+  String get timeCapsulesDeleteConfirmBody;
+
+  /// No description provided for @timeCapsulesSealedConfirmation.
+  ///
+  /// In uk, this message translates to:
+  /// **'Лист запечатано'**
+  String get timeCapsulesSealedConfirmation;
+
+  /// No description provided for @timeCapsulesBannerReady.
+  ///
+  /// In uk, this message translates to:
+  /// **'У тебе є лист, що розкрився'**
+  String get timeCapsulesBannerReady;
 }
 
 class _AppLocalizationsDelegate

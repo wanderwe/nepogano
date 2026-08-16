@@ -681,4 +681,79 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get thisMonth => 'This month';
+
+  @override
+  String get timeCapsulesMenuLabel => 'Time capsules';
+
+  @override
+  String get timeCapsulesEmptyTitle => 'A letter that opens later';
+
+  @override
+  String get timeCapsulesEmptySubtitle =>
+      'Choose when: a month, half a year, or a year from now. Until then it\'s sealed, no peeking.';
+
+  @override
+  String get timeCapsulesWriteFirst => 'Write your first letter';
+
+  @override
+  String get timeCapsulesWriteNew => 'Write a new letter';
+
+  @override
+  String get timeCapsulesComposeHint => 'Write your letter...';
+
+  @override
+  String get timeCapsulesDelayMonth => 'In a month';
+
+  @override
+  String get timeCapsulesDelayHalfYear => 'In half a year';
+
+  @override
+  String get timeCapsulesDelayYear => 'In a year';
+
+  @override
+  String get timeCapsulesSeal => 'Seal it';
+
+  @override
+  String get timeCapsuleToSelfLabel => 'Letter to yourself';
+
+  @override
+  String timeCapsuleToFriendLabel(String name) {
+    return 'Letter for $name';
+  }
+
+  @override
+  String timeCapsuleFromFriendLabel(String name) {
+    return 'Letter from $name';
+  }
+
+  @override
+  String get timeCapsulesRecipientLabel => 'To';
+
+  @override
+  String timeCapsulesLockedUntil(String date) {
+    return 'unlocks $date';
+  }
+
+  @override
+  String timeCapsulesOpenedOn(String date) {
+    return 'opened $date';
+  }
+
+  @override
+  String timeCapsulesStillLocked(String date) {
+    return 'Still sealed, opens $date';
+  }
+
+  @override
+  String get timeCapsulesDeleteConfirmTitle => 'Delete letter?';
+
+  @override
+  String get timeCapsulesDeleteConfirmBody =>
+      'An unsealed letter can be deleted for good.';
+
+  @override
+  String get timeCapsulesSealedConfirmation => 'Letter sealed';
+
+  @override
+  String get timeCapsulesBannerReady => 'You have a letter that\'s unlocked';
 }
