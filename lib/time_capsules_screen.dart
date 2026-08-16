@@ -115,6 +115,10 @@ class _TimeCapsulesScreenState extends State<TimeCapsulesScreen> {
   final _supabase = Supabase.instance.client;
   List<_Letter> _letters = [];
   bool _loading = true;
+  // Знімок "щойно отримано, ще не бачив" на момент відкриття списку — щоб
+  // рядок ще підсвічувався крапкою під час цього перегляду, навіть якщо
+  // recipient_seen_at уже проставився фоновим запитом нижче.
+  Set<String> _newlyReceivedIds = {};
 
   @override
   void initState() {
@@ -182,15 +186,22 @@ class _TimeCapsulesScreenState extends State<TimeCapsulesScreen> {
           otherPartyName: otherId != null ? nameById[otherId] : null,
         );
       }).toList();
-      if (mounted) setState(() => _letters = letters);
 
-      // Сам факт побачити запечатаний лист друга у списку — вже
-      // "ознайомлення", тому знімає індикатор, навіть якщо unlock_at ще
-      // далеко в майбутньому.
       final unseenIds = letters
           .where((l) => l.recipientId == myId && l.recipientSeenAt == null)
           .map((l) => l.id)
           .toList();
+      if (mounted) {
+        setState(() {
+          _letters = letters;
+          _newlyReceivedIds = unseenIds.toSet();
+        });
+      }
+
+      // Сам факт побачити запечатаний лист друга у списку — вже
+      // "ознайомлення", тому знімає індикатор, навіть якщо unlock_at ще
+      // далеко в майбутньому. _newlyReceivedIds вище лишається знімком для
+      // підсвітки в цьому перегляді.
       if (unseenIds.isNotEmpty) {
         // Очікуємо завершення (не unawaited) — юзер може повернутись на
         // головний екран одразу, і той перечитує лічильник на поверненні;
@@ -321,6 +332,7 @@ class _TimeCapsulesScreenState extends State<TimeCapsulesScreen> {
                   letter: letter,
                   onTap: () => _openLetter(letter),
                   onDelete: canDelete ? () => _confirmDelete(letter) : null,
+                  showNewDot: _newlyReceivedIds.contains(letter.id),
                 );
               },
             ),
@@ -390,8 +402,15 @@ class _LetterRow extends StatelessWidget {
   // Тільки для ще незапечатаних листів — видима кнопка замість прихованого
   // long-press, який ніхто сам не здогадався б спробувати.
   final VoidCallback? onDelete;
+  // Щойно отриманий лист від друга, ще не бачений у списку раніше.
+  final bool showNewDot;
 
-  const _LetterRow({required this.letter, required this.onTap, this.onDelete});
+  const _LetterRow({
+    required this.letter,
+    required this.onTap,
+    this.onDelete,
+    this.showNewDot = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -433,13 +452,29 @@ class _LetterRow extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      _letterLabel(
-                        letter,
-                        Supabase.instance.client.auth.currentUser!.id,
-                        l10n,
-                      ),
-                      style: const TextStyle(color: AppColors.ink),
+                    Row(
+                      children: [
+                        Flexible(
+                          child: Text(
+                            _letterLabel(
+                              letter,
+                              Supabase.instance.client.auth.currentUser!.id,
+                              l10n,
+                            ),
+                            style: const TextStyle(color: AppColors.ink),
+                          ),
+                        ),
+                        if (showNewDot) ...[
+                          const SizedBox(width: 6),
+                          const DecoratedBox(
+                            decoration: BoxDecoration(
+                              color: AppColors.notification,
+                              shape: BoxShape.circle,
+                            ),
+                            child: SizedBox(width: 7, height: 7),
+                          ),
+                        ],
+                      ],
                     ),
                     const SizedBox(height: 2),
                     Text(status, style: const TextStyle(color: AppColors.inkMuted, fontSize: 12)),
