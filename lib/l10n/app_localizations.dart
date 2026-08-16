@@ -956,6 +956,12 @@ abstract class AppLocalizations {
   /// **'Позначити все переглянутим'**
   String get commentActivityMarkAllRead;
 
+  /// No description provided for @commentActivityMarkedAllRead.
+  ///
+  /// In uk, this message translates to:
+  /// **'Усі коментарі позначено переглянутими'**
+  String get commentActivityMarkedAllRead;
+
   /// No description provided for @commentActivityNewComment.
   ///
   /// In uk, this message translates to:

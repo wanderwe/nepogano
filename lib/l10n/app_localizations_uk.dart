@@ -473,6 +473,10 @@ class AppLocalizationsUk extends AppLocalizations {
   String get commentActivityMarkAllRead => 'Позначити все переглянутим';
 
   @override
+  String get commentActivityMarkedAllRead =>
+      'Усі коментарі позначено переглянутими';
+
+  @override
   String commentActivityNewComment(String name) {
     return 'Новий коментар від $name';
   }

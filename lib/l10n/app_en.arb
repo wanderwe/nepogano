@@ -193,6 +193,7 @@
 
   "commentActivityEmpty": "Nothing here yet",
   "commentActivityMarkAllRead": "Mark all as read",
+  "commentActivityMarkedAllRead": "All comments marked as read",
   "commentActivityNewComment": "New comment from {name}",
   "@commentActivityNewComment": {
     "placeholders": {

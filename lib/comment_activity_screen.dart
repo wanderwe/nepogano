@@ -60,6 +60,7 @@ class _CommentActivityScreenState extends State<CommentActivityScreen> {
   }
 
   Future<void> _markAllRead() async {
+    final l10n = AppLocalizations.of(context);
     setState(() => _markingAllRead = true);
     try {
       await markAllCommentsSeen(_supabase);
@@ -68,8 +69,15 @@ class _CommentActivityScreenState extends State<CommentActivityScreen> {
         _seenIds = {..._seenIds, ..._items.map((i) => i.commentId)};
         _markingAllRead = false;
       });
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.commentActivityMarkedAllRead)));
     } catch (e) {
-      if (mounted) setState(() => _markingAllRead = false);
+      if (!mounted) return;
+      setState(() => _markingAllRead = false);
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.somethingWentWrong)));
     }
   }
 

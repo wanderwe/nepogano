@@ -202,6 +202,7 @@
 
   "commentActivityEmpty": "Поки що нічого немає",
   "commentActivityMarkAllRead": "Позначити все переглянутим",
+  "commentActivityMarkedAllRead": "Усі коментарі позначено переглянутими",
   "commentActivityNewComment": "Новий коментар від {name}",
   "@commentActivityNewComment": {
     "placeholders": {
