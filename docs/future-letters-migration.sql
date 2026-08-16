@@ -57,7 +57,7 @@ with check (
 drop policy if exists "future_letters_delete" on public.future_letters;
 create policy "future_letters_delete"
 on public.future_letters for delete
-using (author_id = auth.uid() and unlock_at > now());
+using (author_id = auth.uid() or recipient_id = auth.uid());
 
 -- єдине, що можна змінювати — позначка "прочитано", і лише після розкриття.
 drop policy if exists "future_letters_update_opened" on public.future_letters;

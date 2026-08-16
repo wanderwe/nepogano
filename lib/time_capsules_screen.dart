@@ -273,9 +273,7 @@ class _TimeCapsulesScreenState extends State<TimeCapsulesScreen> {
                 return _LetterRow(
                   letter: letter,
                   onTap: () => _openLetter(letter),
-                  onDelete: letter.state == _LetterState.locked
-                      ? () => _confirmDelete(letter)
-                      : null,
+                  onDelete: () => _confirmDelete(letter),
                 );
               },
             ),
