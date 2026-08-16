@@ -61,6 +61,22 @@ class _CommentActivityScreenState extends State<CommentActivityScreen> {
 
   Future<void> _markAllRead() async {
     final l10n = AppLocalizations.of(context);
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AppDialog(
+        title: l10n.commentActivityMarkAllReadConfirmTitle,
+        content: Text(
+          l10n.commentActivityMarkAllReadConfirmBody,
+          style: const TextStyle(color: AppColors.inkMuted),
+        ),
+        primaryLabel: l10n.no,
+        onPrimary: () => Navigator.of(context).pop(false),
+        secondaryLabel: l10n.commentActivityMarkAllReadConfirmYes,
+        onSecondary: () => Navigator.of(context).pop(true),
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
     setState(() => _markingAllRead = true);
     try {
       await markAllCommentsSeen(_supabase);

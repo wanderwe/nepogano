@@ -203,6 +203,9 @@
   "commentActivityEmpty": "Поки що нічого немає",
   "commentActivityMarkAllRead": "Позначити всі переглянутими",
   "commentActivityMarkedAllRead": "Усі коментарі позначено переглянутими",
+  "commentActivityMarkAllReadConfirmTitle": "Позначити всі переглянутими?",
+  "commentActivityMarkAllReadConfirmBody": "Усі непрочитані коментарі стануть позначеними переглянутими, це не можна скасувати.",
+  "commentActivityMarkAllReadConfirmYes": "Так, позначити",
   "commentActivityNewComment": "Новий коментар від {name}",
   "@commentActivityNewComment": {
     "placeholders": {

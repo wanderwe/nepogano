@@ -477,6 +477,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get commentActivityMarkedAllRead => 'All comments marked as read';
 
   @override
+  String get commentActivityMarkAllReadConfirmTitle => 'Mark all as read?';
+
+  @override
+  String get commentActivityMarkAllReadConfirmBody =>
+      'All unread comments will be marked as read, this can\'t be undone.';
+
+  @override
+  String get commentActivityMarkAllReadConfirmYes => 'Yes, mark them';
+
+  @override
   String commentActivityNewComment(String name) {
     return 'New comment from $name';
   }

@@ -962,6 +962,24 @@ abstract class AppLocalizations {
   /// **'Усі коментарі позначено переглянутими'**
   String get commentActivityMarkedAllRead;
 
+  /// No description provided for @commentActivityMarkAllReadConfirmTitle.
+  ///
+  /// In uk, this message translates to:
+  /// **'Позначити всі переглянутими?'**
+  String get commentActivityMarkAllReadConfirmTitle;
+
+  /// No description provided for @commentActivityMarkAllReadConfirmBody.
+  ///
+  /// In uk, this message translates to:
+  /// **'Усі непрочитані коментарі стануть позначеними переглянутими, це не можна скасувати.'**
+  String get commentActivityMarkAllReadConfirmBody;
+
+  /// No description provided for @commentActivityMarkAllReadConfirmYes.
+  ///
+  /// In uk, this message translates to:
+  /// **'Так, позначити'**
+  String get commentActivityMarkAllReadConfirmYes;
+
   /// No description provided for @commentActivityNewComment.
   ///
   /// In uk, this message translates to:

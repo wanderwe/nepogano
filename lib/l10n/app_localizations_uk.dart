@@ -477,6 +477,17 @@ class AppLocalizationsUk extends AppLocalizations {
       'Усі коментарі позначено переглянутими';
 
   @override
+  String get commentActivityMarkAllReadConfirmTitle =>
+      'Позначити всі переглянутими?';
+
+  @override
+  String get commentActivityMarkAllReadConfirmBody =>
+      'Усі непрочитані коментарі стануть позначеними переглянутими, це не можна скасувати.';
+
+  @override
+  String get commentActivityMarkAllReadConfirmYes => 'Так, позначити';
+
+  @override
   String commentActivityNewComment(String name) {
     return 'Новий коментар від $name';
   }
