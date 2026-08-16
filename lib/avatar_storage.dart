@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:path_provider/path_provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 const _bucket = 'avatars';
@@ -9,6 +10,15 @@ const _bucket = 'avatars';
 /// аватарка не має історії: заміна перезаписує той самий файл (upsert),
 /// не створює новий об'єкт щоразу.
 String _avatarPathFor(String userId) => '$userId/avatar.jpg';
+
+/// Файл диску, куди кешується завантажена аватарка — на відміну від
+/// [_avatarCache] (лише пам'ять процесу), переживає холодний старт
+/// застосунку, тому фото більше не "підвантажується з нуля" щоразу.
+Future<File> _diskCacheFile(String path) async {
+  final dir = await getApplicationSupportDirectory();
+  final safeName = path.replaceAll('/', '_');
+  return File('${dir.path}/avatar_cache_$safeName');
+}
 
 Future<String> uploadAvatar(File file) async {
   final supabase = Supabase.instance.client;
@@ -24,6 +34,12 @@ Future<String> uploadAvatar(File file) async {
       );
 
   _avatarCache.remove(path);
+  try {
+    final cacheFile = await _diskCacheFile(path);
+    if (cacheFile.existsSync()) await cacheFile.delete();
+  } catch (_) {
+    // Диск-кеш — лише прискорення, відсутність файлу для видалення не біда.
+  }
   return path;
 }
 
@@ -32,11 +48,29 @@ final Map<String, Uint8List> _avatarCache = {};
 Future<Uint8List?> downloadAvatar(String path) async {
   final cached = _avatarCache[path];
   if (cached != null) return cached;
+
+  try {
+    final cacheFile = await _diskCacheFile(path);
+    if (cacheFile.existsSync()) {
+      final bytes = await cacheFile.readAsBytes();
+      _avatarCache[path] = bytes;
+      return bytes;
+    }
+  } catch (_) {
+    // Читання диск-кешу впало — просто йдемо в мережу нижче.
+  }
+
   try {
     final bytes = await Supabase.instance.client.storage
         .from(_bucket)
         .download(path);
     _avatarCache[path] = bytes;
+    try {
+      final cacheFile = await _diskCacheFile(path);
+      await cacheFile.writeAsBytes(bytes);
+    } catch (_) {
+      // Диск-кеш — лише прискорення, помилка запису не критична.
+    }
     return bytes;
   } catch (_) {
     return null;

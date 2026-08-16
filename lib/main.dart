@@ -644,7 +644,8 @@ class CheckInScreen extends StatefulWidget {
   State<CheckInScreen> createState() => _CheckInScreenState();
 }
 
-class _CheckInScreenState extends State<CheckInScreen> {
+class _CheckInScreenState extends State<CheckInScreen>
+    with WidgetsBindingObserver {
   MoodLevel? _selected;
   final TextEditingController _noteController = TextEditingController();
   bool _saving = false;
@@ -721,6 +722,7 @@ class _CheckInScreenState extends State<CheckInScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _visibleWeekStart = _mondayOf(DateTime.now());
     _loadTodayEntry();
     _loadWeek();
@@ -1404,8 +1406,19 @@ class _CheckInScreenState extends State<CheckInScreen> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _noteController.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // Юзер міг отримати новий коментар чи вгадування друга, поки застосунок
+    // був у фоні — обидва індикатори інакше оновлюються лише при холодному
+    // старті чи поверненні саме з екрана Друзів/Коментарів, не живо.
+    if (state == AppLifecycleState.resumed) {
+      _checkAllActivityOnLoad();
+    }
   }
 
   Widget _buildTodayLoadError(AppLocalizations l10n) {
