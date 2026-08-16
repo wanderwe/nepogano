@@ -408,6 +408,115 @@ class _LetterRow extends StatelessWidget {
   }
 }
 
+class _RecipientPickResult {
+  final String? id; // null = собі
+
+  _RecipientPickResult(this.id);
+}
+
+/// Пошук + прокручуваний список замість ряду чіпів — той не масштабується,
+/// якщо друзів десятки чи сотні. "Я" завжди першим рядком і не фільтрується
+/// пошуком, той самий принцип, що чіп "Я" в перемикачі сутностей.
+class _RecipientPickerSheet extends StatefulWidget {
+  final List<_FriendOption> friends;
+  final String? selectedId;
+
+  const _RecipientPickerSheet({required this.friends, required this.selectedId});
+
+  @override
+  State<_RecipientPickerSheet> createState() => _RecipientPickerSheetState();
+}
+
+class _RecipientPickerSheetState extends State<_RecipientPickerSheet> {
+  final _searchController = TextEditingController();
+  String _query = '';
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final query = _query.trim().toLowerCase();
+    final filtered = query.isEmpty
+        ? widget.friends
+        : widget.friends
+              .where((f) => f.name.toLowerCase().contains(query))
+              .toList();
+
+    return DraggableScrollableSheet(
+      initialChildSize: 0.6,
+      minChildSize: 0.4,
+      maxChildSize: 0.9,
+      expand: false,
+      builder: (context, scrollController) {
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
+          child: Column(
+            children: [
+              TextField(
+                controller: _searchController,
+                onChanged: (value) => setState(() => _query = value),
+                decoration: appFieldDecoration(l10n.search),
+              ),
+              const SizedBox(height: 12),
+              Expanded(
+                child: ListView(
+                  controller: scrollController,
+                  children: [
+                    if (query.isEmpty)
+                      _RecipientRow(
+                        label: l10n.me,
+                        selected: widget.selectedId == null,
+                        onTap: () =>
+                            Navigator.of(context).pop(_RecipientPickResult(null)),
+                      ),
+                    ...filtered.map(
+                      (friend) => _RecipientRow(
+                        label: friend.name,
+                        selected: widget.selectedId == friend.id,
+                        onTap: () => Navigator.of(
+                          context,
+                        ).pop(_RecipientPickResult(friend.id)),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _RecipientRow extends StatelessWidget {
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _RecipientRow({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      onTap: onTap,
+      title: Text(label, style: const TextStyle(color: AppColors.ink)),
+      trailing: selected
+          ? const Icon(PhosphorIconsLight.check, color: AppColors.accent, size: 18)
+          : null,
+    );
+  }
+}
+
 class _ComposeLetterSheet extends StatefulWidget {
   const _ComposeLetterSheet();
 
@@ -511,29 +620,53 @@ class _ComposeLetterSheetState extends State<_ComposeLetterSheet> {
               maxLength: _bodyMaxLength,
               decoration: appFieldDecoration(l10n.timeCapsulesComposeHint),
             ),
-            // Тільки якщо є хоч один друг — інакше цей ряд чіпів завжди
-            // однаковий (лише "Я") і нічого не додає, крім зайвого рядка.
+            // Тільки якщо є хоч один друг — інакше вибір завжди однаковий
+            // (лише "Я") і не додає нічого, крім зайвого рядка. Окремий
+            // піквер із пошуком замість ряду чіпів — той не масштабується,
+            // якщо в юзера десятки чи сотні друзів (стіна плиток замість
+            // списку).
             if (_friends.isNotEmpty) ...[
               const SizedBox(height: 12),
               Text(l10n.timeCapsulesRecipientLabel, style: const TextStyle(color: AppColors.inkMuted, fontSize: 12)),
               const SizedBox(height: 6),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  AppChip(
-                    label: l10n.me,
-                    selected: _recipientId == null,
-                    onTap: () => setState(() => _recipientId = null),
-                  ),
-                  ..._friends.map(
-                    (friend) => AppChip(
-                      label: friend.name,
-                      selected: _recipientId == friend.id,
-                      onTap: () => setState(() => _recipientId = friend.id),
+              GestureDetector(
+                onTap: () async {
+                  final picked = await showModalBottomSheet<_RecipientPickResult>(
+                    context: context,
+                    isScrollControlled: true,
+                    builder: (_) => _RecipientPickerSheet(
+                      friends: _friends,
+                      selectedId: _recipientId,
                     ),
+                  );
+                  if (picked != null) setState(() => _recipientId = picked.id);
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(14),
                   ),
-                ],
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          _recipientId == null
+                              ? l10n.me
+                              : _friends
+                                    .firstWhere((f) => f.id == _recipientId)
+                                    .name,
+                          style: const TextStyle(color: AppColors.ink),
+                        ),
+                      ),
+                      const Icon(
+                        PhosphorIconsLight.caretDown,
+                        size: 16,
+                        color: AppColors.inkMuted,
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ],
             const SizedBox(height: 8),
