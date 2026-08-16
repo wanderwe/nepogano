@@ -302,21 +302,17 @@ class _CommentActivityScreenState extends State<CommentActivityScreen> {
                     ),
                   ),
                   const SizedBox(height: 4),
-                  // Фіксована висота під 2 рядки незалежно від довжини
-                  // тексту — інакше короткі коментарі (1 рядок) робили
-                  // рядок нижчим за довші (2 рядки), і список виглядав
-                  // нерівним. Повний текст — лише після переходу на день.
-                  SizedBox(
-                    height: 34,
-                    child: Text(
-                      item.body,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 13,
-                        color: AppColors.inkMuted,
-                        height: 1.3,
-                      ),
+                  // maxLines: 1, не 2 — рядок має лишатись однакової висоти
+                  // для БУДЬ-ЯКОГО тексту, тож обрізаємо довгий коментар до
+                  // висоти коротких, а не навпаки. Повний текст — лише
+                  // після переходу на день.
+                  Text(
+                    item.body,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: AppColors.inkMuted,
                     ),
                   ),
                 ],
