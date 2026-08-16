@@ -378,5 +378,5 @@
   "timeCapsulesDeleteConfirmTitle": "Delete letter?",
   "timeCapsulesDeleteConfirmBody": "The letter will be deleted for good.",
   "timeCapsulesSealedConfirmation": "Letter sealed",
-  "timeCapsulesBannerReady": "You have a letter that's unlocked"
+  "timeCapsulesBannerReady": "There's news in your time capsules"
 }

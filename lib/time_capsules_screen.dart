@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -55,6 +57,7 @@ class _Letter {
   final String? recipientId;
   final DateTime unlockAt;
   final DateTime? openedAt;
+  final DateTime? recipientSeenAt;
   // Присутнє, лише коли RLS дозволив прочитати future_letter_bodies —
   // тобто фактично коли лист уже розкрито. До того часу null навіть якщо
   // рядок технічно існує на сервері.
@@ -71,6 +74,7 @@ class _Letter {
     this.recipientId,
     required this.unlockAt,
     this.openedAt,
+    this.recipientSeenAt,
     this.body,
     this.otherPartyName,
   });
@@ -127,7 +131,7 @@ class _TimeCapsulesScreenState extends State<TimeCapsulesScreen> {
       final rows = await _supabase
           .from('future_letters')
           .select(
-            'id, author_id, recipient_id, unlock_at, opened_at, future_letter_bodies(body)',
+            'id, author_id, recipient_id, unlock_at, opened_at, recipient_seen_at, future_letter_bodies(body)',
           )
           .order('created_at', ascending: false);
 
@@ -161,6 +165,7 @@ class _TimeCapsulesScreenState extends State<TimeCapsulesScreen> {
         // і список тихо ставав порожнім.
         final bodyRow = row['future_letter_bodies'] as Map<String, dynamic>?;
         final openedAtRaw = row['opened_at'] as String?;
+        final recipientSeenAtRaw = row['recipient_seen_at'] as String?;
         final authorId = row['author_id'] as String;
         final recipientId = row['recipient_id'] as String?;
         final otherId = authorId == myId ? recipientId : authorId;
@@ -172,11 +177,32 @@ class _TimeCapsulesScreenState extends State<TimeCapsulesScreen> {
           openedAt: openedAtRaw != null
               ? DateTime.parse(openedAtRaw).toLocal()
               : null,
+          recipientSeenAt: recipientSeenAtRaw != null
+              ? DateTime.parse(recipientSeenAtRaw).toLocal()
+              : null,
           body: bodyRow?['body'] as String?,
           otherPartyName: otherId != null ? nameById[otherId] : null,
         );
       }).toList();
       if (mounted) setState(() => _letters = letters);
+
+      // Сам факт побачити запечатаний лист друга у списку — вже
+      // "ознайомлення", тому знімає індикатор, навіть якщо unlock_at ще
+      // далеко в майбутньому.
+      final unseenIds = letters
+          .where((l) => l.recipientId == myId && l.recipientSeenAt == null)
+          .map((l) => l.id)
+          .toList();
+      if (unseenIds.isNotEmpty) {
+        unawaited(
+          _supabase
+              .from('future_letters')
+              .update({
+                'recipient_seen_at': DateTime.now().toUtc().toIso8601String(),
+              })
+              .inFilter('id', unseenIds),
+        );
+      }
     } catch (_) {
       // Список просто лишається таким, яким був — немає окремого
       // "щось пішло не так" стану для цього екрана, спробує ще раз при

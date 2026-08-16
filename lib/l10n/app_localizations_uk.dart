@@ -777,5 +777,5 @@ class AppLocalizationsUk extends AppLocalizations {
   String get timeCapsulesSealedConfirmation => 'Лист запечатано';
 
   @override
-  String get timeCapsulesBannerReady => 'У тебе є лист, що розкрився';
+  String get timeCapsulesBannerReady => 'У капсулах часу є новина';
 }

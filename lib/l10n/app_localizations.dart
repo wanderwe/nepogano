@@ -1445,7 +1445,7 @@ abstract class AppLocalizations {
   /// No description provided for @timeCapsulesBannerReady.
   ///
   /// In uk, this message translates to:
-  /// **'У тебе є лист, що розкрився'**
+  /// **'У капсулах часу є новина'**
   String get timeCapsulesBannerReady;
 }
 

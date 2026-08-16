@@ -19,8 +19,15 @@ create table if not exists public.future_letters (
   recipient_id uuid references auth.users(id) on delete cascade,
   created_at timestamptz not null default now(),
   unlock_at timestamptz not null,
-  opened_at timestamptz
+  opened_at timestamptz,
+  -- Окремо від opened_at: ставиться, щойно отримувач побачив ЗАПЕЧАТАНИЙ
+  -- лист у своєму списку (просто факт "хтось мені написав"), а не коли
+  -- прочитав текст — це може статись задовго до unlock_at.
+  recipient_seen_at timestamptz
 );
+
+alter table public.future_letters
+  add column if not exists recipient_seen_at timestamptz;
 
 alter table public.future_letters enable row level security;
 
@@ -65,6 +72,14 @@ create policy "future_letters_update_opened"
 on public.future_letters for update
 using ((author_id = auth.uid() or recipient_id = auth.uid()) and unlock_at <= now())
 with check ((author_id = auth.uid() or recipient_id = auth.uid()) and unlock_at <= now());
+
+-- окрема політика для recipient_seen_at — на відміну від opened_at, це
+-- можна ставити ще ДО unlock_at (сам факт отримання запечатаного листа).
+drop policy if exists "future_letters_update_recipient_seen" on public.future_letters;
+create policy "future_letters_update_recipient_seen"
+on public.future_letters for update
+using (recipient_id = auth.uid())
+with check (recipient_id = auth.uid());
 
 create table if not exists public.future_letter_bodies (
   letter_id uuid primary key references public.future_letters(id) on delete cascade,
