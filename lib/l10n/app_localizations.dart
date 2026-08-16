@@ -1292,6 +1292,12 @@ abstract class AppLocalizations {
   /// **'Капсули часу'**
   String get timeCapsulesMenuLabel;
 
+  /// No description provided for @timeCapsulesRecipientSelf.
+  ///
+  /// In uk, this message translates to:
+  /// **'Собі'**
+  String get timeCapsulesRecipientSelf;
+
   /// No description provided for @timeCapsulesEmptyTitle.
   ///
   /// In uk, this message translates to:

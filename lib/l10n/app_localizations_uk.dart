@@ -688,6 +688,9 @@ class AppLocalizationsUk extends AppLocalizations {
   String get timeCapsulesMenuLabel => 'Капсули часу';
 
   @override
+  String get timeCapsulesRecipientSelf => 'Собі';
+
+  @override
   String get timeCapsulesEmptyTitle => 'Лист, який відкриється пізніше';
 
   @override

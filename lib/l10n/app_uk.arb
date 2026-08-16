@@ -337,6 +337,7 @@
   "thisMonth": "Цей місяць",
 
   "timeCapsulesMenuLabel": "Капсули часу",
+  "timeCapsulesRecipientSelf": "Собі",
   "timeCapsulesEmptyTitle": "Лист, який відкриється пізніше",
   "timeCapsulesEmptySubtitle": "Обери коли: за місяць, півроку чи рік. До того часу він запечатаний, підглянути не вийде.",
   "timeCapsulesWriteFirst": "Написати перший лист",

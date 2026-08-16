@@ -328,6 +328,7 @@
   "thisMonth": "This month",
 
   "timeCapsulesMenuLabel": "Time capsules",
+  "timeCapsulesRecipientSelf": "Myself",
   "timeCapsulesEmptyTitle": "A letter that opens later",
   "timeCapsulesEmptySubtitle": "Choose when: a month, half a year, or a year from now. Until then it's sealed, no peeking.",
   "timeCapsulesWriteFirst": "Write your first letter",

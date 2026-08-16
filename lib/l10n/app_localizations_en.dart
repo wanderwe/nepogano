@@ -686,6 +686,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get timeCapsulesMenuLabel => 'Time capsules';
 
   @override
+  String get timeCapsulesRecipientSelf => 'Myself';
+
+  @override
   String get timeCapsulesEmptyTitle => 'A letter that opens later';
 
   @override

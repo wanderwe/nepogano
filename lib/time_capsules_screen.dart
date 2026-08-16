@@ -273,7 +273,7 @@ class _TimeCapsulesScreenState extends State<TimeCapsulesScreen> {
                 return _LetterRow(
                   letter: letter,
                   onTap: () => _openLetter(letter),
-                  onLongPress: letter.state == _LetterState.locked
+                  onDelete: letter.state == _LetterState.locked
                       ? () => _confirmDelete(letter)
                       : null,
                 );
@@ -342,9 +342,11 @@ class _EmptyState extends StatelessWidget {
 class _LetterRow extends StatelessWidget {
   final _Letter letter;
   final VoidCallback onTap;
-  final VoidCallback? onLongPress;
+  // Тільки для ще незапечатаних листів — видима кнопка замість прихованого
+  // long-press, який ніхто сам не здогадався б спробувати.
+  final VoidCallback? onDelete;
 
-  const _LetterRow({required this.letter, required this.onTap, this.onLongPress});
+  const _LetterRow({required this.letter, required this.onTap, this.onDelete});
 
   @override
   Widget build(BuildContext context) {
@@ -372,7 +374,6 @@ class _LetterRow extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 10),
       child: GestureDetector(
         onTap: onTap,
-        onLongPress: onLongPress,
         child: Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
@@ -400,6 +401,16 @@ class _LetterRow extends StatelessWidget {
                   ],
                 ),
               ),
+              if (onDelete != null)
+                IconButton(
+                  onPressed: onDelete,
+                  icon: const Icon(
+                    PhosphorIconsLight.trash,
+                    size: 18,
+                    color: AppColors.inkMuted,
+                  ),
+                  tooltip: l10n.delete,
+                ),
             ],
           ),
         ),
@@ -469,7 +480,7 @@ class _RecipientPickerSheetState extends State<_RecipientPickerSheet> {
                   children: [
                     if (query.isEmpty)
                       _RecipientRow(
-                        label: l10n.me,
+                        label: l10n.timeCapsulesRecipientSelf,
                         selected: widget.selectedId == null,
                         onTap: () =>
                             Navigator.of(context).pop(_RecipientPickResult(null)),
@@ -652,7 +663,7 @@ class _ComposeLetterSheetState extends State<_ComposeLetterSheet> {
                       Expanded(
                         child: Text(
                           _recipientId == null
-                              ? l10n.me
+                              ? l10n.timeCapsulesRecipientSelf
                               : _friends
                                     .firstWhere((f) => f.id == _recipientId)
                                     .name,
