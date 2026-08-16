@@ -371,7 +371,7 @@
     }
   },
   "timeCapsulesDeleteConfirmTitle": "Delete letter?",
-  "timeCapsulesDeleteConfirmBody": "An unsealed letter can be deleted for good.",
+  "timeCapsulesDeleteConfirmBody": "The letter will be deleted for good.",
   "timeCapsulesSealedConfirmation": "Letter sealed",
   "timeCapsulesBannerReady": "You have a letter that's unlocked"
 }

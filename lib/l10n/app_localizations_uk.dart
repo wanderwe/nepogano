@@ -753,8 +753,7 @@ class AppLocalizationsUk extends AppLocalizations {
   String get timeCapsulesDeleteConfirmTitle => 'Видалити лист?';
 
   @override
-  String get timeCapsulesDeleteConfirmBody =>
-      'Незапечатаний лист можна видалити назавжди.';
+  String get timeCapsulesDeleteConfirmBody => 'Лист буде видалено назавжди.';
 
   @override
   String get timeCapsulesSealedConfirmation => 'Лист запечатано';

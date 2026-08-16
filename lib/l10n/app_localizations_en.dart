@@ -752,7 +752,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get timeCapsulesDeleteConfirmBody =>
-      'An unsealed letter can be deleted for good.';
+      'The letter will be deleted for good.';
 
   @override
   String get timeCapsulesSealedConfirmation => 'Letter sealed';
