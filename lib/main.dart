@@ -749,7 +749,11 @@ class _CheckInScreenState extends State<CheckInScreen>
   // Гілка "автор не прочитав" звужена лише до листів СОБІ (recipient_id
   // null) — інакше автор, що просто не перечитує вже НАДІСЛАНИЙ другові
   // лист (той однаково більше не зміниться і не потребує його уваги),
-  // назавжди тримав би бейдж увімкненим на власних старих листах.
+  // назавжди тримав би бейдж увімкненим на власних старих листах. Кожна
+  // гілка додатково звіряє відповідний *_deleted_at is null — лист,
+  // видалений зі свого боку, не повинен більше рахуватись у бейджі навіть
+  // якщо *_opened_at чомусь так і лишився null (як у листів, створених ще
+  // до розділення на author_opened_at/recipient_opened_at).
   Future<void> _loadPendingUnlockedLetters() async {
     final now = DateTime.now().toUtc().toIso8601String();
     final myId = _supabase.auth.currentUser?.id;
@@ -758,9 +762,9 @@ class _CheckInScreenState extends State<CheckInScreen>
         .from('future_letters')
         .select('id')
         .or(
-          'and(unlock_at.lte.$now,author_id.eq.$myId,recipient_id.is.null,author_opened_at.is.null),'
-          'and(unlock_at.lte.$now,recipient_id.eq.$myId,recipient_opened_at.is.null),'
-          'and(recipient_id.eq.$myId,recipient_seen_at.is.null)',
+          'and(unlock_at.lte.$now,author_id.eq.$myId,recipient_id.is.null,author_opened_at.is.null,author_deleted_at.is.null),'
+          'and(unlock_at.lte.$now,recipient_id.eq.$myId,recipient_opened_at.is.null,recipient_deleted_at.is.null),'
+          'and(recipient_id.eq.$myId,recipient_seen_at.is.null,recipient_deleted_at.is.null)',
         );
     if (mounted) setState(() => _pendingUnlockedLetters = (rows as List).length);
   }
