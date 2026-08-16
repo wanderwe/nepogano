@@ -43,15 +43,17 @@ alter table public.future_letters enable row level security;
 
 -- метадані видно обом сторонам одразу (список, банер, read receipt через
 -- opened_at) — саме body лишається прихованим окремою таблицею нижче.
--- Сторона, що "видалила" свою копію (author_deleted_at/recipient_deleted_at),
--- більше рядок не бачить — навіть якщо він фізично лишився для іншої сторони.
+-- Навмисно НЕ звіряє author_deleted_at/recipient_deleted_at тут: коли
+-- UPDATE сам встановлює цю колонку, WITH CHECK нового рядка перестає
+-- проходити SELECT-політику для того самого юзера, і Postgres кидає
+-- "new row violates row-level security policy" навіть якщо конкретна
+-- UPDATE-політика логічно мала б дозволити запис. Фільтрація "видалено
+-- для мене" — на клієнті (time_capsules_screen.dart), той самий підхід,
+-- що й для м'яко видалених коментарів (comment_activity.dart, deleted_at).
 drop policy if exists "future_letters_select" on public.future_letters;
 create policy "future_letters_select"
 on public.future_letters for select
-using (
-  (author_id = auth.uid() and author_deleted_at is null)
-  or (recipient_id = auth.uid() and recipient_deleted_at is null)
-);
+using (author_id = auth.uid() or recipient_id = auth.uid());
 
 -- лист другові можна написати лише прямому другу (той самий
 -- friendships-принцип, що й у friend_nudges); лист собі — recipient_id null,
@@ -125,10 +127,7 @@ using (
   exists (
     select 1 from public.future_letters fl
     where fl.id = letter_id
-      and (
-        (fl.author_id = auth.uid() and fl.author_deleted_at is null)
-        or (fl.recipient_id = auth.uid() and fl.recipient_deleted_at is null)
-      )
+      and (fl.author_id = auth.uid() or fl.recipient_id = auth.uid())
       and fl.unlock_at <= now()
   )
 );
