@@ -742,13 +742,21 @@ class _CheckInScreenState extends State<CheckInScreen>
     await markNudgesSeen();
   }
 
+  // Два різні приводи для індикатора на "Капсули часу": лист розкрився і
+  // чекає на прочитання (unlock_at минув, opened_at ще null), АБО друг
+  // щойно надіслав новий запечатаний лист, який я ще не бачив у списку
+  // (recipient_seen_at null) — це може статись задовго до unlock_at.
   Future<void> _loadPendingUnlockedLetters() async {
     final now = DateTime.now().toUtc().toIso8601String();
+    final myId = _supabase.auth.currentUser?.id;
+    if (myId == null) return;
     final rows = await _supabase
         .from('future_letters')
         .select('id')
-        .lte('unlock_at', now)
-        .isFilter('opened_at', null);
+        .or(
+          'and(unlock_at.lte.$now,opened_at.is.null),'
+          'and(recipient_id.eq.$myId,recipient_seen_at.is.null)',
+        );
     if (mounted) setState(() => _pendingUnlockedLetters = (rows as List).length);
   }
 
@@ -1413,11 +1421,13 @@ class _CheckInScreenState extends State<CheckInScreen>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    // Юзер міг отримати новий коментар чи вгадування друга, поки застосунок
-    // був у фоні — обидва індикатори інакше оновлюються лише при холодному
-    // старті чи поверненні саме з екрана Друзів/Коментарів, не живо.
+    // Юзер міг отримати новий коментар, вгадування друга чи капсулу часу,
+    // поки застосунок був у фоні — усі три індикатори інакше оновлюються
+    // лише при холодному старті чи поверненні саме з відповідного екрана,
+    // не живо.
     if (state == AppLifecycleState.resumed) {
       _checkAllActivityOnLoad();
+      _loadPendingUnlockedLetters();
     }
   }
 
@@ -2050,17 +2060,19 @@ class _CheckInScreenState extends State<CheckInScreen>
     showModalBottomSheet(
       context: context,
       builder: (sheetContext) => _MoreMenuSheet(
+        hasNewLetters: _pendingUnlockedLetters > 0,
         onProfile: () {
           Navigator.of(sheetContext).pop();
           Navigator.of(
             context,
           ).push(MaterialPageRoute(builder: (_) => const ProfileScreen()));
         },
-        onTimeCapsules: () {
+        onTimeCapsules: () async {
           Navigator.of(sheetContext).pop();
-          Navigator.of(context).push(
+          await Navigator.of(context).push(
             MaterialPageRoute(builder: (_) => const TimeCapsulesScreen()),
           );
+          if (mounted) _loadPendingUnlockedLetters();
         },
         onLanguage: () {
           Navigator.of(sheetContext).pop();
@@ -2351,13 +2363,14 @@ class _CheckInScreenState extends State<CheckInScreen>
                       Expanded(
                         child: GestureDetector(
                           behavior: HitTestBehavior.opaque,
-                          onTap: () {
+                          onTap: () async {
                             setState(() => _lettersBannerDismissed = true);
-                            Navigator.of(context).push(
+                            await Navigator.of(context).push(
                               MaterialPageRoute(
                                 builder: (_) => const TimeCapsulesScreen(),
                               ),
                             );
+                            if (mounted) _loadPendingUnlockedLetters();
                           },
                           child: Text(
                             l10n.timeCapsulesBannerReady,
@@ -2569,6 +2582,7 @@ class _CheckInScreenState extends State<CheckInScreen>
 class _MoreMenuSheet extends StatelessWidget {
   final VoidCallback onProfile;
   final VoidCallback onTimeCapsules;
+  final bool hasNewLetters;
   final VoidCallback onLanguage;
   final VoidCallback onSignOut;
   final VoidCallback onDeleteAccount;
@@ -2576,6 +2590,7 @@ class _MoreMenuSheet extends StatelessWidget {
   const _MoreMenuSheet({
     required this.onProfile,
     required this.onTimeCapsules,
+    required this.hasNewLetters,
     required this.onLanguage,
     required this.onSignOut,
     required this.onDeleteAccount,
@@ -2599,6 +2614,7 @@ class _MoreMenuSheet extends StatelessWidget {
               icon: PhosphorIconsLight.envelopeSimple,
               label: l10n.timeCapsulesMenuLabel,
               onTap: onTimeCapsules,
+              showDot: hasNewLetters,
             ),
             _MenuRow(
               icon: PhosphorIconsLight.globe,
@@ -2633,12 +2649,14 @@ class _MenuRow extends StatelessWidget {
   final String label;
   final VoidCallback onTap;
   final Color? color;
+  final bool showDot;
 
   const _MenuRow({
     required this.icon,
     required this.label,
     required this.onTap,
     this.color,
+    this.showDot = false,
   });
 
   @override
@@ -2654,6 +2672,16 @@ class _MenuRow extends StatelessWidget {
             Icon(icon, size: 20, color: textColor),
             const SizedBox(width: 16),
             Text(label, style: TextStyle(fontSize: 16, color: textColor)),
+            if (showDot) ...[
+              const SizedBox(width: 8),
+              const DecoratedBox(
+                decoration: BoxDecoration(
+                  color: AppColors.notification,
+                  shape: BoxShape.circle,
+                ),
+                child: SizedBox(width: 8, height: 8),
+              ),
+            ],
           ],
         ),
       ),

@@ -774,5 +774,5 @@ class AppLocalizationsEn extends AppLocalizations {
   String get timeCapsulesSealedConfirmation => 'Letter sealed';
 
   @override
-  String get timeCapsulesBannerReady => 'You have a letter that\'s unlocked';
+  String get timeCapsulesBannerReady => 'There\'s news in your time capsules';
 }

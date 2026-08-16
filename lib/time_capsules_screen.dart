@@ -55,6 +55,7 @@ class _Letter {
   final String? recipientId;
   final DateTime unlockAt;
   final DateTime? openedAt;
+  final DateTime? recipientSeenAt;
   // Присутнє, лише коли RLS дозволив прочитати future_letter_bodies —
   // тобто фактично коли лист уже розкрито. До того часу null навіть якщо
   // рядок технічно існує на сервері.
@@ -71,6 +72,7 @@ class _Letter {
     this.recipientId,
     required this.unlockAt,
     this.openedAt,
+    this.recipientSeenAt,
     this.body,
     this.otherPartyName,
   });
@@ -113,6 +115,10 @@ class _TimeCapsulesScreenState extends State<TimeCapsulesScreen> {
   final _supabase = Supabase.instance.client;
   List<_Letter> _letters = [];
   bool _loading = true;
+  // Знімок "щойно отримано, ще не бачив" на момент відкриття списку — щоб
+  // рядок ще підсвічувався крапкою під час цього перегляду, навіть якщо
+  // recipient_seen_at уже проставився фоновим запитом нижче.
+  Set<String> _newlyReceivedIds = {};
 
   @override
   void initState() {
@@ -127,7 +133,7 @@ class _TimeCapsulesScreenState extends State<TimeCapsulesScreen> {
       final rows = await _supabase
           .from('future_letters')
           .select(
-            'id, author_id, recipient_id, unlock_at, opened_at, future_letter_bodies(body)',
+            'id, author_id, recipient_id, unlock_at, opened_at, recipient_seen_at, future_letter_bodies(body)',
           )
           .order('created_at', ascending: false);
 
@@ -161,6 +167,7 @@ class _TimeCapsulesScreenState extends State<TimeCapsulesScreen> {
         // і список тихо ставав порожнім.
         final bodyRow = row['future_letter_bodies'] as Map<String, dynamic>?;
         final openedAtRaw = row['opened_at'] as String?;
+        final recipientSeenAtRaw = row['recipient_seen_at'] as String?;
         final authorId = row['author_id'] as String;
         final recipientId = row['recipient_id'] as String?;
         final otherId = authorId == myId ? recipientId : authorId;
@@ -172,11 +179,40 @@ class _TimeCapsulesScreenState extends State<TimeCapsulesScreen> {
           openedAt: openedAtRaw != null
               ? DateTime.parse(openedAtRaw).toLocal()
               : null,
+          recipientSeenAt: recipientSeenAtRaw != null
+              ? DateTime.parse(recipientSeenAtRaw).toLocal()
+              : null,
           body: bodyRow?['body'] as String?,
           otherPartyName: otherId != null ? nameById[otherId] : null,
         );
       }).toList();
-      if (mounted) setState(() => _letters = letters);
+
+      final unseenIds = letters
+          .where((l) => l.recipientId == myId && l.recipientSeenAt == null)
+          .map((l) => l.id)
+          .toList();
+      if (mounted) {
+        setState(() {
+          _letters = letters;
+          _newlyReceivedIds = unseenIds.toSet();
+        });
+      }
+
+      // Сам факт побачити запечатаний лист друга у списку — вже
+      // "ознайомлення", тому знімає індикатор, навіть якщо unlock_at ще
+      // далеко в майбутньому. _newlyReceivedIds вище лишається знімком для
+      // підсвітки в цьому перегляді.
+      if (unseenIds.isNotEmpty) {
+        // Очікуємо завершення (не unawaited) — юзер може повернутись на
+        // головний екран одразу, і той перечитує лічильник на поверненні;
+        // без await update міг не встигнути закомітитись до того моменту.
+        await _supabase
+            .from('future_letters')
+            .update({
+              'recipient_seen_at': DateTime.now().toUtc().toIso8601String(),
+            })
+            .inFilter('id', unseenIds);
+      }
     } catch (_) {
       // Список просто лишається таким, яким був — немає окремого
       // "щось пішло не так" стану для цього екрана, спробує ще раз при
@@ -252,8 +288,44 @@ class _TimeCapsulesScreenState extends State<TimeCapsulesScreen> {
       ),
     );
     if (confirmed != true) return;
-    await _supabase.from('future_letters').delete().eq('id', letter.id);
-    _load();
+
+    try {
+      final myId = _supabase.auth.currentUser!.id;
+      final isAuthor = letter.authorId == myId;
+      final isSelfLetter = letter.recipientId == null;
+      if (isSelfLetter || (isAuthor && letter.openedAt == null)) {
+        // Втрачати нічого — інша сторона або не існує, або ще навіть не
+        // бачила текст, тому стираємо рядок повністю. RETURNING тут
+        // безпечний для перевірки — DELETE-політика звіряється зі старим
+        // рядком, який ще існував і був видимий нам.
+        final affected = await _supabase
+            .from('future_letters')
+            .delete()
+            .eq('id', letter.id)
+            .select('id');
+        if (affected.isEmpty) throw Exception('RLS blocked the delete');
+      } else {
+        // М'яке видалення — ховаємо лише зі свого боку, інша сторона (яка
+        // вже читала або є автором) зберігає свою копію. Без .select() тут
+        // навмисно: після встановлення recipient_deleted_at/author_deleted_at
+        // рядок одразу перестає проходити SELECT-політику для НАС САМИХ,
+        // тож RETURNING легітимно повернув би порожньо навіть при успіху —
+        // покладаємось на те, що WITH CHECK кидає реальний виняток при
+        // фактичній відмові.
+        final column = isAuthor ? 'author_deleted_at' : 'recipient_deleted_at';
+        await _supabase
+            .from('future_letters')
+            .update({column: DateTime.now().toUtc().toIso8601String()})
+            .eq('id', letter.id);
+      }
+      _load();
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(AppLocalizations.of(context).somethingWentWrong)),
+        );
+      }
+    }
   }
 
   @override
@@ -270,10 +342,19 @@ class _TimeCapsulesScreenState extends State<TimeCapsulesScreen> {
               itemCount: _letters.length,
               itemBuilder: (context, index) {
                 final letter = _letters[index];
+                final myId = _supabase.auth.currentUser!.id;
+                // Автор може передумати будь-коли; отримувач — лише
+                // прочитавши, щоб не стерти чужу працю навіть не глянувши.
+                final canDelete =
+                    letter.authorId == myId ||
+                    letter.state == _LetterState.opened;
                 return _LetterRow(
                   letter: letter,
                   onTap: () => _openLetter(letter),
-                  onDelete: () => _confirmDelete(letter),
+                  onDelete: canDelete ? () => _confirmDelete(letter) : null,
+                  showNewDot:
+                      _newlyReceivedIds.contains(letter.id) ||
+                      letter.state == _LetterState.unlockedUnread,
                 );
               },
             ),
@@ -343,8 +424,17 @@ class _LetterRow extends StatelessWidget {
   // Тільки для ще незапечатаних листів — видима кнопка замість прихованого
   // long-press, який ніхто сам не здогадався б спробувати.
   final VoidCallback? onDelete;
+  // Або щойно отриманий лист від друга (ще не бачений у списку раніше),
+  // або щойно розкрився і чекає на прочитання — той самий привід, що й для
+  // бейджа на меню/банері, лише вказаний на конкретному рядку.
+  final bool showNewDot;
 
-  const _LetterRow({required this.letter, required this.onTap, this.onDelete});
+  const _LetterRow({
+    required this.letter,
+    required this.onTap,
+    this.onDelete,
+    this.showNewDot = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -380,6 +470,16 @@ class _LetterRow extends StatelessWidget {
           ),
           child: Row(
             children: [
+              if (showNewDot) ...[
+                const DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: AppColors.notification,
+                    shape: BoxShape.circle,
+                  ),
+                  child: SizedBox(width: 8, height: 8),
+                ),
+                const SizedBox(width: 10),
+              ],
               Icon(icon, color: AppColors.inkMuted, size: 22),
               const SizedBox(width: 14),
               Expanded(
