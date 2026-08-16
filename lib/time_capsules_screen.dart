@@ -29,7 +29,10 @@ Future<List<_FriendOption>> _loadFriendOptions(SupabaseClient supabase) async {
       .or('requester_id.eq.$myId,addressee_id.eq.$myId')
       .eq('status', 'accepted');
   final friendIds = (rows as List)
-      .map((r) => r['requester_id'] == myId ? r['addressee_id'] : r['requester_id'])
+      .map(
+        (r) =>
+            r['requester_id'] == myId ? r['addressee_id'] : r['requester_id'],
+      )
       .whereType<String>()
       .toSet()
       .toList();
@@ -127,6 +130,12 @@ class _TimeCapsulesScreenState extends State<TimeCapsulesScreen> {
   // рядок ще підсвічувався крапкою під час цього перегляду, навіть якщо
   // recipient_seen_at уже проставився фоновим запитом нижче.
   Set<String> _newlyReceivedIds = {};
+  // Позначення recipient_seen_at — await у _load() сам собою НІЧОГО не
+  // блокує в навігації: юзер може вийти (кнопка "назад", свайп) раніше,
+  // ніж запит устигне завершитись, і батьківський екран одразу перечитає
+  // бейдж зі старими даними. PopScope нижче гарантує, що вихід реально
+  // стається лише ПІСЛЯ завершення цього запиту.
+  Future<void> _markSeenFuture = Future.value();
 
   @override
   void initState() {
@@ -223,15 +232,16 @@ class _TimeCapsulesScreenState extends State<TimeCapsulesScreen> {
       // далеко в майбутньому. _newlyReceivedIds вище лишається знімком для
       // підсвітки в цьому перегляді.
       if (unseenIds.isNotEmpty) {
-        // Очікуємо завершення (не unawaited) — юзер може повернутись на
-        // головний екран одразу, і той перечитує лічильник на поверненні;
-        // без await update міг не встигнути закомітитись до того моменту.
-        await _supabase
+        // Зберігаємо посилання на Future — PopScope в build() чекає саме
+        // на нього перед фактичним виходом з екрана (див. коментар біля
+        // поля _markSeenFuture).
+        _markSeenFuture = _supabase
             .from('future_letters')
             .update({
               'recipient_seen_at': DateTime.now().toUtc().toIso8601String(),
             })
             .inFilter('id', unseenIds);
+        await _markSeenFuture;
       }
     } catch (_) {
       // Список просто лишається таким, яким був — немає окремого
@@ -252,7 +262,9 @@ class _TimeCapsulesScreenState extends State<TimeCapsulesScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(AppLocalizations.of(context).timeCapsulesSealedConfirmation),
+            content: Text(
+              AppLocalizations.of(context).timeCapsulesSealedConfirmation,
+            ),
           ),
         );
       }
@@ -289,7 +301,8 @@ class _TimeCapsulesScreenState extends State<TimeCapsulesScreen> {
     final title = _letterLabel(letter, myId, l10n);
     await Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => _LetterDetailScreen(title: title, body: letter.body ?? ''),
+        builder: (_) =>
+            _LetterDetailScreen(title: title, body: letter.body ?? ''),
       ),
     );
     _load();
@@ -347,7 +360,9 @@ class _TimeCapsulesScreenState extends State<TimeCapsulesScreen> {
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(AppLocalizations.of(context).somethingWentWrong)),
+          SnackBar(
+            content: Text(AppLocalizations.of(context).somethingWentWrong),
+          ),
         );
       }
     }
@@ -356,49 +371,59 @@ class _TimeCapsulesScreenState extends State<TimeCapsulesScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return Scaffold(
-      appBar: AppBar(title: Text(l10n.timeCapsulesMenuLabel, style: appScreenTitle())),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator())
-          : _letters.isEmpty
-          ? _EmptyState(onWrite: _openCompose)
-          : ListView.builder(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
-              itemCount: _letters.length,
-              itemBuilder: (context, index) {
-                final letter = _letters[index];
-                final myId = _supabase.auth.currentUser!.id;
-                final myState = letter.stateFor(myId);
-                // Автор може передумати будь-коли; отримувач — лише
-                // прочитавши, щоб не стерти чужу працю навіть не глянувши.
-                final canDelete =
-                    letter.authorId == myId || myState == _LetterState.opened;
-                return _LetterRow(
-                  letter: letter,
-                  myId: myId,
-                  onTap: () => _openLetter(letter),
-                  onDelete: canDelete ? () => _confirmDelete(letter) : null,
-                  // "Новий" для щойно розкритого — той самий виняток, що й
-                  // бейдж на меню: не для автора, що просто не перечитує
-                  // вже надісланий другові лист (не потребує його уваги).
-                  showNewDot:
-                      _newlyReceivedIds.contains(letter.id) ||
-                      (myState == _LetterState.unlockedUnread &&
-                          (letter.recipientId == null ||
-                              letter.authorId != myId)),
-                );
-              },
-            ),
-      floatingActionButton: _letters.isEmpty
-          ? null
-          : FloatingActionButton.extended(
-              onPressed: _openCompose,
-              backgroundColor: AppColors.accent,
-              foregroundColor: AppColors.accentInk,
-              icon: const Icon(PhosphorIconsLight.envelopeSimple),
-              label: Text(l10n.timeCapsulesWriteNew),
-            ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) return;
+        await _markSeenFuture;
+        if (context.mounted) Navigator.of(context).pop();
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(l10n.timeCapsulesMenuLabel, style: appScreenTitle()),
+        ),
+        body: _loading
+            ? const Center(child: CircularProgressIndicator())
+            : _letters.isEmpty
+            ? _EmptyState(onWrite: _openCompose)
+            : ListView.builder(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
+                itemCount: _letters.length,
+                itemBuilder: (context, index) {
+                  final letter = _letters[index];
+                  final myId = _supabase.auth.currentUser!.id;
+                  final myState = letter.stateFor(myId);
+                  // Автор може передумати будь-коли; отримувач — лише
+                  // прочитавши, щоб не стерти чужу працю навіть не глянувши.
+                  final canDelete =
+                      letter.authorId == myId || myState == _LetterState.opened;
+                  return _LetterRow(
+                    letter: letter,
+                    myId: myId,
+                    onTap: () => _openLetter(letter),
+                    onDelete: canDelete ? () => _confirmDelete(letter) : null,
+                    // "Новий" для щойно розкритого — той самий виняток, що й
+                    // бейдж на меню: не для автора, що просто не перечитує
+                    // вже надісланий другові лист (не потребує його уваги).
+                    showNewDot:
+                        _newlyReceivedIds.contains(letter.id) ||
+                        (myState == _LetterState.unlockedUnread &&
+                            (letter.recipientId == null ||
+                                letter.authorId != myId)),
+                  );
+                },
+              ),
+        floatingActionButton: _letters.isEmpty
+            ? null
+            : FloatingActionButton.extended(
+                onPressed: _openCompose,
+                backgroundColor: AppColors.accent,
+                foregroundColor: AppColors.accentInk,
+                icon: const Icon(PhosphorIconsLight.envelopeSimple),
+                label: Text(l10n.timeCapsulesWriteNew),
+              ),
+        floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+      ),
     );
   }
 }
@@ -426,7 +451,11 @@ class _EmptyState extends StatelessWidget {
             Text(
               l10n.timeCapsulesEmptySubtitle,
               textAlign: TextAlign.center,
-              style: const TextStyle(color: AppColors.inkMuted, fontSize: 14, height: 1.4),
+              style: const TextStyle(
+                color: AppColors.inkMuted,
+                fontSize: 14,
+                height: 1.4,
+              ),
             ),
             const SizedBox(height: 28),
             SizedBox(
@@ -435,7 +464,9 @@ class _EmptyState extends StatelessWidget {
                 style: FilledButton.styleFrom(
                   backgroundColor: AppColors.accent,
                   foregroundColor: AppColors.accentInk,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
                   padding: const EdgeInsets.symmetric(horizontal: 24),
                 ),
                 onPressed: onWrite,
@@ -478,11 +509,15 @@ class _LetterRow extends StatelessWidget {
     switch (state) {
       case _LetterState.locked:
         icon = PhosphorIconsLight.lockKey;
-        status = l10n.timeCapsulesLockedUntil(_formatDate(letter.unlockAt, context));
+        status = l10n.timeCapsulesLockedUntil(
+          _formatDate(letter.unlockAt, context),
+        );
         break;
       case _LetterState.unlockedUnread:
         icon = PhosphorIconsLight.envelopeSimpleOpen;
-        status = l10n.timeCapsulesLockedUntil(_formatDate(letter.unlockAt, context));
+        status = l10n.timeCapsulesLockedUntil(
+          _formatDate(letter.unlockAt, context),
+        );
         break;
       case _LetterState.opened:
         icon = PhosphorIconsLight.bookOpen;
@@ -525,7 +560,13 @@ class _LetterRow extends StatelessWidget {
                       style: const TextStyle(color: AppColors.ink),
                     ),
                     const SizedBox(height: 2),
-                    Text(status, style: const TextStyle(color: AppColors.inkMuted, fontSize: 12)),
+                    Text(
+                      status,
+                      style: const TextStyle(
+                        color: AppColors.inkMuted,
+                        fontSize: 12,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -560,7 +601,10 @@ class _RecipientPickerSheet extends StatefulWidget {
   final List<_FriendOption> friends;
   final String? selectedId;
 
-  const _RecipientPickerSheet({required this.friends, required this.selectedId});
+  const _RecipientPickerSheet({
+    required this.friends,
+    required this.selectedId,
+  });
 
   @override
   State<_RecipientPickerSheet> createState() => _RecipientPickerSheetState();
@@ -610,8 +654,9 @@ class _RecipientPickerSheetState extends State<_RecipientPickerSheet> {
                       _RecipientRow(
                         label: l10n.timeCapsulesRecipientSelf,
                         selected: widget.selectedId == null,
-                        onTap: () =>
-                            Navigator.of(context).pop(_RecipientPickResult(null)),
+                        onTap: () => Navigator.of(
+                          context,
+                        ).pop(_RecipientPickResult(null)),
                       ),
                     ...filtered.map(
                       (friend) => _RecipientRow(
@@ -650,7 +695,11 @@ class _RecipientRow extends StatelessWidget {
       onTap: onTap,
       title: Text(label, style: const TextStyle(color: AppColors.ink)),
       trailing: selected
-          ? const Icon(PhosphorIconsLight.check, color: AppColors.accent, size: 18)
+          ? const Icon(
+              PhosphorIconsLight.check,
+              color: AppColors.accent,
+              size: 18,
+            )
           : null,
     );
   }
@@ -731,7 +780,9 @@ class _ComposeLetterSheetState extends State<_ComposeLetterSheet> {
       if (mounted) {
         setState(() => _saving = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(AppLocalizations.of(context).somethingWentWrong)),
+          SnackBar(
+            content: Text(AppLocalizations.of(context).somethingWentWrong),
+          ),
         );
       }
     }
@@ -766,22 +817,29 @@ class _ComposeLetterSheetState extends State<_ComposeLetterSheet> {
             // списку).
             if (_friends.isNotEmpty) ...[
               const SizedBox(height: 12),
-              Text(l10n.timeCapsulesRecipientLabel, style: const TextStyle(color: AppColors.inkMuted, fontSize: 12)),
+              Text(
+                l10n.timeCapsulesRecipientLabel,
+                style: const TextStyle(color: AppColors.inkMuted, fontSize: 12),
+              ),
               const SizedBox(height: 6),
               GestureDetector(
                 onTap: () async {
-                  final picked = await showModalBottomSheet<_RecipientPickResult>(
-                    context: context,
-                    isScrollControlled: true,
-                    builder: (_) => _RecipientPickerSheet(
-                      friends: _friends,
-                      selectedId: _recipientId,
-                    ),
-                  );
+                  final picked =
+                      await showModalBottomSheet<_RecipientPickResult>(
+                        context: context,
+                        isScrollControlled: true,
+                        builder: (_) => _RecipientPickerSheet(
+                          friends: _friends,
+                          selectedId: _recipientId,
+                        ),
+                      );
                   if (picked != null) setState(() => _recipientId = picked.id);
                 },
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 14,
+                  ),
                   decoration: BoxDecoration(
                     color: AppColors.surface,
                     borderRadius: BorderRadius.circular(14),
@@ -837,14 +895,19 @@ class _ComposeLetterSheetState extends State<_ComposeLetterSheet> {
                 style: FilledButton.styleFrom(
                   backgroundColor: AppColors.accent,
                   foregroundColor: AppColors.accentInk,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
                 ),
                 onPressed: _saving ? null : _save,
                 child: _saving
                     ? const SizedBox(
                         height: 18,
                         width: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.accentInk),
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: AppColors.accentInk,
+                        ),
                       )
                     : Text(l10n.timeCapsulesSeal),
               ),
@@ -870,7 +933,11 @@ class _LetterDetailScreen extends StatelessWidget {
         padding: const EdgeInsets.all(24),
         child: Text(
           body,
-          style: const TextStyle(color: AppColors.ink, fontSize: 16, height: 1.5),
+          style: const TextStyle(
+            color: AppColors.ink,
+            fontSize: 16,
+            height: 1.5,
+          ),
         ),
       ),
     );
