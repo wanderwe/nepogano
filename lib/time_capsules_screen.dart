@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -194,14 +192,15 @@ class _TimeCapsulesScreenState extends State<TimeCapsulesScreen> {
           .map((l) => l.id)
           .toList();
       if (unseenIds.isNotEmpty) {
-        unawaited(
-          _supabase
-              .from('future_letters')
-              .update({
-                'recipient_seen_at': DateTime.now().toUtc().toIso8601String(),
-              })
-              .inFilter('id', unseenIds),
-        );
+        // Очікуємо завершення (не unawaited) — юзер може повернутись на
+        // головний екран одразу, і той перечитує лічильник на поверненні;
+        // без await update міг не встигнути закомітитись до того моменту.
+        await _supabase
+            .from('future_letters')
+            .update({
+              'recipient_seen_at': DateTime.now().toUtc().toIso8601String(),
+            })
+            .inFilter('id', unseenIds);
       }
     } catch (_) {
       // Список просто лишається таким, яким був — немає окремого
@@ -278,7 +277,23 @@ class _TimeCapsulesScreenState extends State<TimeCapsulesScreen> {
       ),
     );
     if (confirmed != true) return;
-    await _supabase.from('future_letters').delete().eq('id', letter.id);
+
+    final myId = _supabase.auth.currentUser!.id;
+    final isAuthor = letter.authorId == myId;
+    final isSelfLetter = letter.recipientId == null;
+    if (isSelfLetter || (isAuthor && letter.openedAt == null)) {
+      // Втрачати нічого — інша сторона або не існує, або ще навіть не
+      // бачила текст, тому стираємо рядок повністю.
+      await _supabase.from('future_letters').delete().eq('id', letter.id);
+    } else {
+      // М'яке видалення — ховаємо лише зі свого боку, інша сторона (яка
+      // вже читала або є автором) зберігає свою копію.
+      final column = isAuthor ? 'author_deleted_at' : 'recipient_deleted_at';
+      await _supabase
+          .from('future_letters')
+          .update({column: DateTime.now().toUtc().toIso8601String()})
+          .eq('id', letter.id);
+    }
     _load();
   }
 
@@ -296,10 +311,16 @@ class _TimeCapsulesScreenState extends State<TimeCapsulesScreen> {
               itemCount: _letters.length,
               itemBuilder: (context, index) {
                 final letter = _letters[index];
+                final myId = _supabase.auth.currentUser!.id;
+                // Автор може передумати будь-коли; отримувач — лише
+                // прочитавши, щоб не стерти чужу працю навіть не глянувши.
+                final canDelete =
+                    letter.authorId == myId ||
+                    letter.state == _LetterState.opened;
                 return _LetterRow(
                   letter: letter,
                   onTap: () => _openLetter(letter),
-                  onDelete: () => _confirmDelete(letter),
+                  onDelete: canDelete ? () => _confirmDelete(letter) : null,
                 );
               },
             ),

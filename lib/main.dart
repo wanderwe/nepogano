@@ -2363,13 +2363,14 @@ class _CheckInScreenState extends State<CheckInScreen>
                       Expanded(
                         child: GestureDetector(
                           behavior: HitTestBehavior.opaque,
-                          onTap: () {
+                          onTap: () async {
                             setState(() => _lettersBannerDismissed = true);
-                            Navigator.of(context).push(
+                            await Navigator.of(context).push(
                               MaterialPageRoute(
                                 builder: (_) => const TimeCapsulesScreen(),
                               ),
                             );
+                            if (mounted) _loadPendingUnlockedLetters();
                           },
                           child: Text(
                             l10n.timeCapsulesBannerReady,
