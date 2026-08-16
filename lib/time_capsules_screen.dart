@@ -54,7 +54,11 @@ class _Letter {
   final String authorId;
   final String? recipientId;
   final DateTime unlockAt;
-  final DateTime? openedAt;
+  // Окремо для автора й отримувача — інакше автор, зазирнувши у власний
+  // надісланий лист, помилково позначав би його "прочитаним" і для
+  // отримувача теж (спільне поле не могло різнити, хто саме відкрив).
+  final DateTime? authorOpenedAt;
+  final DateTime? recipientOpenedAt;
   final DateTime? recipientSeenAt;
   // Присутнє, лише коли RLS дозволив прочитати future_letter_bodies —
   // тобто фактично коли лист уже розкрито. До того часу null навіть якщо
@@ -71,15 +75,19 @@ class _Letter {
     required this.authorId,
     this.recipientId,
     required this.unlockAt,
-    this.openedAt,
+    this.authorOpenedAt,
+    this.recipientOpenedAt,
     this.recipientSeenAt,
     this.body,
     this.otherPartyName,
   });
 
-  _LetterState get state {
+  DateTime? _myOpenedAt(String myId) =>
+      myId == authorId ? authorOpenedAt : recipientOpenedAt;
+
+  _LetterState stateFor(String myId) {
     if (DateTime.now().isBefore(unlockAt)) return _LetterState.locked;
-    if (openedAt == null) return _LetterState.unlockedUnread;
+    if (_myOpenedAt(myId) == null) return _LetterState.unlockedUnread;
     return _LetterState.opened;
   }
 }
@@ -137,7 +145,7 @@ class _TimeCapsulesScreenState extends State<TimeCapsulesScreen> {
       final rows = await _supabase
           .from('future_letters')
           .select(
-            'id, author_id, recipient_id, unlock_at, opened_at, recipient_seen_at, future_letter_bodies(body)',
+            'id, author_id, recipient_id, unlock_at, author_opened_at, recipient_opened_at, recipient_seen_at, future_letter_bodies(body)',
           )
           .or(
             'and(author_id.eq.$myId,author_deleted_at.is.null),'
@@ -174,7 +182,8 @@ class _TimeCapsulesScreenState extends State<TimeCapsulesScreen> {
         // впав з рантайм-помилкою, яку ковтав catch навколо всього _load(),
         // і список тихо ставав порожнім.
         final bodyRow = row['future_letter_bodies'] as Map<String, dynamic>?;
-        final openedAtRaw = row['opened_at'] as String?;
+        final authorOpenedAtRaw = row['author_opened_at'] as String?;
+        final recipientOpenedAtRaw = row['recipient_opened_at'] as String?;
         final recipientSeenAtRaw = row['recipient_seen_at'] as String?;
         final authorId = row['author_id'] as String;
         final recipientId = row['recipient_id'] as String?;
@@ -184,8 +193,11 @@ class _TimeCapsulesScreenState extends State<TimeCapsulesScreen> {
           authorId: authorId,
           recipientId: recipientId,
           unlockAt: DateTime.parse(row['unlock_at'] as String).toLocal(),
-          openedAt: openedAtRaw != null
-              ? DateTime.parse(openedAtRaw).toLocal()
+          authorOpenedAt: authorOpenedAtRaw != null
+              ? DateTime.parse(authorOpenedAtRaw).toLocal()
+              : null,
+          recipientOpenedAt: recipientOpenedAtRaw != null
+              ? DateTime.parse(recipientOpenedAtRaw).toLocal()
               : null,
           recipientSeenAt: recipientSeenAtRaw != null
               ? DateTime.parse(recipientSeenAtRaw).toLocal()
@@ -250,7 +262,9 @@ class _TimeCapsulesScreenState extends State<TimeCapsulesScreen> {
 
   Future<void> _openLetter(_Letter letter) async {
     final l10n = AppLocalizations.of(context);
-    if (letter.state == _LetterState.locked) {
+    final myId = _supabase.auth.currentUser!.id;
+    final state = letter.stateFor(myId);
+    if (state == _LetterState.locked) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
@@ -261,15 +275,18 @@ class _TimeCapsulesScreenState extends State<TimeCapsulesScreen> {
       return;
     }
 
-    if (letter.state == _LetterState.unlockedUnread) {
+    if (state == _LetterState.unlockedUnread) {
+      final column = myId == letter.authorId
+          ? 'author_opened_at'
+          : 'recipient_opened_at';
       await _supabase
           .from('future_letters')
-          .update({'opened_at': DateTime.now().toUtc().toIso8601String()})
+          .update({column: DateTime.now().toUtc().toIso8601String()})
           .eq('id', letter.id);
     }
 
     if (!mounted) return;
-    final title = _letterLabel(letter, _supabase.auth.currentUser!.id, l10n);
+    final title = _letterLabel(letter, myId, l10n);
     await Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => _LetterDetailScreen(title: title, body: letter.body ?? ''),
@@ -301,7 +318,7 @@ class _TimeCapsulesScreenState extends State<TimeCapsulesScreen> {
       final myId = _supabase.auth.currentUser!.id;
       final isAuthor = letter.authorId == myId;
       final isSelfLetter = letter.recipientId == null;
-      if (isSelfLetter || (isAuthor && letter.openedAt == null)) {
+      if (isSelfLetter || (isAuthor && letter.recipientOpenedAt == null)) {
         // Втрачати нічого — інша сторона або не існує, або ще навіть не
         // бачила текст, тому стираємо рядок повністю. RETURNING тут
         // безпечний для перевірки — DELETE-політика звіряється зі старим
@@ -351,18 +368,19 @@ class _TimeCapsulesScreenState extends State<TimeCapsulesScreen> {
               itemBuilder: (context, index) {
                 final letter = _letters[index];
                 final myId = _supabase.auth.currentUser!.id;
+                final myState = letter.stateFor(myId);
                 // Автор може передумати будь-коли; отримувач — лише
                 // прочитавши, щоб не стерти чужу працю навіть не глянувши.
                 final canDelete =
-                    letter.authorId == myId ||
-                    letter.state == _LetterState.opened;
+                    letter.authorId == myId || myState == _LetterState.opened;
                 return _LetterRow(
                   letter: letter,
+                  myId: myId,
                   onTap: () => _openLetter(letter),
                   onDelete: canDelete ? () => _confirmDelete(letter) : null,
                   showNewDot:
                       _newlyReceivedIds.contains(letter.id) ||
-                      letter.state == _LetterState.unlockedUnread,
+                      myState == _LetterState.unlockedUnread,
                 );
               },
             ),
@@ -428,6 +446,7 @@ class _EmptyState extends StatelessWidget {
 
 class _LetterRow extends StatelessWidget {
   final _Letter letter;
+  final String myId;
   final VoidCallback onTap;
   // Тільки для ще незапечатаних листів — видима кнопка замість прихованого
   // long-press, який ніхто сам не здогадався б спробувати.
@@ -439,6 +458,7 @@ class _LetterRow extends StatelessWidget {
 
   const _LetterRow({
     required this.letter,
+    required this.myId,
     required this.onTap,
     this.onDelete,
     this.showNewDot = false,
@@ -447,9 +467,10 @@ class _LetterRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final state = letter.stateFor(myId);
     final IconData icon;
     final String status;
-    switch (letter.state) {
+    switch (state) {
       case _LetterState.locked:
         icon = PhosphorIconsLight.lockKey;
         status = l10n.timeCapsulesLockedUntil(_formatDate(letter.unlockAt, context));
@@ -461,7 +482,7 @@ class _LetterRow extends StatelessWidget {
       case _LetterState.opened:
         icon = PhosphorIconsLight.bookOpen;
         status = l10n.timeCapsulesOpenedOn(
-          _formatDate(letter.openedAt ?? letter.unlockAt, context),
+          _formatDate(letter._myOpenedAt(myId) ?? letter.unlockAt, context),
         );
         break;
     }
@@ -495,11 +516,7 @@ class _LetterRow extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      _letterLabel(
-                        letter,
-                        Supabase.instance.client.auth.currentUser!.id,
-                        l10n,
-                      ),
+                      _letterLabel(letter, myId, l10n),
                       style: const TextStyle(color: AppColors.ink),
                     ),
                     const SizedBox(height: 2),

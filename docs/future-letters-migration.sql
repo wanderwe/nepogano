@@ -19,7 +19,14 @@ create table if not exists public.future_letters (
   recipient_id uuid references auth.users(id) on delete cascade,
   created_at timestamptz not null default now(),
   unlock_at timestamptz not null,
+  -- Застаріле: замінено на author_opened_at/recipient_opened_at нижче —
+  -- одне спільне поле не могло розрізнити, хто саме відкрив лист (автор,
+  -- зазирнувши у власний надісланий лист, помилково позначав би його
+  -- прочитаним і для отримувача теж). Колонка лишається в БД, але код
+  -- більше її не читає й не пише.
   opened_at timestamptz,
+  author_opened_at timestamptz,
+  recipient_opened_at timestamptz,
   -- Окремо від opened_at: ставиться, щойно отримувач побачив ЗАПЕЧАТАНИЙ
   -- лист у своєму списку (просто факт "хтось мені написав"), а не коли
   -- прочитав текст — це може статись задовго до unlock_at.
@@ -38,6 +45,10 @@ alter table public.future_letters
   add column if not exists author_deleted_at timestamptz;
 alter table public.future_letters
   add column if not exists recipient_deleted_at timestamptz;
+alter table public.future_letters
+  add column if not exists author_opened_at timestamptz;
+alter table public.future_letters
+  add column if not exists recipient_opened_at timestamptz;
 
 alter table public.future_letters enable row level security;
 
@@ -85,7 +96,7 @@ create policy "future_letters_delete"
 on public.future_letters for delete
 using (
   author_id = auth.uid()
-  and (recipient_id is null or opened_at is null)
+  and (recipient_id is null or recipient_opened_at is null)
 );
 
 -- М'яке видалення "зі свого боку" — автор чи отримувач позначає лист
