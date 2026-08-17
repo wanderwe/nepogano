@@ -322,19 +322,7 @@
     }
   },
   "nudgeListTitle": "Хто поштовхнув",
-  "nudgeBannerSolo": "{name} цікавиться, як ти",
-  "@nudgeBannerSolo": {
-    "placeholders": {
-      "name": { "type": "String" }
-    }
-  },
-  "nudgeBannerMultiple": "{name} і ще {restCount, plural, one{{restCount} друг} few{{restCount} друга} many{{restCount} друзів} other{{restCount} друзів}} цікавляться, як ти",
-  "@nudgeBannerMultiple": {
-    "placeholders": {
-      "name": { "type": "String" },
-      "restCount": { "type": "int" }
-    }
-  },
+  "nudgeBanner": "Хтось цікавиться, як ти",
 
   "language": "Мова",
 

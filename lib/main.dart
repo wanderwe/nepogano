@@ -2486,29 +2486,21 @@ class _CheckInScreenState extends State<CheckInScreen>
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
-                            _pendingNudges!.count == 1
-                                ? l10n.nudgeBannerSolo(
-                                    _pendingNudges!.latestFromName,
-                                  )
-                                : l10n.nudgeBannerMultiple(
-                                    _pendingNudges!.latestFromName,
-                                    _pendingNudges!.count - 1,
-                                  ),
+                            l10n.nudgeBanner,
                             style: const TextStyle(
                               fontSize: 13,
                               color: AppColors.accent,
                             ),
                           ),
                         ),
-                        const SizedBox(width: 8),
                         GestureDetector(
                           onTap: _dismissNudgeBanner,
                           behavior: HitTestBehavior.opaque,
                           child: const Padding(
-                            padding: EdgeInsets.only(top: 2),
+                            padding: EdgeInsets.all(10),
                             child: Icon(
                               PhosphorIconsLight.x,
-                              size: 14,
+                              size: 16,
                               color: AppColors.accent,
                             ),
                           ),

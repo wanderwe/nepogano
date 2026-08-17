@@ -313,19 +313,7 @@
     }
   },
   "nudgeListTitle": "Who nudged you",
-  "nudgeBannerSolo": "{name} is wondering how you're doing",
-  "@nudgeBannerSolo": {
-    "placeholders": {
-      "name": { "type": "String" }
-    }
-  },
-  "nudgeBannerMultiple": "{name} and {restCount, plural, one{{restCount} other friend} other{{restCount} other friends}} are wondering how you're doing",
-  "@nudgeBannerMultiple": {
-    "placeholders": {
-      "name": { "type": "String" },
-      "restCount": { "type": "int" }
-    }
-  },
+  "nudgeBanner": "Someone's wondering how you're doing",
 
   "language": "Language",
 

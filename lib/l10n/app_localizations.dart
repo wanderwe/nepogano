@@ -1292,17 +1292,11 @@ abstract class AppLocalizations {
   /// **'Хто поштовхнув'**
   String get nudgeListTitle;
 
-  /// No description provided for @nudgeBannerSolo.
+  /// No description provided for @nudgeBanner.
   ///
   /// In uk, this message translates to:
-  /// **'{name} цікавиться, як ти'**
-  String nudgeBannerSolo(String name);
-
-  /// No description provided for @nudgeBannerMultiple.
-  ///
-  /// In uk, this message translates to:
-  /// **'{name} і ще {restCount, plural, one{{restCount} друг} few{{restCount} друга} many{{restCount} друзів} other{{restCount} друзів}} цікавляться, як ти'**
-  String nudgeBannerMultiple(String name, int restCount);
+  /// **'Хтось цікавиться, як ти'**
+  String get nudgeBanner;
 
   /// No description provided for @language.
   ///

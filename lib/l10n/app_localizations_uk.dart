@@ -679,22 +679,7 @@ class AppLocalizationsUk extends AppLocalizations {
   String get nudgeListTitle => 'Хто поштовхнув';
 
   @override
-  String nudgeBannerSolo(String name) {
-    return '$name цікавиться, як ти';
-  }
-
-  @override
-  String nudgeBannerMultiple(String name, int restCount) {
-    String _temp0 = intl.Intl.pluralLogic(
-      restCount,
-      locale: localeName,
-      other: '$restCount друзів',
-      many: '$restCount друзів',
-      few: '$restCount друга',
-      one: '$restCount друг',
-    );
-    return '$name і ще $_temp0 цікавляться, як ти';
-  }
+  String get nudgeBanner => 'Хтось цікавиться, як ти';
 
   @override
   String get language => 'Мова';

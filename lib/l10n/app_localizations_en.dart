@@ -677,20 +677,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get nudgeListTitle => 'Who nudged you';
 
   @override
-  String nudgeBannerSolo(String name) {
-    return '$name is wondering how you\'re doing';
-  }
-
-  @override
-  String nudgeBannerMultiple(String name, int restCount) {
-    String _temp0 = intl.Intl.pluralLogic(
-      restCount,
-      locale: localeName,
-      other: '$restCount other friends',
-      one: '$restCount other friend',
-    );
-    return '$name and $_temp0 are wondering how you\'re doing';
-  }
+  String get nudgeBanner => 'Someone\'s wondering how you\'re doing';
 
   @override
   String get language => 'Language';
