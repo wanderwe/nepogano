@@ -2469,19 +2469,15 @@ class _CheckInScreenState extends State<CheckInScreen>
                       borderRadius: BorderRadius.circular(14),
                     ),
                     child: Row(
-                      // start, не center (за замовчуванням) — інакше коли
-                      // текст переноситься на 2 рядки, іконки центруються
-                      // відносно всього блоку й "висять" між рядками
-                      // замість вирівнювання по першому рядку.
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                      // Текст банера тепер завжди один короткий рядок
+                      // (без name/count-інтерполяції), тож переносу більше
+                      // нема — center замість start.
+                      crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        const Padding(
-                          padding: EdgeInsets.only(top: 2),
-                          child: Icon(
-                            PhosphorIconsLight.handWaving,
-                            size: 16,
-                            color: AppColors.accent,
-                          ),
+                        const Icon(
+                          PhosphorIconsLight.handWaving,
+                          size: 16,
+                          color: AppColors.accent,
                         ),
                         const SizedBox(width: 8),
                         Expanded(
@@ -2497,7 +2493,7 @@ class _CheckInScreenState extends State<CheckInScreen>
                           onTap: _dismissNudgeBanner,
                           behavior: HitTestBehavior.opaque,
                           child: const Padding(
-                            padding: EdgeInsets.all(10),
+                            padding: EdgeInsets.all(6),
                             child: Icon(
                               PhosphorIconsLight.x,
                               size: 16,
