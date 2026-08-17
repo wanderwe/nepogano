@@ -102,6 +102,18 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   const Spacer(),
                   TextButton(
                     onPressed: widget.onDone,
+                    // Material дає TextButton прихований відступ під
+                    // 48dp-зону натискання — навіть якщо сам текст
+                    // компактний, кнопка фізично вища за пігулку мови
+                    // поруч. Звужую тап-зону, щоб висота збігалась.
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
+                      minimumSize: Size.zero,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
                     child: Text(
                       l10n.skip,
                       style: const TextStyle(color: AppColors.inkMuted),
