@@ -683,7 +683,7 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String get nudgeListTitle => 'Хто поштовхнув';
+  String get nudgeListTitle => 'Хто цікавиться';
 
   @override
   String get nudgeBanner => 'Хтось цікавиться, як ти';

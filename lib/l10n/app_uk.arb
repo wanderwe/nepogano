@@ -323,7 +323,7 @@
       "date": { "type": "String" }
     }
   },
-  "nudgeListTitle": "Хто поштовхнув",
+  "nudgeListTitle": "Хто цікавиться",
   "nudgeBanner": "Хтось цікавиться, як ти",
 
   "language": "Мова",

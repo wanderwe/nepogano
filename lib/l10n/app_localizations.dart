@@ -1301,7 +1301,7 @@ abstract class AppLocalizations {
   /// No description provided for @nudgeListTitle.
   ///
   /// In uk, this message translates to:
-  /// **'Хто поштовхнув'**
+  /// **'Хто цікавиться'**
   String get nudgeListTitle;
 
   /// No description provided for @nudgeBanner.

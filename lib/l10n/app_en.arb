@@ -314,7 +314,7 @@
       "date": { "type": "String" }
     }
   },
-  "nudgeListTitle": "Who nudged you",
+  "nudgeListTitle": "Who's curious",
   "nudgeBanner": "Curious about you",
 
   "language": "Language",
