@@ -735,13 +735,13 @@ class AppLocalizationsUk extends AppLocalizations {
   String get timeCapsulesComposeHint => 'Напиши свій лист...';
 
   @override
-  String get timeCapsulesDelayMonth => 'За місяць';
+  String get timeCapsulesDelayMonth => '1 місяць';
 
   @override
-  String get timeCapsulesDelayHalfYear => 'За півроку';
+  String get timeCapsulesDelayHalfYear => '6 місяців';
 
   @override
-  String get timeCapsulesDelayYear => 'За рік';
+  String get timeCapsulesDelayYear => '1 рік';
 
   @override
   String get timeCapsulesSeal => 'Запечатати';
