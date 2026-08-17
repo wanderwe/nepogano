@@ -66,6 +66,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             children: [
               const SizedBox(height: 8),
               Row(
+                // start, не center (за замовчуванням) — інакше кнопка
+                // "Пропустити" (вища за пігулку мови) центрує весь ряд по
+                // своїй висоті, і пігулка "просідає" нижче за пігулку на
+                // логін-екрані, де в ряду нема іншого, вищого елемента.
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Автовизначення мови системи (locale_provider.dart) не
                   // завжди вгадує — юзер може хотіти читати онбординг не

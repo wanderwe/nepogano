@@ -1893,6 +1893,12 @@ class _CheckInScreenState extends State<CheckInScreen>
                   TextField(
                     controller: _noteController,
                     maxLines: 3,
+                    // "Готово" на клавіатурі одразу зберігає — без цього
+                    // єдиний спосіб зберегти з відкритою клавіатурою це
+                    // скролити й шукати кнопку "Зберегти" нижче фото,
+                    // яку клавіатура ще й затуляє знизу.
+                    textInputAction: TextInputAction.done,
+                    onSubmitted: (_) => _saving ? null : _save(),
                     // Той самий розмір і міжрядковий інтервал, що й у збереженому
                     // вигляді нижче (_buildSummaryContent) — щоб перехід
                     // "пишу" → "збережено" не виглядав як зовсім інший текст.
