@@ -796,7 +796,13 @@ class _ComposeLetterSheetState extends State<_ComposeLetterSheet> {
         20,
         20,
         20,
-        20 + MediaQuery.of(context).viewInsets.bottom,
+        // Клавіатура (viewInsets) ДО padding.bottom — цей другий доданок
+        // бракувало: без нього кнопка ховалась під системною навігацією
+        // Android (жестовою панеллю чи 3-кнопковою), бо на iOS safe-area
+        // знизу вже враховувалась інакше й проблема там не виникала.
+        20 +
+            MediaQuery.of(context).viewInsets.bottom +
+            MediaQuery.of(context).padding.bottom,
       ),
       child: SingleChildScrollView(
         child: Column(

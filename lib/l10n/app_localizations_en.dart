@@ -731,13 +731,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get timeCapsulesComposeHint => 'Write your letter...';
 
   @override
-  String get timeCapsulesDelayMonth => 'In a month';
+  String get timeCapsulesDelayMonth => '1 month';
 
   @override
-  String get timeCapsulesDelayHalfYear => 'In half a year';
+  String get timeCapsulesDelayHalfYear => '6 months';
 
   @override
-  String get timeCapsulesDelayYear => 'In a year';
+  String get timeCapsulesDelayYear => '1 year';
 
   @override
   String get timeCapsulesSeal => 'Seal it';
