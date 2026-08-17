@@ -159,13 +159,20 @@ class _OnboardingPage extends StatelessWidget {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(
-                    headline,
-                    textAlign: TextAlign.center,
-                    style: appSerif(
-                      fontSize: 28,
-                      fontWeight: FontWeight.w700,
-                      height: 1.2,
+                  SizedBox(
+                    width: double.infinity,
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        headline,
+                        textAlign: TextAlign.center,
+                        maxLines: 1,
+                        style: appSerif(
+                          fontSize: 28,
+                          fontWeight: FontWeight.w700,
+                          height: 1.2,
+                        ),
+                      ),
                     ),
                   ),
                   const SizedBox(height: 16),
