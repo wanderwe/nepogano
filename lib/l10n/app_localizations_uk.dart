@@ -70,7 +70,7 @@ class AppLocalizationsUk extends AppLocalizations {
   String get getStarted => 'Почати';
 
   @override
-  String get onboarding1Headline => 'Твій день, без прикрас';
+  String get onboarding1Headline => 'День без прикрас';
 
   @override
   String get onboarding1Body =>
@@ -158,7 +158,7 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String get notePlaceholder => 'Пару слів про день (необов\'язково)';
+  String get notePlaceholder => 'Про день (необов\'язково)';
 
   @override
   String get dayCard => 'Картка дня';

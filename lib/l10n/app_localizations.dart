@@ -221,7 +221,7 @@ abstract class AppLocalizations {
   /// No description provided for @onboarding1Headline.
   ///
   /// In uk, this message translates to:
-  /// **'Твій день, без прикрас'**
+  /// **'День без прикрас'**
   String get onboarding1Headline;
 
   /// No description provided for @onboarding1Body.
@@ -383,7 +383,7 @@ abstract class AppLocalizations {
   /// No description provided for @notePlaceholder.
   ///
   /// In uk, this message translates to:
-  /// **'Пару слів про день (необов\'язково)'**
+  /// **'Про день (необов\'язково)'**
   String get notePlaceholder;
 
   /// No description provided for @dayCard.

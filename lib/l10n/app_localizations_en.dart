@@ -70,21 +70,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get getStarted => 'Get started';
 
   @override
-  String get onboarding1Headline => 'Your day, no dressing it up';
+  String get onboarding1Headline => 'Unfiltered day';
 
   @override
   String get onboarding1Body =>
       'Not every day has to be amazing, and that\'s fine. Just honestly note how it went.';
 
   @override
-  String get onboarding4Headline => 'Close ones, close by';
+  String get onboarding4Headline => 'Close ones nearby';
 
   @override
   String get onboarding4Body =>
       'Just the people you actually know, no endless feed of strangers. Add friends and try to guess how their day went.';
 
   @override
-  String get onboarding5Headline => 'A look back at your month';
+  String get onboarding5Headline => 'A look at your month';
 
   @override
   String get onboarding5Body =>
@@ -159,7 +159,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get notePlaceholder => 'A few words about your day (optional)';
+  String get notePlaceholder => 'About your day (optional)';
 
   @override
   String get dayCard => 'Day card';
@@ -277,7 +277,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get profile => 'Profile';
 
   @override
-  String get myFriendCode => 'Your friend code';
+  String get myFriendCode => 'Your friend-code';
 
   @override
   String get codeCopied => 'Code copied';
@@ -369,13 +369,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get friendAdded => 'Done! You\'re friends now.';
 
   @override
-  String get editDisplayName => 'Your name';
+  String get editDisplayName => 'Name or nickname';
 
   @override
   String get displayNameHint => 'How friends will see you';
 
   @override
-  String get setDisplayName => 'Add your name';
+  String get setDisplayName => 'Add name or nickname';
 
   @override
   String get couldNotSaveDisplayName => 'Couldn\'t save your name.';

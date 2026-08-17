@@ -23,7 +23,7 @@
   "skip": "Пропустити",
   "next": "Далі",
   "getStarted": "Почати",
-  "onboarding1Headline": "Твій день, без прикрас",
+  "onboarding1Headline": "День без прикрас",
   "onboarding1Body": "Не кожен день має бути неймовірним, і це нормально. Просто чесно зафіксуй, як він минув.",
   "onboarding4Headline": "Близькі поруч",
   "onboarding4Body": "Лише ті, кого ти справді знаєш, без нескінченної стрічки чужих людей. Додай друзів і спробуй вгадати, як минув їхній день.",
@@ -55,7 +55,7 @@
   "@alreadySavedToday": {
     "placeholders": { "time": { "type": "String" } }
   },
-  "notePlaceholder": "Пару слів про день (необов'язково)",
+  "notePlaceholder": "Про день (необов'язково)",
   "dayCard": "Картка дня",
   "savedSnackbar": "Збережено: {mood}",
   "@savedSnackbar": {
