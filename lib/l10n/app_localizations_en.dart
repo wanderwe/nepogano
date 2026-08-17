@@ -70,7 +70,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get getStarted => 'Get started';
 
   @override
-  String get onboarding1Headline => 'Your day, no dressing it up';
+  String get onboarding1Headline => 'Unfiltered day';
 
   @override
   String get onboarding1Body =>
@@ -84,14 +84,14 @@ class AppLocalizationsEn extends AppLocalizations {
       'Three plain words: quick and honest, no pressure to oversell it as \"amazing\" when it was really just okay.';
 
   @override
-  String get onboarding4Headline => 'Close ones, close by';
+  String get onboarding4Headline => 'Close ones nearby';
 
   @override
   String get onboarding4Body =>
       'Just the people you actually know, no endless feed of strangers. Add friends and try to guess how their day went.';
 
   @override
-  String get onboarding5Headline => 'A look back at your month';
+  String get onboarding5Headline => 'Monthly recap';
 
   @override
   String get onboarding5Body =>

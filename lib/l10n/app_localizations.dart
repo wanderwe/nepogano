@@ -221,25 +221,25 @@ abstract class AppLocalizations {
   /// No description provided for @onboarding1Headline.
   ///
   /// In uk, this message translates to:
-  /// **'Твій день, без прикрас'**
+  /// **'День без прикрас'**
   String get onboarding1Headline;
 
   /// No description provided for @onboarding1Body.
   ///
   /// In uk, this message translates to:
-  /// **'Не кожен день має бути неймовірним, і це нормально. Просто чесно зафіксуй, як він минув.'**
+  /// **'Не кожен день має бути неймовірним, і це нормально. Просто зафіксуй чесно, як він минув.'**
   String get onboarding1Body;
 
   /// No description provided for @onboarding2Headline.
   ///
   /// In uk, this message translates to:
-  /// **'Ніяк. Непогано.\nЧудово.'**
+  /// **'Ніяк. Непогано. Чудово.'**
   String get onboarding2Headline;
 
   /// No description provided for @onboarding2Body.
   ///
   /// In uk, this message translates to:
-  /// **'Три прості слова: швидко й чесно, без тиску вигадувати щось \"грандіозне\", коли насправді просто \"так собі\".'**
+  /// **'Три прості слова: швидко й чесно, без тиску вигадувати щось «грандіозне», коли насправді просто «так собі».'**
   String get onboarding2Body;
 
   /// No description provided for @onboarding4Headline.
@@ -251,13 +251,13 @@ abstract class AppLocalizations {
   /// No description provided for @onboarding4Body.
   ///
   /// In uk, this message translates to:
-  /// **'Лише ті, кого ти справді знаєш, без нескінченної стрічки чужих людей. Додай друзів і спробуй вгадати, як минув їхній день.'**
+  /// **'Лише ті, кого ти справді знаєш, без стрічки незнайомців. Додай друзів і спробуй вгадати, як минув їхній день.'**
   String get onboarding4Body;
 
   /// No description provided for @onboarding5Headline.
   ///
   /// In uk, this message translates to:
-  /// **'Погляд на місяць'**
+  /// **'Місячний підсумок'**
   String get onboarding5Headline;
 
   /// No description provided for @onboarding5Body.

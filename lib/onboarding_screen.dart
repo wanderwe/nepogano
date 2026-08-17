@@ -64,6 +64,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 24),
           child: Column(
             children: [
+              const SizedBox(height: 8),
               Row(
                 children: [
                   // Автовизначення мови системи (locale_provider.dart) не
