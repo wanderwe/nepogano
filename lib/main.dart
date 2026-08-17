@@ -2655,10 +2655,22 @@ class _CheckInScreenState extends State<CheckInScreen>
               // забирала місце саме тоді, коли форма чек-іну (поле
               // нотатки, кнопка збереження) найбільше його потребує.
               // Навігація тижнями під час набору тексту й не потрібна.
-              if (MediaQuery.of(context).viewInsets.bottom == 0) ...[
-                _buildWeekStrip(),
-                const SizedBox(height: 16),
-              ],
+              // AnimatedSize замість миттєвого if/insert — інакше поява
+              // смужки одразу після закриття клавіатури виглядає як різкий
+              // стрибок контенту, а не плавне звільнення місця.
+              AnimatedSize(
+                duration: const Duration(milliseconds: 200),
+                curve: Curves.easeOut,
+                alignment: Alignment.topCenter,
+                child: MediaQuery.of(context).viewInsets.bottom == 0
+                    ? Column(
+                        children: [
+                          _buildWeekStrip(),
+                          const SizedBox(height: 16),
+                        ],
+                      )
+                    : const SizedBox.shrink(),
+              ),
             ],
           ),
         ),
