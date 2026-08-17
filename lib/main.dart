@@ -584,6 +584,76 @@ class _MoodTileState extends State<_MoodTile> {
   }
 }
 
+/// Кнопка вибору настрою для гри-вгадування (`PersonDetailScreen`,
+/// `SubjectDetailScreen`) — навмисно заповнена кольором, з крапкою й
+/// анімацією натискання, а не голий `OutlinedButton` з тонкою рамкою: той
+/// самий візуальний "почерк", що й `_MoodTile` вище, який юзер уже знає як
+/// "тапни тут, щоб обрати настрій". Розбіжність у стилі раніше означала,
+/// що кнопки вгадування виглядали як пасивні лейбли, не як інтерактивний
+/// вибір — імовірна причина, чому частина юзерів постить власні чек-іни,
+/// але жодного разу не пробувала вгадати друга.
+class GuessMoodButton extends StatefulWidget {
+  final MoodLevel mood;
+  final VoidCallback onTap;
+
+  const GuessMoodButton({super.key, required this.mood, required this.onTap});
+
+  @override
+  State<GuessMoodButton> createState() => _GuessMoodButtonState();
+}
+
+class _GuessMoodButtonState extends State<GuessMoodButton> {
+  bool _pressed = false;
+
+  void _setPressed(bool value) => setState(() => _pressed = value);
+
+  @override
+  Widget build(BuildContext context) {
+    final mood = widget.mood;
+    return GestureDetector(
+      onTap: widget.onTap,
+      onTapDown: (_) => _setPressed(true),
+      onTapUp: (_) => _setPressed(false),
+      onTapCancel: () => _setPressed(false),
+      child: AnimatedScale(
+        scale: _pressed ? 0.96 : 1.0,
+        duration: const Duration(milliseconds: 100),
+        curve: Curves.easeOut,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          decoration: BoxDecoration(
+            color: mood.color.withValues(alpha: 0.16),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: mood.color, width: 1.5),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 8,
+                height: 8,
+                decoration: BoxDecoration(
+                  color: mood.color,
+                  shape: BoxShape.circle,
+                ),
+              ),
+              const SizedBox(width: 6),
+              Text(
+                mood.label(context),
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.ink,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _SubjectChip extends StatelessWidget {
   final String label;
   final bool selected;
@@ -766,7 +836,8 @@ class _CheckInScreenState extends State<CheckInScreen>
           'and(unlock_at.lte.$now,recipient_id.eq.$myId,recipient_opened_at.is.null,recipient_deleted_at.is.null),'
           'and(recipient_id.eq.$myId,recipient_seen_at.is.null,recipient_deleted_at.is.null)',
         );
-    if (mounted) setState(() => _pendingUnlockedLetters = (rows as List).length);
+    if (mounted)
+      setState(() => _pendingUnlockedLetters = (rows as List).length);
   }
 
   Future<void> _loadSubjects() async {
@@ -931,6 +1002,14 @@ class _CheckInScreenState extends State<CheckInScreen>
                       onTap: () => setState(() => kind = 'other'),
                     ),
                   ],
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  l10n.newSubjectExplainer,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: AppColors.inkMuted,
+                  ),
                 ),
               ],
             ),
@@ -2078,9 +2157,9 @@ class _CheckInScreenState extends State<CheckInScreen>
         },
         onTimeCapsules: () async {
           Navigator.of(sheetContext).pop();
-          await Navigator.of(context).push(
-            MaterialPageRoute(builder: (_) => const TimeCapsulesScreen()),
-          );
+          await Navigator.of(
+            context,
+          ).push(MaterialPageRoute(builder: (_) => const TimeCapsulesScreen()));
           if (mounted) _loadPendingUnlockedLetters();
         },
         onLanguage: () {
@@ -2392,7 +2471,8 @@ class _CheckInScreenState extends State<CheckInScreen>
                       ),
                       GestureDetector(
                         behavior: HitTestBehavior.opaque,
-                        onTap: () => setState(() => _lettersBannerDismissed = true),
+                        onTap: () =>
+                            setState(() => _lettersBannerDismissed = true),
                         child: const Icon(
                           PhosphorIconsLight.x,
                           size: 14,

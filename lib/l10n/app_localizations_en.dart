@@ -553,6 +553,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get subjectKindOther => 'Other';
 
   @override
+  String get newSubjectExplainer =>
+      'By default only you can see this diary. If you want to share it, open it up for a friend circle to view, or add co-authors who can edit it.';
+
+  @override
   String get couldNotCreateSubject => 'Couldn\'t create it.';
 
   @override

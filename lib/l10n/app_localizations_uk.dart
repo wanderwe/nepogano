@@ -554,6 +554,10 @@ class AppLocalizationsUk extends AppLocalizations {
   String get subjectKindOther => 'Інше';
 
   @override
+  String get newSubjectExplainer =>
+      'Цей щоденник за замовчуванням бачиш лише ти. Якщо захочеш поділитись, відкрий на перегляд колу друзів або додай співавторів для редагування.';
+
+  @override
   String get couldNotCreateSubject => 'Не вдалось створити.';
 
   @override

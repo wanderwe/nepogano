@@ -2033,19 +2033,9 @@ class _PersonDetailScreenState extends State<PersonDetailScreen> {
               children: MoodLevel.values.map((mood) {
                 return Padding(
                   padding: const EdgeInsets.only(right: 8),
-                  child: OutlinedButton(
-                    onPressed: () => _guess(entry, mood),
-                    style: OutlinedButton.styleFrom(
-                      side: BorderSide(color: mood.color),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 8,
-                      ),
-                    ),
-                    child: Text(
-                      mood.label(context),
-                      style: const TextStyle(fontSize: 13),
-                    ),
+                  child: GuessMoodButton(
+                    mood: mood,
+                    onTap: () => _guess(entry, mood),
                   ),
                 );
               }).toList(),

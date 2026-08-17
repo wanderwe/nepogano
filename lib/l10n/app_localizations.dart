@@ -1100,6 +1100,12 @@ abstract class AppLocalizations {
   /// **'Інше'**
   String get subjectKindOther;
 
+  /// No description provided for @newSubjectExplainer.
+  ///
+  /// In uk, this message translates to:
+  /// **'Цей щоденник за замовчуванням бачиш лише ти. Якщо захочеш поділитись, відкрий на перегляд колу друзів або додай співавторів для редагування.'**
+  String get newSubjectExplainer;
+
   /// No description provided for @couldNotCreateSubject.
   ///
   /// In uk, this message translates to:
