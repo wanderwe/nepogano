@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 
 /// Пропорція фото і в рамці позиціювання (`PhotoRepositionScreen`), і в
@@ -91,7 +90,11 @@ TextStyle appSerif({
   Color color = AppColors.ink,
   double? height,
 }) {
-  return GoogleFonts.lora(
+  // Вшита локально (assets/fonts/), не через google_fonts — мережеве
+  // довантаження при першому запуску викликало видиму зміну розміру
+  // тексту, щойно шрифт довантажувався і layout перебудовувався.
+  return TextStyle(
+    fontFamily: 'Lora',
     fontSize: fontSize,
     fontWeight: fontWeight,
     color: color,

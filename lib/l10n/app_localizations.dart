@@ -239,7 +239,7 @@ abstract class AppLocalizations {
   /// No description provided for @onboarding4Body.
   ///
   /// In uk, this message translates to:
-  /// **'Лише ті, кого ти справді знаєш, без стрічки чужих людей. Додай друзів і спробуй вгадати, як минув їхній день.'**
+  /// **'Лише ті, кого ти справді знаєш, без стрічки незнайомців. Додай друзів і спробуй вгадати, як минув їхній день.'**
   String get onboarding4Body;
 
   /// No description provided for @onboarding5Headline.
