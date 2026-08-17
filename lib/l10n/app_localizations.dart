@@ -227,7 +227,7 @@ abstract class AppLocalizations {
   /// No description provided for @onboarding1Body.
   ///
   /// In uk, this message translates to:
-  /// **'Не кожен день має бути неймовірним, і це нормально. Просто чесно зафіксуй, як він минув.'**
+  /// **'Не кожен день має виглядати неймовірним, і це нормально. Просто чесно зафіксуй, як він минув.'**
   String get onboarding1Body;
 
   /// No description provided for @onboarding4Headline.
@@ -239,7 +239,7 @@ abstract class AppLocalizations {
   /// No description provided for @onboarding4Body.
   ///
   /// In uk, this message translates to:
-  /// **'Лише ті, кого ти справді знаєш, без стрічки незнайомців. Додай друзів і спробуй вгадати, як минув їхній день.'**
+  /// **'Лише ті, кого ти справді знаєш, без стрічки незнайомців. Додай друзів і спробуй вгадати їхній настрій.'**
   String get onboarding4Body;
 
   /// No description provided for @onboarding5Headline.
