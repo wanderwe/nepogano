@@ -269,8 +269,24 @@ class _AuthScreenState extends State<AuthScreen> {
                     onPressed: _loading
                         ? null
                         : () => setState(() => _isSignUp = !_isSignUp),
-                    child: Text(
-                      _isSignUp ? l10n.alreadyHaveAccount : l10n.noAccountYet,
+                    child: Text.rich(
+                      TextSpan(
+                        children: [
+                          TextSpan(
+                            text: _isSignUp
+                                ? l10n.alreadyHaveAccountQuestion
+                                : l10n.noAccountYetQuestion,
+                          ),
+                          const TextSpan(text: ' '),
+                          TextSpan(
+                            text: _isSignUp ? l10n.signIn : l10n.signUp,
+                            style: const TextStyle(
+                              color: AppColors.accent,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
 

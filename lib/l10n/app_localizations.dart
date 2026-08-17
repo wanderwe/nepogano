@@ -488,17 +488,17 @@ abstract class AppLocalizations {
   /// **'Увійти'**
   String get signIn;
 
-  /// No description provided for @alreadyHaveAccount.
+  /// No description provided for @alreadyHaveAccountQuestion.
   ///
   /// In uk, this message translates to:
-  /// **'Вже є акаунт? Увійти'**
-  String get alreadyHaveAccount;
+  /// **'Вже є акаунт?'**
+  String get alreadyHaveAccountQuestion;
 
-  /// No description provided for @noAccountYet.
+  /// No description provided for @noAccountYetQuestion.
   ///
   /// In uk, this message translates to:
-  /// **'Немає акаунту? Зареєструватись'**
-  String get noAccountYet;
+  /// **'Немає акаунту?'**
+  String get noAccountYetQuestion;
 
   /// No description provided for @continueWithGoogle.
   ///

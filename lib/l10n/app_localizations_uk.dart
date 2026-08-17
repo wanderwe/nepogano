@@ -216,10 +216,10 @@ class AppLocalizationsUk extends AppLocalizations {
   String get signIn => 'Увійти';
 
   @override
-  String get alreadyHaveAccount => 'Вже є акаунт? Увійти';
+  String get alreadyHaveAccountQuestion => 'Вже є акаунт?';
 
   @override
-  String get noAccountYet => 'Немає акаунту? Зареєструватись';
+  String get noAccountYetQuestion => 'Немає акаунту?';
 
   @override
   String get continueWithGoogle => 'Продовжити з Google';

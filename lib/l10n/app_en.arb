@@ -71,8 +71,8 @@
   "passwordHint": "Password",
   "signUp": "Sign up",
   "signIn": "Sign in",
-  "alreadyHaveAccount": "Already have an account? Sign in",
-  "noAccountYet": "No account yet? Sign up",
+  "alreadyHaveAccountQuestion": "Already have an account?",
+  "noAccountYetQuestion": "No account yet?",
   "continueWithGoogle": "Continue with Google",
   "signInWithApple": "Sign in with Apple",
 

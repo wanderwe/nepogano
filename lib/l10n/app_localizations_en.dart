@@ -217,10 +217,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get signIn => 'Sign in';
 
   @override
-  String get alreadyHaveAccount => 'Already have an account? Sign in';
+  String get alreadyHaveAccountQuestion => 'Already have an account?';
 
   @override
-  String get noAccountYet => 'No account yet? Sign up';
+  String get noAccountYetQuestion => 'No account yet?';
 
   @override
   String get continueWithGoogle => 'Continue with Google';
