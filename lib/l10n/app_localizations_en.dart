@@ -74,7 +74,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get onboarding1Body =>
-      'Not every day has to look amazing, and that\'s fine. Just honestly note how it went.';
+      'Not every day has to look amazing, and that\'s fine. Just note it honestly, exactly as it happened.';
 
   @override
   String get onboarding4Headline => 'Close ones nearby';
