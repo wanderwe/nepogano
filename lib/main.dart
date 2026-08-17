@@ -4,7 +4,6 @@ import 'dart:io';
 import 'package:app_links/app_links.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/retry.dart';
 import 'package:image_picker/image_picker.dart';
@@ -170,8 +169,13 @@ class NepoganoApp extends StatelessWidget {
           title: 'Nepogano',
           debugShowCheckedModeBanner: false,
           scaffoldMessengerKey: scaffoldMessengerKey,
+          // Inter вшита локально (assets/fonts/), не через
+          // GoogleFonts.interTextTheme — той самий фікс, що для Lora в
+          // appSerif(): мережеве довантаження при першому запуску викликало
+          // видиму зміну розміру тексту по всьому застосунку, не лише на
+          // заголовках.
           theme: base.copyWith(
-            textTheme: GoogleFonts.interTextTheme(base.textTheme),
+            textTheme: base.textTheme.apply(fontFamily: 'Inter'),
           ),
           locale: locale,
           localizationsDelegates: AppLocalizations.localizationsDelegates,

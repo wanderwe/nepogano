@@ -42,7 +42,6 @@ dependencies:
   crypto: ^3.0.6
   share_plus: ^11.0.0
   path_provider: ^2.1.5
-  google_fonts: ^6.2.1
   image_picker: ^1.1.2
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
@@ -102,4 +101,18 @@ flutter:
         - asset: assets/fonts/Lora-Variable.ttf
           weight: 600
         - asset: assets/fonts/Lora-Variable.ttf
+          weight: 700
+    # Той самий фікс — Inter раніше йшов через GoogleFonts.interTextTheme
+    # (main.dart), тобто мережею для тексту всього застосунку, не лише
+    # заголовків. Ваги 400/500/600/700 покривають фактичні FontWeight,
+    # які використовуються в застосунку.
+    - family: Inter
+      fonts:
+        - asset: assets/fonts/Inter-Variable.ttf
+          weight: 400
+        - asset: assets/fonts/Inter-Variable.ttf
+          weight: 500
+        - asset: assets/fonts/Inter-Variable.ttf
+          weight: 600
+        - asset: assets/fonts/Inter-Variable.ttf
           weight: 700
