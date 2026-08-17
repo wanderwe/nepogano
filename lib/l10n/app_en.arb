@@ -25,6 +25,8 @@
   "getStarted": "Get started",
   "onboarding1Headline": "Unfiltered day",
   "onboarding1Body": "Not every day has to be amazing, and that's fine. Just honestly note how it went.",
+  "onboarding2Headline": "Meh. Fine. Awesome.",
+  "onboarding2Body": "Three plain words: quick and honest, no pressure to oversell it as \"amazing\" when it was really just okay.",
   "onboarding4Headline": "Close ones nearby",
   "onboarding4Body": "Just the people you actually know, no endless feed of strangers. Add friends and try to guess how their day went.",
   "onboarding5Headline": "A look at your month",
@@ -313,7 +315,7 @@
     }
   },
   "nudgeListTitle": "Who nudged you",
-  "nudgeBanner": "Someone's wondering how you're doing",
+  "nudgeBanner": "Someone nudged you",
 
   "language": "Language",
 

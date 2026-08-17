@@ -77,6 +77,13 @@ class AppLocalizationsEn extends AppLocalizations {
       'Not every day has to be amazing, and that\'s fine. Just honestly note how it went.';
 
   @override
+  String get onboarding2Headline => 'Meh. Fine. Awesome.';
+
+  @override
+  String get onboarding2Body =>
+      'Three plain words: quick and honest, no pressure to oversell it as \"amazing\" when it was really just okay.';
+
+  @override
   String get onboarding4Headline => 'Close ones nearby';
 
   @override
@@ -677,7 +684,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get nudgeListTitle => 'Who nudged you';
 
   @override
-  String get nudgeBanner => 'Someone\'s wondering how you\'re doing';
+  String get nudgeBanner => 'Someone nudged you';
 
   @override
   String get language => 'Language';

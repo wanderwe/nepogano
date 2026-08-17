@@ -230,6 +230,18 @@ abstract class AppLocalizations {
   /// **'Не кожен день має бути неймовірним, і це нормально. Просто чесно зафіксуй, як він минув.'**
   String get onboarding1Body;
 
+  /// No description provided for @onboarding2Headline.
+  ///
+  /// In uk, this message translates to:
+  /// **'Ніяк. Непогано.\nЧудово.'**
+  String get onboarding2Headline;
+
+  /// No description provided for @onboarding2Body.
+  ///
+  /// In uk, this message translates to:
+  /// **'Три прості слова: швидко й чесно, без тиску вигадувати щось «грандіозне», коли насправді просто «так собі».'**
+  String get onboarding2Body;
+
   /// No description provided for @onboarding4Headline.
   ///
   /// In uk, this message translates to:

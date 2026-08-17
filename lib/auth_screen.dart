@@ -8,6 +8,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'l10n/app_localizations.dart';
+import 'locale_provider.dart';
 import 'style.dart';
 
 // Web Client ID з Google Cloud Console (той самий, що використовує Supabase
@@ -192,6 +193,32 @@ class _AuthScreenState extends State<AuthScreen> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  // Той самий перемикач, що на онбордингу — автовизначення
+                  // мови системи не завжди вгадує, і на логін-екрані так
+                  // само немає іншого способу її змінити до входу.
+                  Row(
+                    children: [
+                      GestureDetector(
+                        onTap: () {
+                          final next = appLocale.value.languageCode == 'uk'
+                              ? 'en'
+                              : 'uk';
+                          setAppLocale(Locale(next));
+                        },
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                          child: Text(
+                            appLocale.value.languageCode == 'uk' ? 'EN' : 'UK',
+                            style: const TextStyle(
+                              color: AppColors.inkMuted,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
                   Text(
                     'Nepogano',
                     textAlign: TextAlign.center,

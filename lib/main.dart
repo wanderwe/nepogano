@@ -2448,119 +2448,145 @@ class _CheckInScreenState extends State<CheckInScreen>
                   ),
                 ],
               ),
-              if (_pendingNudges != null) ...[
-                const SizedBox(height: 12),
-                GestureDetector(
-                  // Тап на банер (окрім ✕ нижче) — показує, хто саме
-                  // поштовхнув, а не просто закриває банер. ✕ має власний
-                  // GestureDetector усередині — вкладений тап "перемагає"
-                  // цей зовнішній, тож натискання саме на хрестик все ще
-                  // просто закриває, не відкриваючи список.
-                  onTap: _showNudgeList,
-                  behavior: HitTestBehavior.opaque,
-                  child: Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 12,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.accent.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    child: Row(
-                      // Текст банера тепер завжди один короткий рядок
-                      // (без name/count-інтерполяції), тож переносу більше
-                      // нема — center замість start.
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        const Icon(
-                          PhosphorIconsLight.handWaving,
-                          size: 16,
-                          color: AppColors.accent,
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            l10n.nudgeBanner,
-                            style: const TextStyle(
-                              fontSize: 13,
-                              color: AppColors.accent,
-                            ),
-                          ),
-                        ),
-                        GestureDetector(
-                          onTap: _dismissNudgeBanner,
-                          behavior: HitTestBehavior.opaque,
-                          child: const Padding(
-                            padding: EdgeInsets.all(6),
-                            child: Icon(
-                              PhosphorIconsLight.x,
-                              size: 16,
-                              color: AppColors.accent,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-              if (_pendingUnlockedLetters > 0 && !_lettersBannerDismissed) ...[
-                const SizedBox(height: 12),
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 12,
-                  ),
-                  decoration: BoxDecoration(
-                    color: AppColors.accent.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(
-                        PhosphorIconsLight.envelopeSimpleOpen,
-                        size: 16,
-                        color: AppColors.accent,
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: GestureDetector(
-                          behavior: HitTestBehavior.opaque,
-                          onTap: () async {
-                            setState(() => _lettersBannerDismissed = true);
-                            await Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (_) => const TimeCapsulesScreen(),
+              AnimatedSize(
+                duration: const Duration(milliseconds: 200),
+                curve: Curves.easeOut,
+                alignment: Alignment.topCenter,
+                child: _pendingNudges == null
+                    ? const SizedBox.shrink()
+                    : Column(
+                        children: [
+                          const SizedBox(height: 12),
+                          GestureDetector(
+                            // Тап на банер (окрім ✕ нижче) — показує, хто саме
+                            // поштовхнув, а не просто закриває банер. ✕ має
+                            // власний GestureDetector усередині — вкладений
+                            // тап "перемагає" цей зовнішній, тож натискання
+                            // саме на хрестик все ще просто закриває, не
+                            // відкриваючи список.
+                            onTap: _showNudgeList,
+                            behavior: HitTestBehavior.opaque,
+                            child: Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 14,
+                                vertical: 12,
                               ),
-                            );
-                            if (mounted) _loadPendingUnlockedLetters();
-                          },
-                          child: Text(
-                            l10n.timeCapsulesBannerReady,
-                            style: const TextStyle(
-                              fontSize: 13,
-                              color: AppColors.accent,
+                              decoration: BoxDecoration(
+                                color: AppColors.accent.withValues(alpha: 0.12),
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                              child: Row(
+                                // Текст банера тепер завжди один короткий
+                                // рядок (без name/count-інтерполяції), тож
+                                // переносу більше нема — center замість
+                                // start.
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  const Icon(
+                                    PhosphorIconsLight.handWaving,
+                                    size: 16,
+                                    color: AppColors.accent,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      l10n.nudgeBanner,
+                                      style: const TextStyle(
+                                        fontSize: 13,
+                                        color: AppColors.accent,
+                                      ),
+                                    ),
+                                  ),
+                                  GestureDetector(
+                                    onTap: _dismissNudgeBanner,
+                                    behavior: HitTestBehavior.opaque,
+                                    child: const Padding(
+                                      padding: EdgeInsets.all(6),
+                                      child: Icon(
+                                        PhosphorIconsLight.x,
+                                        size: 16,
+                                        color: AppColors.accent,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
-                        ),
+                        ],
                       ),
-                      GestureDetector(
-                        behavior: HitTestBehavior.opaque,
-                        onTap: () =>
-                            setState(() => _lettersBannerDismissed = true),
-                        child: const Icon(
-                          PhosphorIconsLight.x,
-                          size: 14,
-                          color: AppColors.accent,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+              ),
+              AnimatedSize(
+                duration: const Duration(milliseconds: 200),
+                curve: Curves.easeOut,
+                alignment: Alignment.topCenter,
+                child: (_pendingUnlockedLetters > 0 && !_lettersBannerDismissed)
+                    ? Column(
+                        children: [
+                          const SizedBox(height: 12),
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 12,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppColors.accent.withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                            child: Row(
+                              children: [
+                                const Icon(
+                                  PhosphorIconsLight.envelopeSimpleOpen,
+                                  size: 16,
+                                  color: AppColors.accent,
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: GestureDetector(
+                                    behavior: HitTestBehavior.opaque,
+                                    onTap: () async {
+                                      setState(
+                                        () => _lettersBannerDismissed = true,
+                                      );
+                                      await Navigator.of(context).push(
+                                        MaterialPageRoute(
+                                          builder: (_) =>
+                                              const TimeCapsulesScreen(),
+                                        ),
+                                      );
+                                      if (mounted) {
+                                        _loadPendingUnlockedLetters();
+                                      }
+                                    },
+                                    child: Text(
+                                      l10n.timeCapsulesBannerReady,
+                                      style: const TextStyle(
+                                        fontSize: 13,
+                                        color: AppColors.accent,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                GestureDetector(
+                                  behavior: HitTestBehavior.opaque,
+                                  onTap: () => setState(
+                                    () => _lettersBannerDismissed = true,
+                                  ),
+                                  child: const Icon(
+                                    PhosphorIconsLight.x,
+                                    size: 14,
+                                    color: AppColors.accent,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      )
+                    : const SizedBox.shrink(),
+              ),
               const SizedBox(height: 12),
               Row(
                 children: [
