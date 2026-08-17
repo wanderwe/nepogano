@@ -1286,6 +1286,12 @@ abstract class AppLocalizations {
   /// **'Вже надіслано. Зможеш ще раз {date}.'**
   String nudgeAlreadySent(String date);
 
+  /// No description provided for @nudgeListTitle.
+  ///
+  /// In uk, this message translates to:
+  /// **'Хто поштовхнув'**
+  String get nudgeListTitle;
+
   /// No description provided for @nudgeBannerSolo.
   ///
   /// In uk, this message translates to:

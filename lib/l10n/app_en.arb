@@ -312,6 +312,7 @@
       "date": { "type": "String" }
     }
   },
+  "nudgeListTitle": "Who nudged you",
   "nudgeBannerSolo": "{name} is wondering how you're doing",
   "@nudgeBannerSolo": {
     "placeholders": {

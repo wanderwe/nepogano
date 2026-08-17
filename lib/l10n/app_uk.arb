@@ -321,6 +321,7 @@
       "date": { "type": "String" }
     }
   },
+  "nudgeListTitle": "Хто поштовхнув",
   "nudgeBannerSolo": "{name} цікавиться, як ти",
   "@nudgeBannerSolo": {
     "placeholders": {

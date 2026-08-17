@@ -205,8 +205,16 @@ const kNudgeCooldownDays = 7;
 class PendingNudges {
   final int count;
   final String latestFromName;
+  // Усі, хто поштовхнув, найновіші перші — щоб можна було показати повний
+  // список за тапом, а не лише "перший + N інших", де ці N лишались
+  // невідомими.
+  final List<String> allNames;
 
-  PendingNudges({required this.count, required this.latestFromName});
+  PendingNudges({
+    required this.count,
+    required this.latestFromName,
+    required this.allNames,
+  });
 }
 
 Future<PendingNudges?> loadPendingNudges(SupabaseClient supabase) async {
@@ -245,6 +253,7 @@ Future<PendingNudges?> loadPendingNudges(SupabaseClient supabase) async {
   return PendingNudges(
     count: fromIds.length,
     latestFromName: nameById[latestFromId] ?? '',
+    allNames: fromIds.map((id) => nameById[id] ?? '').toList(),
   );
 }
 

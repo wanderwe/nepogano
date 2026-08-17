@@ -674,6 +674,9 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get nudgeListTitle => 'Who nudged you';
+
+  @override
   String nudgeBannerSolo(String name) {
     return '$name is wondering how you\'re doing';
   }

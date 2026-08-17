@@ -812,6 +812,46 @@ class _CheckInScreenState extends State<CheckInScreen>
     await markNudgesSeen();
   }
 
+  /// Тап на сам банер (не на ✕) — показує, хто саме поштовхнув, а не лише
+  /// "X і ще N друзів". Раніше ці N імен просто не зберігались після
+  /// підрахунку count.
+  Future<void> _showNudgeList() async {
+    final l10n = AppLocalizations.of(context);
+    final nudges = _pendingNudges;
+    if (nudges == null) return;
+    await showModalBottomSheet<void>(
+      context: context,
+      builder: (context) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(l10n.nudgeListTitle, style: appScreenTitle(fontSize: 18)),
+              const SizedBox(height: 12),
+              for (final name in nudges.allNames)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        PhosphorIconsLight.handWaving,
+                        size: 18,
+                        color: AppColors.accent,
+                      ),
+                      const SizedBox(width: 12),
+                      Text(name, style: const TextStyle(fontSize: 15)),
+                    ],
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   // Три різні приводи для індикатора на "Капсули часу": лист розкрився і
   // чекає на прочитання (unlock_at минув, МІЙ *_opened_at ще null), АБО
   // друг щойно надіслав новий запечатаний лист, який я ще не бачив у
@@ -2411,7 +2451,12 @@ class _CheckInScreenState extends State<CheckInScreen>
               if (_pendingNudges != null) ...[
                 const SizedBox(height: 12),
                 GestureDetector(
-                  onTap: _dismissNudgeBanner,
+                  // Тап на банер (окрім ✕ нижче) — показує, хто саме
+                  // поштовхнув, а не просто закриває банер. ✕ має власний
+                  // GestureDetector усередині — вкладений тап "перемагає"
+                  // цей зовнішній, тож натискання саме на хрестик все ще
+                  // просто закриває, не відкриваючи список.
+                  onTap: _showNudgeList,
                   behavior: HitTestBehavior.opaque,
                   child: Container(
                     width: double.infinity,
@@ -2456,12 +2501,16 @@ class _CheckInScreenState extends State<CheckInScreen>
                           ),
                         ),
                         const SizedBox(width: 8),
-                        const Padding(
-                          padding: EdgeInsets.only(top: 2),
-                          child: Icon(
-                            PhosphorIconsLight.x,
-                            size: 14,
-                            color: AppColors.accent,
+                        GestureDetector(
+                          onTap: _dismissNudgeBanner,
+                          behavior: HitTestBehavior.opaque,
+                          child: const Padding(
+                            padding: EdgeInsets.only(top: 2),
+                            child: Icon(
+                              PhosphorIconsLight.x,
+                              size: 14,
+                              color: AppColors.accent,
+                            ),
                           ),
                         ),
                       ],

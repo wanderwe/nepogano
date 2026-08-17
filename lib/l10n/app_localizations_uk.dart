@@ -676,6 +676,9 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
+  String get nudgeListTitle => 'Хто поштовхнув';
+
+  @override
   String nudgeBannerSolo(String name) {
     return '$name цікавиться, як ти';
   }
