@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'l10n/app_localizations.dart';
+import 'locale_provider.dart';
 import 'style.dart';
 
 class OnboardingScreen extends StatefulWidget {
@@ -63,15 +64,41 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 24),
           child: Column(
             children: [
-              Align(
-                alignment: Alignment.centerRight,
-                child: TextButton(
-                  onPressed: widget.onDone,
-                  child: Text(
-                    l10n.skip,
-                    style: const TextStyle(color: AppColors.inkMuted),
+              Row(
+                children: [
+                  // Автовизначення мови системи (locale_provider.dart) не
+                  // завжди вгадує — юзер може хотіти читати онбординг не
+                  // тією мовою, що в системі телефону. Перемикач саме тут,
+                  // а не лише в меню після онбордингу (куди ще й не
+                  // дійдеш, якщо не розумієш поточну мову), щоб виправити
+                  // це одразу, до того як почнеш читати.
+                  GestureDetector(
+                    onTap: () {
+                      final next = appLocale.value.languageCode == 'uk'
+                          ? 'en'
+                          : 'uk';
+                      setAppLocale(Locale(next));
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      child: Text(
+                        appLocale.value.languageCode == 'uk' ? 'EN' : 'UK',
+                        style: const TextStyle(
+                          color: AppColors.inkMuted,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
                   ),
-                ),
+                  const Spacer(),
+                  TextButton(
+                    onPressed: widget.onDone,
+                    child: Text(
+                      l10n.skip,
+                      style: const TextStyle(color: AppColors.inkMuted),
+                    ),
+                  ),
+                ],
               ),
               Expanded(
                 child: PageView(
