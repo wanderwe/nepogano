@@ -187,183 +187,203 @@ class _AuthScreenState extends State<AuthScreen> {
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: Center(
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Той самий перемикач, що на онбордингу, у тій самій позиції
+              // (верх-ліворуч) — автовизначення мови системи не завжди
+              // вгадує, і на логін-екрані так само немає іншого способу її
+              // змінити до входу. Свідомо поза центрованим блоком форми
+              // нижче, інакше він "плавав" би разом з формою замість того,
+              // щоб лишатись прикріпленим до верху екрана.
+              Row(
                 children: [
-                  // Той самий перемикач, що на онбордингу — автовизначення
-                  // мови системи не завжди вгадує, і на логін-екрані так
-                  // само немає іншого способу її змінити до входу.
-                  Row(
-                    children: [
-                      GestureDetector(
-                        onTap: () {
-                          final next = appLocale.value.languageCode == 'uk'
-                              ? 'en'
-                              : 'uk';
-                          setAppLocale(Locale(next));
-                        },
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 8),
-                          child: Text(
-                            appLocale.value.languageCode == 'uk' ? 'EN' : 'UK',
-                            style: const TextStyle(
-                              color: AppColors.inkMuted,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
+                  GestureDetector(
+                    onTap: () {
+                      final next = appLocale.value.languageCode == 'uk'
+                          ? 'en'
+                          : 'uk';
+                      setAppLocale(Locale(next));
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      child: Text(
+                        appLocale.value.languageCode == 'uk' ? 'EN' : 'UK',
+                        style: const TextStyle(
+                          color: AppColors.inkMuted,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Nepogano',
-                    textAlign: TextAlign.center,
-                    style: appSerif(fontSize: 36, fontWeight: FontWeight.w700),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    _isSignUp ? l10n.createAccount : l10n.signInToAccount,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      fontSize: 15,
-                      color: AppColors.inkMuted,
                     ),
                   ),
-                  const SizedBox(height: 32),
-
-                  TextField(
-                    controller: _emailController,
-                    keyboardType: TextInputType.emailAddress,
-                    decoration: InputDecoration(
-                      hintText: l10n.emailHint,
-                      filled: true,
-                      fillColor: AppColors.surface,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(14),
-                        borderSide: BorderSide.none,
-                      ),
-                      contentPadding: const EdgeInsets.all(16),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: _passwordController,
-                    obscureText: true,
-                    decoration: InputDecoration(
-                      hintText: l10n.passwordHint,
-                      filled: true,
-                      fillColor: AppColors.surface,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(14),
-                        borderSide: BorderSide.none,
-                      ),
-                      contentPadding: const EdgeInsets.all(16),
-                    ),
-                  ),
-
-                  if (_errorMessage != null) ...[
-                    const SizedBox(height: 12),
-                    Text(
-                      _errorMessage!,
-                      style: const TextStyle(
-                        color: Colors.redAccent,
-                        fontSize: 13,
-                      ),
-                    ),
-                  ],
-
-                  const SizedBox(height: 20),
-                  ElevatedButton(
-                    onPressed: _loading ? null : _submitEmailAuth,
-                    child: _loading
-                        ? const SizedBox(
-                            height: 18,
-                            width: 18,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: AppColors.accentInk,
-                            ),
-                          )
-                        : Text(_isSignUp ? l10n.signUp : l10n.signIn),
-                  ),
-
-                  const SizedBox(height: 12),
-                  TextButton(
-                    onPressed: _loading
-                        ? null
-                        : () => setState(() => _isSignUp = !_isSignUp),
-                    child: Text.rich(
-                      TextSpan(
-                        children: [
-                          TextSpan(
-                            text: _isSignUp
-                                ? l10n.alreadyHaveAccountQuestion
-                                : l10n.noAccountYetQuestion,
+                ],
+              ),
+              Expanded(
+                child: Center(
+                  child: SingleChildScrollView(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Text(
+                          'Nepogano',
+                          textAlign: TextAlign.center,
+                          style: appSerif(
+                            fontSize: 36,
+                            fontWeight: FontWeight.w700,
                           ),
-                          const TextSpan(text: ' '),
-                          TextSpan(
-                            text: _isSignUp ? l10n.signIn : l10n.signUp,
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          _isSignUp ? l10n.createAccount : l10n.signInToAccount,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontSize: 15,
+                            color: AppColors.inkMuted,
+                          ),
+                        ),
+                        const SizedBox(height: 32),
+
+                        TextField(
+                          controller: _emailController,
+                          keyboardType: TextInputType.emailAddress,
+                          decoration: InputDecoration(
+                            hintText: l10n.emailHint,
+                            filled: true,
+                            fillColor: AppColors.surface,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(14),
+                              borderSide: BorderSide.none,
+                            ),
+                            contentPadding: const EdgeInsets.all(16),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        TextField(
+                          controller: _passwordController,
+                          obscureText: true,
+                          decoration: InputDecoration(
+                            hintText: l10n.passwordHint,
+                            filled: true,
+                            fillColor: AppColors.surface,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(14),
+                              borderSide: BorderSide.none,
+                            ),
+                            contentPadding: const EdgeInsets.all(16),
+                          ),
+                        ),
+
+                        if (_errorMessage != null) ...[
+                          const SizedBox(height: 12),
+                          Text(
+                            _errorMessage!,
                             style: const TextStyle(
-                              color: AppColors.accent,
-                              fontWeight: FontWeight.w600,
+                              color: Colors.redAccent,
+                              fontSize: 13,
                             ),
                           ),
                         ],
-                      ),
-                    ),
-                  ),
 
-                  const SizedBox(height: 20),
-                  Row(
-                    children: [
-                      const Expanded(child: Divider(color: AppColors.divider)),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 12),
-                        child: Text(
-                          l10n.or,
-                          style: TextStyle(color: Colors.grey.shade500),
+                        const SizedBox(height: 20),
+                        ElevatedButton(
+                          onPressed: _loading ? null : _submitEmailAuth,
+                          child: _loading
+                              ? const SizedBox(
+                                  height: 18,
+                                  width: 18,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: AppColors.accentInk,
+                                  ),
+                                )
+                              : Text(_isSignUp ? l10n.signUp : l10n.signIn),
                         ),
-                      ),
-                      const Expanded(child: Divider(color: AppColors.divider)),
-                    ],
-                  ),
-                  const SizedBox(height: 20),
 
-                  OutlinedButton(
-                    onPressed: _loading ? null : _signInWithGoogle,
-                    // Навмисно окремий вигляд (залита поверхня, без рамки) —
-                    // конвенція для кнопки стороннього провайдера входу,
-                    // не звичайна другорядна дія застосунку.
-                    style: OutlinedButton.styleFrom(
-                      backgroundColor: AppColors.surface,
-                      foregroundColor: AppColors.ink,
-                      side: BorderSide.none,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                    ),
-                    child: Text(l10n.continueWithGoogle),
-                  ),
+                        const SizedBox(height: 12),
+                        TextButton(
+                          onPressed: _loading
+                              ? null
+                              : () => setState(() => _isSignUp = !_isSignUp),
+                          child: Text.rich(
+                            TextSpan(
+                              children: [
+                                TextSpan(
+                                  text: _isSignUp
+                                      ? l10n.alreadyHaveAccountQuestion
+                                      : l10n.noAccountYetQuestion,
+                                ),
+                                const TextSpan(text: ' '),
+                                TextSpan(
+                                  text: _isSignUp ? l10n.signIn : l10n.signUp,
+                                  style: const TextStyle(
+                                    color: AppColors.accent,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
 
-                  // Apple вимагає рівноцінну альтернативу для будь-якого
-                  // стороннього логіну (Guideline 4.8) — тому тільки на iOS,
-                  // на Android Google Sign-In лишається єдиним варіантом.
-                  if (Platform.isIOS) ...[
-                    const SizedBox(height: 12),
-                    SignInWithAppleButton(
-                      onPressed: _loading ? () {} : _signInWithApple,
-                      text: l10n.signInWithApple,
-                      height: 48,
-                      borderRadius: BorderRadius.circular(16),
+                        const SizedBox(height: 20),
+                        Row(
+                          children: [
+                            const Expanded(
+                              child: Divider(color: AppColors.divider),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                              ),
+                              child: Text(
+                                l10n.or,
+                                style: TextStyle(color: Colors.grey.shade500),
+                              ),
+                            ),
+                            const Expanded(
+                              child: Divider(color: AppColors.divider),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 20),
+
+                        OutlinedButton(
+                          onPressed: _loading ? null : _signInWithGoogle,
+                          // Навмисно окремий вигляд (залита поверхня, без
+                          // рамки) — конвенція для кнопки стороннього
+                          // провайдера входу, не звичайна другорядна дія
+                          // застосунку.
+                          style: OutlinedButton.styleFrom(
+                            backgroundColor: AppColors.surface,
+                            foregroundColor: AppColors.ink,
+                            side: BorderSide.none,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                          ),
+                          child: Text(l10n.continueWithGoogle),
+                        ),
+
+                        // Apple вимагає рівноцінну альтернативу для
+                        // будь-якого стороннього логіну (Guideline 4.8) —
+                        // тому тільки на iOS, на Android Google Sign-In
+                        // лишається єдиним варіантом.
+                        if (Platform.isIOS) ...[
+                          const SizedBox(height: 12),
+                          SignInWithAppleButton(
+                            onPressed: _loading ? () {} : _signInWithApple,
+                            text: l10n.signInWithApple,
+                            height: 48,
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                        ],
+                      ],
                     ),
-                  ],
-                ],
+                  ),
+                ),
               ),
-            ),
+            ],
           ),
         ),
       ),

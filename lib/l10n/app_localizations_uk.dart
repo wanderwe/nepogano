@@ -70,7 +70,7 @@ class AppLocalizationsUk extends AppLocalizations {
   String get getStarted => 'Почати';
 
   @override
-  String get onboarding1Headline => 'День без прикрас';
+  String get onboarding1Headline => 'Твій день, без прикрас';
 
   @override
   String get onboarding1Body =>
@@ -81,14 +81,14 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get onboarding2Body =>
-      'Три прості слова: швидко й чесно, без тиску вигадувати щось «грандіозне», коли насправді просто «так собі».';
+      'Три прості слова: швидко й чесно, без тиску вигадувати щось \"грандіозне\", коли насправді просто \"так собі\".';
 
   @override
   String get onboarding4Headline => 'Близькі поруч';
 
   @override
   String get onboarding4Body =>
-      'Лише ті, кого ти справді знаєш, без стрічки незнайомців. Додай друзів і спробуй вгадати, як минув їхній день.';
+      'Лише ті, кого ти справді знаєш, без нескінченної стрічки чужих людей. Додай друзів і спробуй вгадати, як минув їхній день.';
 
   @override
   String get onboarding5Headline => 'Погляд на місяць';
