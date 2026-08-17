@@ -967,7 +967,6 @@ class _CheckInScreenState extends State<CheckInScreen>
     final prefs = await SharedPreferences.getInstance();
     final seen = prefs.getBool(_subjectIntroSeenKey) ?? false;
     if (!seen) {
-      await prefs.setBool(_subjectIntroSeenKey, true);
       if (!mounted) return;
       final l10n = AppLocalizations.of(context);
       final proceed = await showDialog<bool>(
@@ -984,7 +983,11 @@ class _CheckInScreenState extends State<CheckInScreen>
           onSecondary: () => Navigator.of(context).pop(false),
         ),
       );
+      // Прапорець ставимо лише при реальному "Зрозуміло" — "Скасувати" не
+      // повинно назавжди ховати пояснення, яке юзер фактично не прийняв
+      // (міг просто передумати в цю мить, не встигнувши прочитати).
       if (proceed != true) return;
+      await prefs.setBool(_subjectIntroSeenKey, true);
     }
     if (mounted) await _createSubject();
   }

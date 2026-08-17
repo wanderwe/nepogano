@@ -230,7 +230,7 @@
   "me": "Me",
   "newSubject": "New diary",
   "subjectIntroTitle": "About extra diaries",
-  "subjectIntroBody": "All your friends can see your personal diary. By default, only you can see this diary. If you want to share it, open it up for a friend circle to view, or add co-authors who can edit it.",
+  "subjectIntroBody": "All your friends can see your personal diary. A new diary is only visible to you by default. If you want to share it, open it up for a friend circle to view, or add co-authors who can edit it.",
   "gotIt": "Got it",
   "subjectNameHint": "Name (e.g. Emma)",
   "subjectKindChild": "Child",

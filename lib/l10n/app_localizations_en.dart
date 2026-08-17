@@ -542,7 +542,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get subjectIntroBody =>
-      'All your friends can see your personal diary. By default, only you can see this diary. If you want to share it, open it up for a friend circle to view, or add co-authors who can edit it.';
+      'All your friends can see your personal diary. A new diary is only visible to you by default. If you want to share it, open it up for a friend circle to view, or add co-authors who can edit it.';
 
   @override
   String get gotIt => 'Got it';
