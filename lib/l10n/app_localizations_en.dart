@@ -81,7 +81,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get onboarding2Body =>
-      'Three plain words: quick and honest, no pressure to dress it up as \"amazing\" when it was really just okay.';
+      'Three plain words: quick and honest, no pressure to oversell it as \"amazing\" when it was really just okay.';
 
   @override
   String get onboarding4Headline => 'Close ones, close by';
