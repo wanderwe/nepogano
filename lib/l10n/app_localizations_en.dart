@@ -538,6 +538,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get newSubject => 'New diary';
 
   @override
+  String get subjectIntroTitle => 'About extra diaries';
+
+  @override
+  String get subjectIntroBody =>
+      'All your friends can see your personal diary. By default, only you can see this diary. If you want to share it, open it up for a friend circle to view, or add co-authors who can edit it.';
+
+  @override
+  String get gotIt => 'Got it';
+
+  @override
   String get subjectNameHint => 'Name (e.g. Emma)';
 
   @override
@@ -551,10 +561,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get subjectKindOther => 'Other';
-
-  @override
-  String get newSubjectExplainer =>
-      'By default only you can see this diary. If you want to share it, open it up for a friend circle to view, or add co-authors who can edit it.';
 
   @override
   String get couldNotCreateSubject => 'Couldn\'t create it.';

@@ -229,12 +229,14 @@
 
   "me": "Me",
   "newSubject": "New diary",
+  "subjectIntroTitle": "About extra diaries",
+  "subjectIntroBody": "All your friends can see your personal diary. By default, only you can see this diary. If you want to share it, open it up for a friend circle to view, or add co-authors who can edit it.",
+  "gotIt": "Got it",
   "subjectNameHint": "Name (e.g. Emma)",
   "subjectKindChild": "Child",
   "subjectKindPet": "Pet",
   "subjectKindPartner": "Partner",
   "subjectKindOther": "Other",
-  "newSubjectExplainer": "By default only you can see this diary. If you want to share it, open it up for a friend circle to view, or add co-authors who can edit it.",
   "couldNotCreateSubject": "Couldn't create it.",
   "removeSubjectConfirmTitle": "Delete {name}'s diary?",
   "@removeSubjectConfirmTitle": {

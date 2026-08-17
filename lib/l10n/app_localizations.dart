@@ -1070,6 +1070,24 @@ abstract class AppLocalizations {
   /// **'Новий щоденник'**
   String get newSubject;
 
+  /// No description provided for @subjectIntroTitle.
+  ///
+  /// In uk, this message translates to:
+  /// **'Про додаткові щоденники'**
+  String get subjectIntroTitle;
+
+  /// No description provided for @subjectIntroBody.
+  ///
+  /// In uk, this message translates to:
+  /// **'Твій особистий щоденник бачать усі друзі. Цей щоденник за замовчуванням бачиш лише ти. Якщо захочеш поділитись, відкрий на перегляд колу друзів або додай співавторів для редагування.'**
+  String get subjectIntroBody;
+
+  /// No description provided for @gotIt.
+  ///
+  /// In uk, this message translates to:
+  /// **'Зрозуміло'**
+  String get gotIt;
+
   /// No description provided for @subjectNameHint.
   ///
   /// In uk, this message translates to:
@@ -1099,12 +1117,6 @@ abstract class AppLocalizations {
   /// In uk, this message translates to:
   /// **'Інше'**
   String get subjectKindOther;
-
-  /// No description provided for @newSubjectExplainer.
-  ///
-  /// In uk, this message translates to:
-  /// **'Цей щоденник за замовчуванням бачиш лише ти. Якщо захочеш поділитись, відкрий на перегляд колу друзів або додай співавторів для редагування.'**
-  String get newSubjectExplainer;
 
   /// No description provided for @couldNotCreateSubject.
   ///

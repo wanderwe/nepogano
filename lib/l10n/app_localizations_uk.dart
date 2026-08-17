@@ -539,6 +539,16 @@ class AppLocalizationsUk extends AppLocalizations {
   String get newSubject => 'Новий щоденник';
 
   @override
+  String get subjectIntroTitle => 'Про додаткові щоденники';
+
+  @override
+  String get subjectIntroBody =>
+      'Твій особистий щоденник бачать усі друзі. Цей щоденник за замовчуванням бачиш лише ти. Якщо захочеш поділитись, відкрий на перегляд колу друзів або додай співавторів для редагування.';
+
+  @override
+  String get gotIt => 'Зрозуміло';
+
+  @override
   String get subjectNameHint => 'Ім\'я (наприклад, Тьома)';
 
   @override
@@ -552,10 +562,6 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get subjectKindOther => 'Інше';
-
-  @override
-  String get newSubjectExplainer =>
-      'Цей щоденник за замовчуванням бачиш лише ти. Якщо захочеш поділитись, відкрий на перегляд колу друзів або додай співавторів для редагування.';
 
   @override
   String get couldNotCreateSubject => 'Не вдалось створити.';

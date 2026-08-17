@@ -294,6 +294,7 @@ class AuthGate extends StatefulWidget {
 const _onboardingSeenKey = 'onboarding_seen';
 const _installReferrerCheckedKey = 'install_referrer_checked';
 const _dailyReminderScheduledDateKey = 'daily_reminder_scheduled_date';
+const _subjectIntroSeenKey = 'subject_intro_seen';
 
 class _AuthGateState extends State<AuthGate> {
   late final Stream<AuthState> _authStateStream;
@@ -954,6 +955,40 @@ class _CheckInScreenState extends State<CheckInScreen>
     _loadWeek();
   }
 
+  /// Перше натискання "+" за весь час на цьому пристрої — одноразово
+  /// пояснює всю механіку (особистий щоденник видно всім друзям, цей
+  /// приватний, коло=перегляд, співавтор=редагування) перед самим
+  /// створенням. Раз, повністю, і не повторюється — на відміну від
+  /// постійного підпису в діалозі створення (забирали, бо заважав швидко
+  /// прийняти рішення щоразу) чи підзаголовків у меню шеру (не рятує,
+  /// якщо саме меню ніхто не знаходить). Прапорець на пристрій, той самий
+  /// підхід, що й [_onboardingSeenKey].
+  Future<void> _onCreateSubjectTap() async {
+    final prefs = await SharedPreferences.getInstance();
+    final seen = prefs.getBool(_subjectIntroSeenKey) ?? false;
+    if (!seen) {
+      await prefs.setBool(_subjectIntroSeenKey, true);
+      if (!mounted) return;
+      final l10n = AppLocalizations.of(context);
+      final proceed = await showDialog<bool>(
+        context: context,
+        builder: (context) => AppDialog(
+          title: l10n.subjectIntroTitle,
+          content: Text(
+            l10n.subjectIntroBody,
+            style: const TextStyle(color: AppColors.inkMuted, height: 1.4),
+          ),
+          primaryLabel: l10n.gotIt,
+          onPrimary: () => Navigator.of(context).pop(true),
+          secondaryLabel: l10n.cancel,
+          onSecondary: () => Navigator.of(context).pop(false),
+        ),
+      );
+      if (proceed != true) return;
+    }
+    if (mounted) await _createSubject();
+  }
+
   Future<void> _createSubject() async {
     final l10n = AppLocalizations.of(context);
     final controller = TextEditingController();
@@ -1002,14 +1037,6 @@ class _CheckInScreenState extends State<CheckInScreen>
                       onTap: () => setState(() => kind = 'other'),
                     ),
                   ],
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  l10n.newSubjectExplainer,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: AppColors.inkMuted,
-                  ),
                 ),
               ],
             ),
@@ -2515,7 +2542,7 @@ class _CheckInScreenState extends State<CheckInScreen>
                     ),
                   ),
                   IconButton(
-                    onPressed: _createSubject,
+                    onPressed: _onCreateSubjectTap,
                     icon: const Icon(PhosphorIconsLight.plusCircle, size: 22),
                     tooltip: l10n.newSubject,
                     color: AppColors.inkMuted,

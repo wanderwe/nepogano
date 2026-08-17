@@ -238,12 +238,14 @@
 
   "me": "Я",
   "newSubject": "Новий щоденник",
+  "subjectIntroTitle": "Про додаткові щоденники",
+  "subjectIntroBody": "Твій особистий щоденник бачать усі друзі. Цей щоденник за замовчуванням бачиш лише ти. Якщо захочеш поділитись, відкрий на перегляд колу друзів або додай співавторів для редагування.",
+  "gotIt": "Зрозуміло",
   "subjectNameHint": "Ім'я (наприклад, Тьома)",
   "subjectKindChild": "Дитина",
   "subjectKindPet": "Улюбленець",
   "subjectKindPartner": "Партнер",
   "subjectKindOther": "Інше",
-  "newSubjectExplainer": "Цей щоденник за замовчуванням бачиш лише ти. Якщо захочеш поділитись, відкрий на перегляд колу друзів або додай співавторів для редагування.",
   "couldNotCreateSubject": "Не вдалось створити.",
   "removeSubjectConfirmTitle": "Видалити щоденник {name}?",
   "@removeSubjectConfirmTitle": {
