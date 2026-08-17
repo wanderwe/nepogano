@@ -227,7 +227,7 @@ abstract class AppLocalizations {
   /// No description provided for @onboarding1Body.
   ///
   /// In uk, this message translates to:
-  /// **'Не кожен день має бути неймовірним. Зафіксуй чесно, без тиску видавати «Ніяк» за «Чудово».'**
+  /// **'Не кожен день має бути неймовірним, і це нормально. Просто чесно зафіксуй, як він минув.'**
   String get onboarding1Body;
 
   /// No description provided for @onboarding4Headline.

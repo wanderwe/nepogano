@@ -74,7 +74,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get onboarding1Body =>
-      'Не кожен день має бути неймовірним. Зафіксуй чесно, без тиску видавати «Ніяк» за «Чудово».';
+      'Не кожен день має бути неймовірним, і це нормально. Просто чесно зафіксуй, як він минув.';
 
   @override
   String get onboarding4Headline => 'Близькі поруч';
