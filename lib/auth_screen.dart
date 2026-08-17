@@ -207,8 +207,15 @@ class _AuthScreenState extends State<AuthScreen> {
                           : 'uk';
                       setAppLocale(Locale(next));
                     },
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 8),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.surface,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
                       child: Text(
                         appLocale.value.languageCode == 'uk' ? 'EN' : 'UK',
                         style: const TextStyle(
