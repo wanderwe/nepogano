@@ -104,7 +104,7 @@
 
   "friends": "Друзі",
   "profile": "Профіль",
-  "myFriendCode": "Мій код",
+  "myFriendCode": "Твій код для друзів",
   "codeCopied": "Код скопійовано",
   "addFriend": "Додати друга",
   "couldNotLoadFriends": "Не вдалось завантажити друзів.",
@@ -144,9 +144,9 @@
     }
   },
   "friendAdded": "Готово! Тепер ви друзі.",
-  "editDisplayName": "Твоє ім'я",
+  "editDisplayName": "Ім'я або нікнейм",
   "displayNameHint": "Як тебе підписати для друзів",
-  "setDisplayName": "Додати своє ім'я",
+  "setDisplayName": "Додати ім'я або нікнейм",
   "couldNotSaveDisplayName": "Не вдалось зберегти ім'я.",
   "couldNotSaveAvatar": "Не вдалось зберегти аватарку.",
   "notCheckedInToday": "Давно не було новин",

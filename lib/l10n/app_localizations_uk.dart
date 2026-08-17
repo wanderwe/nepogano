@@ -277,7 +277,7 @@ class AppLocalizationsUk extends AppLocalizations {
   String get profile => 'Профіль';
 
   @override
-  String get myFriendCode => 'Мій код';
+  String get myFriendCode => 'Твій код для друзів';
 
   @override
   String get codeCopied => 'Код скопійовано';
@@ -368,13 +368,13 @@ class AppLocalizationsUk extends AppLocalizations {
   String get friendAdded => 'Готово! Тепер ви друзі.';
 
   @override
-  String get editDisplayName => 'Твоє ім\'я';
+  String get editDisplayName => 'Ім\'я або нікнейм';
 
   @override
   String get displayNameHint => 'Як тебе підписати для друзів';
 
   @override
-  String get setDisplayName => 'Додати своє ім\'я';
+  String get setDisplayName => 'Додати ім\'я або нікнейм';
 
   @override
   String get couldNotSaveDisplayName => 'Не вдалось зберегти ім\'я.';

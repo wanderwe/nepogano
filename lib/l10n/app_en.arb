@@ -95,7 +95,7 @@
 
   "friends": "Friends",
   "profile": "Profile",
-  "myFriendCode": "My code",
+  "myFriendCode": "Your friend code",
   "codeCopied": "Code copied",
   "addFriend": "Add friend",
   "couldNotLoadFriends": "Couldn't load friends.",

@@ -599,7 +599,7 @@ abstract class AppLocalizations {
   /// No description provided for @myFriendCode.
   ///
   /// In uk, this message translates to:
-  /// **'Мій код'**
+  /// **'Твій код для друзів'**
   String get myFriendCode;
 
   /// No description provided for @codeCopied.
@@ -767,7 +767,7 @@ abstract class AppLocalizations {
   /// No description provided for @editDisplayName.
   ///
   /// In uk, this message translates to:
-  /// **'Твоє ім\'я'**
+  /// **'Ім\'я або нікнейм'**
   String get editDisplayName;
 
   /// No description provided for @displayNameHint.
@@ -779,7 +779,7 @@ abstract class AppLocalizations {
   /// No description provided for @setDisplayName.
   ///
   /// In uk, this message translates to:
-  /// **'Додати своє ім\'я'**
+  /// **'Додати ім\'я або нікнейм'**
   String get setDisplayName;
 
   /// No description provided for @couldNotSaveDisplayName.

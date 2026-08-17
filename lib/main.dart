@@ -2424,11 +2424,19 @@ class _CheckInScreenState extends State<CheckInScreen>
                       borderRadius: BorderRadius.circular(14),
                     ),
                     child: Row(
+                      // start, не center (за замовчуванням) — інакше коли
+                      // текст переноситься на 2 рядки, іконки центруються
+                      // відносно всього блоку й "висять" між рядками
+                      // замість вирівнювання по першому рядку.
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Icon(
-                          PhosphorIconsLight.handWaving,
-                          size: 16,
-                          color: AppColors.accent,
+                        const Padding(
+                          padding: EdgeInsets.only(top: 2),
+                          child: Icon(
+                            PhosphorIconsLight.handWaving,
+                            size: 16,
+                            color: AppColors.accent,
+                          ),
                         ),
                         const SizedBox(width: 8),
                         Expanded(
@@ -2447,10 +2455,14 @@ class _CheckInScreenState extends State<CheckInScreen>
                             ),
                           ),
                         ),
-                        const Icon(
-                          PhosphorIconsLight.x,
-                          size: 14,
-                          color: AppColors.accent,
+                        const SizedBox(width: 8),
+                        const Padding(
+                          padding: EdgeInsets.only(top: 2),
+                          child: Icon(
+                            PhosphorIconsLight.x,
+                            size: 14,
+                            color: AppColors.accent,
+                          ),
                         ),
                       ],
                     ),
@@ -2600,8 +2612,16 @@ class _CheckInScreenState extends State<CheckInScreen>
                         ),
                 ),
               ),
-              _buildWeekStrip(),
-              const SizedBox(height: 16),
+              // Ховаємо смужку тижня, коли відкрита клавіатура — вона
+              // сидить поза скролом фіксованою висотою, тож при
+              // стисканні Scaffold клавіатурою (resizeToAvoidBottomInset)
+              // забирала місце саме тоді, коли форма чек-іну (поле
+              // нотатки, кнопка збереження) найбільше його потребує.
+              // Навігація тижнями під час набору тексту й не потрібна.
+              if (MediaQuery.of(context).viewInsets.bottom == 0) ...[
+                _buildWeekStrip(),
+                const SizedBox(height: 16),
+              ],
             ],
           ),
         ),
