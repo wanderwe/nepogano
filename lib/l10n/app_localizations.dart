@@ -230,18 +230,6 @@ abstract class AppLocalizations {
   /// **'Не кожен день має бути неймовірним, і це нормально. Просто чесно зафіксуй, як він минув.'**
   String get onboarding1Body;
 
-  /// No description provided for @onboarding2Headline.
-  ///
-  /// In uk, this message translates to:
-  /// **'Ніяк. Непогано. Чудово.'**
-  String get onboarding2Headline;
-
-  /// No description provided for @onboarding2Body.
-  ///
-  /// In uk, this message translates to:
-  /// **'Три прості слова: швидко й чесно, без тиску вигадувати щось \"грандіозне\", коли насправді просто \"так собі\".'**
-  String get onboarding2Body;
-
   /// No description provided for @onboarding4Headline.
   ///
   /// In uk, this message translates to:
@@ -1379,19 +1367,19 @@ abstract class AppLocalizations {
   /// No description provided for @timeCapsulesDelayMonth.
   ///
   /// In uk, this message translates to:
-  /// **'За місяць'**
+  /// **'1 місяць'**
   String get timeCapsulesDelayMonth;
 
   /// No description provided for @timeCapsulesDelayHalfYear.
   ///
   /// In uk, this message translates to:
-  /// **'За півроку'**
+  /// **'6 місяців'**
   String get timeCapsulesDelayHalfYear;
 
   /// No description provided for @timeCapsulesDelayYear.
   ///
   /// In uk, this message translates to:
-  /// **'За рік'**
+  /// **'1 рік'**
   String get timeCapsulesDelayYear;
 
   /// No description provided for @timeCapsulesSeal.

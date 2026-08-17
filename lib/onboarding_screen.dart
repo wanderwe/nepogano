@@ -16,7 +16,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   final _controller = PageController();
   int _page = 0;
 
-  static const _pageCount = 4;
+  static const _pageCount = 3;
 
   @override
   void dispose() {
@@ -42,10 +42,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       _OnboardingPage(
         headline: l10n.onboarding1Headline,
         body: l10n.onboarding1Body,
-      ),
-      _OnboardingPage(
-        headline: l10n.onboarding2Headline,
-        body: l10n.onboarding2Body,
       ),
       _OnboardingPage(
         headline: l10n.onboarding4Headline,
@@ -159,20 +155,13 @@ class _OnboardingPage extends StatelessWidget {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  SizedBox(
-                    width: double.infinity,
-                    child: FittedBox(
-                      fit: BoxFit.scaleDown,
-                      child: Text(
-                        headline,
-                        textAlign: TextAlign.center,
-                        maxLines: 1,
-                        style: appSerif(
-                          fontSize: 28,
-                          fontWeight: FontWeight.w700,
-                          height: 1.2,
-                        ),
-                      ),
+                  Text(
+                    headline,
+                    textAlign: TextAlign.center,
+                    style: appSerif(
+                      fontSize: 28,
+                      fontWeight: FontWeight.w700,
+                      height: 1.2,
                     ),
                   ),
                   const SizedBox(height: 16),
