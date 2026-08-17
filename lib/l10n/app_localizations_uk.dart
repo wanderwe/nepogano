@@ -55,7 +55,7 @@ class AppLocalizationsUk extends AppLocalizations {
   String get moodNepogano => 'Непогано';
 
   @override
-  String get moodZbs => 'Збс';
+  String get moodZbs => 'Чудово';
 
   @override
   String get todayWasPrefix => 'Сьогодні було';
@@ -77,7 +77,7 @@ class AppLocalizationsUk extends AppLocalizations {
       'Не кожен день має бути неймовірним, і це нормально. Просто чесно зафіксуй, як він минув.';
 
   @override
-  String get onboarding2Headline => 'Ніяк. Непогано. Збс.';
+  String get onboarding2Headline => 'Ніяк. Непогано. Чудово.';
 
   @override
   String get onboarding2Body =>

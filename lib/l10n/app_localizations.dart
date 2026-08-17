@@ -191,7 +191,7 @@ abstract class AppLocalizations {
   /// No description provided for @moodZbs.
   ///
   /// In uk, this message translates to:
-  /// **'Збс'**
+  /// **'Чудово'**
   String get moodZbs;
 
   /// No description provided for @todayWasPrefix.
@@ -233,7 +233,7 @@ abstract class AppLocalizations {
   /// No description provided for @onboarding2Headline.
   ///
   /// In uk, this message translates to:
-  /// **'Ніяк. Непогано. Збс.'**
+  /// **'Ніяк. Непогано. Чудово.'**
   String get onboarding2Headline;
 
   /// No description provided for @onboarding2Body.
