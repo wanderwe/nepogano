@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'date_labels.dart';
@@ -8,7 +7,6 @@ import 'l10n/app_localizations.dart';
 import 'style.dart';
 
 const _bodyMaxLength = 5000;
-const _introSeenKey = 'time_capsules_intro_seen';
 
 enum _LetterState { locked, unlockedUnread, opened }
 
@@ -264,18 +262,19 @@ class _TimeCapsulesScreenState extends State<TimeCapsulesScreen> {
     }
   }
 
-  /// Юзер, який ще ніколи сам не писав листа (навіть якщо йому вже хтось
-  /// надіслав — тоді список НЕ порожній, і _EmptyState ніколи не показувався
-  /// б), перед першим написанням бачить те саме пояснення механіки, що
-  /// раніше жило лише в _EmptyState. Той самий патерн, що для сутностей
-  /// (_onCreateSubjectTap): прапорець "бачив" ставимо лише при реальному
-  /// "Зрозуміло", не при простому показі — "Скасувати" не повинно назавжди
-  /// ховати пояснення, яке юзер фактично не прийняв.
+  /// Викликається лише з FAB "Написати новий лист" (видимий тільки коли
+  /// список НЕ порожній). Якщо юзер ще ЖОДНОГО листа сам не писав (лише
+  /// отримував — інакше список був би порожній, і він побачив би це саме
+  /// пояснення через _EmptyState), показуємо те саме пояснення механіки
+  /// перед першим написанням. Перевірка на живих даних (чи є серед
+  /// _letters лист, де я автор), не окремий прапорець — переживає
+  /// перевстановлення застосунку і не може розсинхронитись із реальністю.
+  /// _EmptyState.onWrite викликає _openComposeSheet() НАПРЯМУ, минаючи цю
+  /// перевірку — інакше юзер бачив би те саме пояснення двічі поспіль.
   Future<void> _openCompose() async {
-    final prefs = await SharedPreferences.getInstance();
-    final seen = prefs.getBool(_introSeenKey) ?? false;
-    if (!seen) {
-      if (!mounted) return;
+    final myId = _supabase.auth.currentUser?.id;
+    final everWrote = _letters.any((l) => l.authorId == myId);
+    if (!everWrote) {
       final l10n = AppLocalizations.of(context);
       final proceed = await showDialog<bool>(
         context: context,
@@ -292,7 +291,6 @@ class _TimeCapsulesScreenState extends State<TimeCapsulesScreen> {
         ),
       );
       if (proceed != true) return;
-      await prefs.setBool(_introSeenKey, true);
     }
     if (mounted) await _openComposeSheet();
   }
@@ -436,7 +434,7 @@ class _TimeCapsulesScreenState extends State<TimeCapsulesScreen> {
         body: _loading
             ? const Center(child: CircularProgressIndicator())
             : _letters.isEmpty
-            ? _EmptyState(onWrite: _openCompose)
+            ? _EmptyState(onWrite: _openComposeSheet)
             : _buildLetterList(l10n),
         floatingActionButton: _letters.isEmpty
             ? null
