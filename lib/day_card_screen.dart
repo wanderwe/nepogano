@@ -286,30 +286,33 @@ class _MultiShareSheetState extends State<_MultiShareSheet> {
                 style: const TextStyle(fontSize: 13, color: AppColors.inkMuted),
               ),
               const SizedBox(height: 20),
-              // Прямий шер реалізований лише нативним Android-каналом
-              // (MainActivity.kt) — на iOS немає відповідача на цей
-              // MethodChannel, тож кнопки мовчки провалювались із фейковим
-              // "не встановлено" для кожного юзера, завжди. "Інше"
-              // (share_plus, вже крос-платформене) лишається на iOS єдиним
-              // шляхом. Facebook свідомо прибраний: немає публічного
+              // Instagram Stories тепер має нативного відповідача на обох
+              // платформах (MainActivity.kt / AppDelegate.swift), той самий
+              // публічний контракт, різний лише механізм (intent vs
+              // pasteboard+URL scheme) — тому без гейту по платформі.
+              // TikTok лишається лише на Android: там це загальний
+              // ACTION_SEND, спрямований на пакет TikTok, а публічного
+              // еквівалента такого "спрямованого інтенту" на iOS немає —
+              // прямий шер туди вимагав би реєстрації в TikTok for
+              // Developers і їхнього SDK, окрема, набагато більша задача.
+              // Facebook свідомо прибраний: немає публічного
               // Stories-контракту, як в Instagram (`ADD_TO_STORY`), тож
               // прямий шер падав на власний внутрішній вибір застосунку
               // Facebook замість чіткого переходу в Stories — а Instagram
               // Stories й так вміє дублювати в Facebook Stories зі своїх
               // налаштувань, окрема кнопка тут переважно дублювала цю
               // можливість.
-              if (Platform.isAndroid) ...[
-                _ShareRow(
-                  label: 'Instagram Stories',
-                  done: _done.contains('instagram'),
-                  onTap: _shareInstagram,
-                ),
+              _ShareRow(
+                label: 'Instagram Stories',
+                done: _done.contains('instagram'),
+                onTap: _shareInstagram,
+              ),
+              if (Platform.isAndroid)
                 _ShareRow(
                   label: 'TikTok',
                   done: _done.contains('tiktok'),
                   onTap: _shareTikTok,
                 ),
-              ],
               _ShareRow(
                 label: l10n.other,
                 done: _done.contains('other'),

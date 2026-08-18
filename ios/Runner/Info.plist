@@ -43,6 +43,13 @@
 	</array>
 	<key>CFBundleVersion</key>
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<!-- Без цього canOpenURL завжди повертає false для instagram-stories,
+		     навіть якщо Instagram реально встановлений — iOS вимагає явно
+		     задекларувати кожну схему, яку застосунок хоче перевірити. -->
+		<string>instagram-stories</string>
+	</array>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSCameraUsageDescription</key>
