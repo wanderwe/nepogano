@@ -1061,7 +1061,7 @@ abstract class AppLocalizations {
   /// No description provided for @subjectIntroTitle.
   ///
   /// In uk, this message translates to:
-  /// **'Про додаткові щоденники'**
+  /// **'Про інші щоденники'**
   String get subjectIntroTitle;
 
   /// No description provided for @subjectIntroBody.
@@ -1331,19 +1331,19 @@ abstract class AppLocalizations {
   /// No description provided for @timeCapsulesRecipientSelf.
   ///
   /// In uk, this message translates to:
-  /// **'Собі'**
+  /// **'собі'**
   String get timeCapsulesRecipientSelf;
 
   /// No description provided for @timeCapsulesEmptyTitle.
   ///
   /// In uk, this message translates to:
-  /// **'Лист, який відкриється пізніше'**
+  /// **'Лист у майбутнє'**
   String get timeCapsulesEmptyTitle;
 
   /// No description provided for @timeCapsulesEmptySubtitle.
   ///
   /// In uk, this message translates to:
-  /// **'Обери коли: за місяць, півроку чи рік. До того часу він запечатаний, підглянути не вийде.'**
+  /// **'Обери коли: за місяць, півроку чи рік. До того часу він запечатаний, зберігаючи сьогодні таким, яким воно справді було.'**
   String get timeCapsulesEmptySubtitle;
 
   /// No description provided for @timeCapsulesWriteFirst.
@@ -1405,12 +1405,6 @@ abstract class AppLocalizations {
   /// In uk, this message translates to:
   /// **'Лист від {name}'**
   String timeCapsuleFromFriendLabel(String name);
-
-  /// No description provided for @timeCapsulesRecipientLabel.
-  ///
-  /// In uk, this message translates to:
-  /// **'Кому'**
-  String get timeCapsulesRecipientLabel;
 
   /// No description provided for @timeCapsulesLockedUntil.
   ///

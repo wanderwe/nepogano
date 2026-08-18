@@ -532,7 +532,7 @@ class AppLocalizationsUk extends AppLocalizations {
   String get newSubject => 'Новий щоденник';
 
   @override
-  String get subjectIntroTitle => 'Про додаткові щоденники';
+  String get subjectIntroTitle => 'Про інші щоденники';
 
   @override
   String get subjectIntroBody =>
@@ -697,14 +697,14 @@ class AppLocalizationsUk extends AppLocalizations {
   String get timeCapsulesMenuLabel => 'Капсули часу';
 
   @override
-  String get timeCapsulesRecipientSelf => 'Собі';
+  String get timeCapsulesRecipientSelf => 'собі';
 
   @override
-  String get timeCapsulesEmptyTitle => 'Лист, який відкриється пізніше';
+  String get timeCapsulesEmptyTitle => 'Лист у майбутнє';
 
   @override
   String get timeCapsulesEmptySubtitle =>
-      'Обери коли: за місяць, півроку чи рік. До того часу він запечатаний, підглянути не вийде.';
+      'Обери коли: за місяць, півроку чи рік. До того часу він запечатаний, зберігаючи сьогодні таким, яким воно справді було.';
 
   @override
   String get timeCapsulesWriteFirst => 'Написати перший лист';
@@ -739,9 +739,6 @@ class AppLocalizationsUk extends AppLocalizations {
   String timeCapsuleFromFriendLabel(String name) {
     return 'Лист від $name';
   }
-
-  @override
-  String get timeCapsulesRecipientLabel => 'Кому';
 
   @override
   String timeCapsulesLockedUntil(String date) {

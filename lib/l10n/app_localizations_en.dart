@@ -698,7 +698,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get timeCapsulesRecipientSelf => 'Myself';
 
   @override
-  String get timeCapsulesEmptyTitle => 'A letter that opens later';
+  String get timeCapsulesEmptyTitle => 'A letter into the future';
 
   @override
   String get timeCapsulesEmptySubtitle =>
@@ -737,9 +737,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String timeCapsuleFromFriendLabel(String name) {
     return 'Letter from $name';
   }
-
-  @override
-  String get timeCapsulesRecipientLabel => 'To';
 
   @override
   String timeCapsulesLockedUntil(String date) {

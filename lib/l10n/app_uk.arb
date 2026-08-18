@@ -236,7 +236,7 @@
 
   "me": "Я",
   "newSubject": "Новий щоденник",
-  "subjectIntroTitle": "Про додаткові щоденники",
+  "subjectIntroTitle": "Про інші щоденники",
   "subjectIntroBody": "Твій особистий щоденник бачать усі друзі. Новий щоденник за замовчуванням бачиш лише ти. Якщо захочеш поділитись, відкрий на перегляд колу друзів або додай співавторів для редагування.",
   "gotIt": "Зрозуміло",
   "subjectNameHint": "Ім'я (наприклад, Тьома)",
@@ -332,9 +332,9 @@
   "thisMonth": "Цей місяць",
 
   "timeCapsulesMenuLabel": "Капсули часу",
-  "timeCapsulesRecipientSelf": "Собі",
-  "timeCapsulesEmptyTitle": "Лист, який відкриється пізніше",
-  "timeCapsulesEmptySubtitle": "Обери коли: за місяць, півроку чи рік. До того часу він запечатаний, підглянути не вийде.",
+  "timeCapsulesRecipientSelf": "собі",
+  "timeCapsulesEmptyTitle": "Лист у майбутнє",
+  "timeCapsulesEmptySubtitle": "Обери коли: за місяць, півроку чи рік. До того часу він запечатаний, зберігаючи сьогодні таким, яким воно справді було.",
   "timeCapsulesWriteFirst": "Написати перший лист",
   "timeCapsulesWriteNew": "Написати новий лист",
   "timeCapsulesComposeHint": "Напиши свій лист...",
@@ -355,7 +355,6 @@
       "name": { "type": "String" }
     }
   },
-  "timeCapsulesRecipientLabel": "Кому",
   "timeCapsulesLockedUntil": "розкриється {date}",
   "@timeCapsulesLockedUntil": {
     "placeholders": {

@@ -199,6 +199,15 @@ const _nudgesLastSeenKey = 'nudges_last_seen';
 // застосунку), щоб один настирливий друг не міг закидати поштовхами щодня.
 const kNudgeCooldownDays = 7;
 
+/// Один рядок у списку "хто цікавиться" — id потрібен, щоб тап по імені міг
+/// вести на профіль цього друга, не лише показувати текст.
+class NudgeFrom {
+  final String userId;
+  final String name;
+
+  NudgeFrom({required this.userId, required this.name});
+}
+
 /// Хто й скільки людей "поштовхнули" мене з часу останнього перегляду —
 /// null, якщо нікого. Показується пасивно на головному екрані при
 /// наступному відкритті застосунку (немає push-інфраструктури, свідомо).
@@ -206,9 +215,9 @@ class PendingNudges {
   // Усі, хто поштовхнув, найновіші перші — щоб можна було показати повний
   // список за тапом, а не лише "перший + N інших", де ці N лишались
   // невідомими.
-  final List<String> allNames;
+  final List<NudgeFrom> from;
 
-  PendingNudges({required this.allNames});
+  PendingNudges({required this.from});
 }
 
 Future<PendingNudges?> loadPendingNudges(SupabaseClient supabase) async {
@@ -244,7 +253,9 @@ Future<PendingNudges?> loadPendingNudges(SupabaseClient supabase) async {
   };
 
   return PendingNudges(
-    allNames: fromIds.map((id) => nameById[id] ?? '').toList(),
+    from: fromIds
+        .map((id) => NudgeFrom(userId: id, name: nameById[id] ?? ''))
+        .toList(),
   );
 }
 

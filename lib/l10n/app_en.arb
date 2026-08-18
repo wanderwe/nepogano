@@ -324,7 +324,7 @@
 
   "timeCapsulesMenuLabel": "Time capsules",
   "timeCapsulesRecipientSelf": "Myself",
-  "timeCapsulesEmptyTitle": "A letter that opens later",
+  "timeCapsulesEmptyTitle": "A letter into the future",
   "timeCapsulesEmptySubtitle": "Choose when: a month, half a year, or a year from now. Until then it's sealed, no peeking.",
   "timeCapsulesWriteFirst": "Write your first letter",
   "timeCapsulesWriteNew": "Write a new letter",
@@ -346,7 +346,6 @@
       "name": { "type": "String" }
     }
   },
-  "timeCapsulesRecipientLabel": "To",
   "timeCapsulesLockedUntil": "unlocks {date}",
   "@timeCapsulesLockedUntil": {
     "placeholders": {

@@ -822,12 +822,9 @@ class _ComposeLetterSheetState extends State<_ComposeLetterSheet> {
             // якщо в юзера десятки чи сотні друзів (стіна плиток замість
             // списку).
             if (_friends.isNotEmpty) ...[
+              // Без окремого підпису "Кому" — значення дропдауна (напр.
+              // "собі") разом із шевроном і так зрозуміле без пояснення.
               const SizedBox(height: 12),
-              Text(
-                l10n.timeCapsulesRecipientLabel,
-                style: const TextStyle(color: AppColors.inkMuted, fontSize: 12),
-              ),
-              const SizedBox(height: 6),
               GestureDetector(
                 onTap: () async {
                   final picked =

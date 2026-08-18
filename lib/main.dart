@@ -819,11 +819,17 @@ class _CheckInScreenState extends State<CheckInScreen>
   /// Тап на сам банер (не на ✕) — показує, хто саме поштовхнув, а не лише
   /// "X і ще N друзів". Раніше ці N імен просто не зберігались після
   /// підрахунку count.
+  ///
+  /// Тап на конкретне ім'я веде на профіль цього друга й НЕ позначає банер
+  /// переглянутим — інакше після переходу до першого з кількох людей решта
+  /// імен ставали недоступні (банер уже зник би). Переглянутим банер
+  /// вважається лише тоді, коли шторку закрили самі (свайп/тап повз),
+  /// не обираючи нікого конкретного.
   Future<void> _showNudgeList() async {
     final l10n = AppLocalizations.of(context);
     final nudges = _pendingNudges;
     if (nudges == null) return;
-    await showModalBottomSheet<void>(
+    final tappedUserId = await showModalBottomSheet<String>(
       context: context,
       builder: (context) => SafeArea(
         child: Padding(
@@ -834,19 +840,26 @@ class _CheckInScreenState extends State<CheckInScreen>
             children: [
               Text(l10n.nudgeListTitle, style: appScreenTitle(fontSize: 18)),
               const SizedBox(height: 12),
-              for (final name in nudges.allNames)
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8),
-                  child: Row(
-                    children: [
-                      const Icon(
-                        PhosphorIconsLight.handWaving,
-                        size: 18,
-                        color: AppColors.accent,
-                      ),
-                      const SizedBox(width: 12),
-                      Text(name, style: const TextStyle(fontSize: 15)),
-                    ],
+              for (final person in nudges.from)
+                InkWell(
+                  onTap: () => Navigator.of(context).pop(person.userId),
+                  borderRadius: BorderRadius.circular(12),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 8,
+                      horizontal: 4,
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(
+                          PhosphorIconsLight.handWaving,
+                          size: 18,
+                          color: AppColors.accent,
+                        ),
+                        const SizedBox(width: 12),
+                        Text(person.name, style: const TextStyle(fontSize: 15)),
+                      ],
+                    ),
                   ),
                 ),
             ],
@@ -854,6 +867,23 @@ class _CheckInScreenState extends State<CheckInScreen>
         ),
       ),
     );
+
+    if (!mounted) return;
+    if (tappedUserId != null) {
+      final person = nudges.from.firstWhere((p) => p.userId == tappedUserId);
+      await Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => PersonDetailScreen(
+            userId: person.userId,
+            displayEmail: '',
+            displayName: person.name.isEmpty ? null : person.name,
+          ),
+        ),
+      );
+    } else {
+      setState(() => _pendingNudges = null);
+      await markNudgesSeen();
+    }
   }
 
   // Три різні приводи для індикатора на "Капсули часу": лист розкрився і
