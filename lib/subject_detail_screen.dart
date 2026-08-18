@@ -243,12 +243,45 @@ class _SubjectDetailScreenState extends State<SubjectDetailScreen> {
                 const Expanded(
                   child: Center(child: CircularProgressIndicator()),
                 )
-              else if (_entries.isEmpty && !_hasMore)
+              else if (_entries.isEmpty)
+                // Порожньо в поточному вікні — сам напис і так інформативний
+                // (є/нема свіжих новин), центрований, як завжди. Якщо
+                // старіші записи все ж є (_hasMore), під написом додається
+                // кнопка з окремим формулюванням "Показати старіші" —
+                // "Показати ще" тут звучало б дивно, бо показувати після
+                // порожнього списку нічого "ще", лише щось старе.
                 Expanded(
                   child: Center(
-                    child: Text(
-                      l10n.notCheckedInToday,
-                      style: const TextStyle(color: AppColors.inkMuted),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          l10n.notCheckedInToday,
+                          style: const TextStyle(color: AppColors.inkMuted),
+                        ),
+                        if (_hasMore) ...[
+                          const SizedBox(height: 12),
+                          _loadingMore
+                              ? const SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : TextButton(
+                                  onPressed: _loadMoreEntries,
+                                  // Точково акцентний колір замість
+                                  // приглушеного дефолту теми — інакше
+                                  // кнопка зливається з написом над нею й не
+                                  // виглядає як щось клікабельне.
+                                  style: TextButton.styleFrom(
+                                    foregroundColor: AppColors.accent,
+                                  ),
+                                  child: Text(l10n.showOlder),
+                                ),
+                        ],
+                      ],
                     ),
                   ),
                 )
@@ -256,21 +289,6 @@ class _SubjectDetailScreenState extends State<SubjectDetailScreen> {
                 Expanded(
                   child: ListView(
                     children: [
-                      // Порожньо в поточному вікні, але старші записи є
-                      // (_hasMore) — без цього юзер бачив би той самий
-                      // порожній екран, що й "нема взагалі жодного запису",
-                      // без кнопки "Показати ще", і застрягав би без
-                      // жодного способу дістатись старіших даних.
-                      if (_entries.isEmpty)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 32),
-                          child: Center(
-                            child: Text(
-                              l10n.notCheckedInToday,
-                              style: const TextStyle(color: AppColors.inkMuted),
-                            ),
-                          ),
-                        ),
                       ..._entries.map(_buildEntryCard),
                       if (_hasMore)
                         Padding(

@@ -200,6 +200,12 @@ abstract class AppLocalizations {
   /// **'Показати ще'**
   String get showMore;
 
+  /// No description provided for @showOlder.
+  ///
+  /// In uk, this message translates to:
+  /// **'Показати старіші'**
+  String get showOlder;
+
   /// No description provided for @moodNiyak.
   ///
   /// In uk, this message translates to:

@@ -61,6 +61,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get showMore => 'Show more';
 
   @override
+  String get showOlder => 'Show older';
+
+  @override
   String get moodNiyak => 'Meh';
 
   @override

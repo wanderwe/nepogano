@@ -62,6 +62,9 @@ class AppLocalizationsUk extends AppLocalizations {
   String get showMore => 'Показати ще';
 
   @override
+  String get showOlder => 'Показати старіші';
+
+  @override
   String get moodNiyak => 'Ніяк';
 
   @override
