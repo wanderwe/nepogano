@@ -906,56 +906,76 @@ class _ComposeLetterSheetState extends State<_ComposeLetterSheet> {
               // (лише "Я") і не додає нічого, крім зайвого рядка. Окремий
               // піквер із пошуком замість ряду чіпів — той не масштабується,
               // якщо в юзера десятки чи сотні друзів (стіна плиток замість
-              // списку).
-              if (_friends.isNotEmpty) ...[
-                // Без окремого підпису "Кому" — значення дропдауна (напр.
-                // "собі") разом із шевроном і так зрозуміле без пояснення.
-                const SizedBox(height: 12),
-                GestureDetector(
-                  onTap: () async {
-                    final picked =
-                        await showModalBottomSheet<_RecipientPickResult>(
-                          context: context,
-                          isScrollControlled: true,
-                          builder: (_) => _RecipientPickerSheet(
-                            friends: _friends,
-                            selectedId: _recipientId,
+              // списку). AnimatedSize — той самий фікс, що для банерів і
+              // тижневої стрічки: _friends вантажиться асинхронно в
+              // initState, тож без цього дропдаун миттєво "вистрибував"
+              // знизу, щойно список друзів довантажувався.
+              AnimatedSize(
+                duration: const Duration(milliseconds: 200),
+                curve: Curves.easeOut,
+                alignment: Alignment.topCenter,
+                child: _friends.isEmpty
+                    ? const SizedBox.shrink()
+                    : Column(
+                        children: [
+                          // Без окремого підпису "Кому" — значення дропдауна
+                          // (напр. "собі") разом із шевроном і так
+                          // зрозуміле без пояснення.
+                          const SizedBox(height: 12),
+                          GestureDetector(
+                            onTap: () async {
+                              final picked =
+                                  await showModalBottomSheet<
+                                    _RecipientPickResult
+                                  >(
+                                    context: context,
+                                    isScrollControlled: true,
+                                    builder: (_) => _RecipientPickerSheet(
+                                      friends: _friends,
+                                      selectedId: _recipientId,
+                                    ),
+                                  );
+                              if (picked != null) {
+                                setState(() => _recipientId = picked.id);
+                              }
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 14,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppColors.surface,
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      _recipientId == null
+                                          ? l10n.timeCapsulesRecipientSelf
+                                          : _friends
+                                                .firstWhere(
+                                                  (f) => f.id == _recipientId,
+                                                )
+                                                .name,
+                                      style: const TextStyle(
+                                        color: AppColors.ink,
+                                      ),
+                                    ),
+                                  ),
+                                  const Icon(
+                                    PhosphorIconsLight.caretDown,
+                                    size: 16,
+                                    color: AppColors.inkMuted,
+                                  ),
+                                ],
+                              ),
+                            ),
                           ),
-                        );
-                    if (picked != null)
-                      setState(() => _recipientId = picked.id);
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 14,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.surface,
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            _recipientId == null
-                                ? l10n.timeCapsulesRecipientSelf
-                                : _friends
-                                      .firstWhere((f) => f.id == _recipientId)
-                                      .name,
-                            style: const TextStyle(color: AppColors.ink),
-                          ),
-                        ),
-                        const Icon(
-                          PhosphorIconsLight.caretDown,
-                          size: 16,
-                          color: AppColors.inkMuted,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
+                        ],
+                      ),
+              ),
               const SizedBox(height: 8),
               Wrap(
                 spacing: 8,
