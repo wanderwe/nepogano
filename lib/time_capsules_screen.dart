@@ -8,7 +8,7 @@ import 'l10n/app_localizations.dart';
 import 'style.dart';
 
 const _bodyMaxLength = 5000;
-const _introBannerDismissedKey = 'time_capsules_intro_banner_dismissed';
+const _introSeenKey = 'time_capsules_intro_seen';
 
 enum _LetterState { locked, unlockedUnread, opened }
 
@@ -140,12 +140,6 @@ class _TimeCapsulesScreenState extends State<TimeCapsulesScreen> {
   // рядок ще підсвічувався крапкою під час цього перегляду, навіть якщо
   // recipient_seen_at уже проставився фоновим запитом нижче.
   Set<String> _newlyReceivedIds = {};
-  // Порожній стан (_EmptyState) пояснює механіку капсул часу, але
-  // показується лише коли список порожній — якщо юзер ще ЖОДНОГО разу не
-  // писав лист сам, а йому вже хтось надіслав, він одразу бачить заповнений
-  // список і повністю пропускає це пояснення. Банер нижче покриває саме цей
-  // випадок, не блокуючи доступ до вже отриманого листа.
-  bool _introBannerDismissed = false;
   // Позначення recipient_seen_at — await у _load() сам собою НІЧОГО не
   // блокує в навігації: юзер може вийти (кнопка "назад", свайп) раніше,
   // ніж запит устигне завершитись, і батьківський екран одразу перечитає
@@ -156,28 +150,7 @@ class _TimeCapsulesScreenState extends State<TimeCapsulesScreen> {
   @override
   void initState() {
     super.initState();
-    _loadIntroBannerDismissed();
     _load();
-  }
-
-  Future<void> _loadIntroBannerDismissed() async {
-    final prefs = await SharedPreferences.getInstance();
-    final dismissed = prefs.getBool(_introBannerDismissedKey) ?? false;
-    if (mounted && dismissed) setState(() => _introBannerDismissed = true);
-  }
-
-  Future<void> _dismissIntroBanner() async {
-    setState(() => _introBannerDismissed = true);
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool(_introBannerDismissedKey, true);
-  }
-
-  bool get _showIntroBanner {
-    if (_introBannerDismissed || _letters.isEmpty) return false;
-    final myId = _supabase.auth.currentUser?.id;
-    // Якщо є хоч один лист, де я автор — я вже проходив через _EmptyState
-    // (єдиний спосіб написати перший лист), тож пояснення зайве.
-    return !_letters.any((l) => l.authorId == myId);
   }
 
   Future<void> _load() async {
@@ -291,7 +264,40 @@ class _TimeCapsulesScreenState extends State<TimeCapsulesScreen> {
     }
   }
 
+  /// Юзер, який ще ніколи сам не писав листа (навіть якщо йому вже хтось
+  /// надіслав — тоді список НЕ порожній, і _EmptyState ніколи не показувався
+  /// б), перед першим написанням бачить те саме пояснення механіки, що
+  /// раніше жило лише в _EmptyState. Той самий патерн, що для сутностей
+  /// (_onCreateSubjectTap): прапорець "бачив" ставимо лише при реальному
+  /// "Зрозуміло", не при простому показі — "Скасувати" не повинно назавжди
+  /// ховати пояснення, яке юзер фактично не прийняв.
   Future<void> _openCompose() async {
+    final prefs = await SharedPreferences.getInstance();
+    final seen = prefs.getBool(_introSeenKey) ?? false;
+    if (!seen) {
+      if (!mounted) return;
+      final l10n = AppLocalizations.of(context);
+      final proceed = await showDialog<bool>(
+        context: context,
+        builder: (context) => AppDialog(
+          title: l10n.timeCapsulesEmptyTitle,
+          content: Text(
+            l10n.timeCapsulesEmptySubtitle,
+            style: const TextStyle(color: AppColors.inkMuted, height: 1.4),
+          ),
+          primaryLabel: l10n.gotIt,
+          onPrimary: () => Navigator.of(context).pop(true),
+          secondaryLabel: l10n.cancel,
+          onSecondary: () => Navigator.of(context).pop(false),
+        ),
+      );
+      if (proceed != true) return;
+      await prefs.setBool(_introSeenKey, true);
+    }
+    if (mounted) await _openComposeSheet();
+  }
+
+  Future<void> _openComposeSheet() async {
     final saved = await showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
@@ -431,13 +437,7 @@ class _TimeCapsulesScreenState extends State<TimeCapsulesScreen> {
             ? const Center(child: CircularProgressIndicator())
             : _letters.isEmpty
             ? _EmptyState(onWrite: _openCompose)
-            : Column(
-                children: [
-                  if (_showIntroBanner)
-                    _IntroBanner(onDismiss: _dismissIntroBanner),
-                  Expanded(child: _buildLetterList(l10n)),
-                ],
-              ),
+            : _buildLetterList(l10n),
         floatingActionButton: _letters.isEmpty
             ? null
             : FloatingActionButton.extended(
@@ -478,72 +478,6 @@ class _TimeCapsulesScreenState extends State<TimeCapsulesScreen> {
                   (letter.recipientId == null || letter.authorId != myId)),
         );
       },
-    );
-  }
-}
-
-/// Той самий текст, що в _EmptyState — коротший вигляд для юзера, який
-/// уже має листи (отримані), але сам ще жодного не писав, тож ніколи не
-/// бачив _EmptyState. Не блокує список, просто пояснює зверху, одноразово.
-class _IntroBanner extends StatelessWidget {
-  final VoidCallback onDismiss;
-
-  const _IntroBanner({required this.onDismiss});
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: AppColors.accent.withValues(alpha: 0.12),
-          borderRadius: BorderRadius.circular(14),
-        ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    l10n.timeCapsulesEmptyTitle,
-                    style: const TextStyle(
-                      color: AppColors.accent,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 15,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    l10n.timeCapsulesEmptySubtitle,
-                    style: const TextStyle(
-                      color: AppColors.accent,
-                      fontSize: 13,
-                      height: 1.4,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            GestureDetector(
-              onTap: onDismiss,
-              behavior: HitTestBehavior.opaque,
-              child: const Padding(
-                padding: EdgeInsets.all(6),
-                child: Icon(
-                  PhosphorIconsLight.x,
-                  size: 16,
-                  color: AppColors.accent,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }
