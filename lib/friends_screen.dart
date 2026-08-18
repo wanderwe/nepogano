@@ -1910,7 +1910,7 @@ class _PersonDetailScreenState extends State<PersonDetailScreen> {
                 const Expanded(
                   child: Center(child: CircularProgressIndicator()),
                 )
-              else if (_entries.isEmpty)
+              else if (_entries.isEmpty && !_hasMore)
                 Expanded(
                   child: Center(
                     child: Text(
@@ -1923,6 +1923,21 @@ class _PersonDetailScreenState extends State<PersonDetailScreen> {
                 Expanded(
                   child: ListView(
                     children: [
+                      // Порожньо в поточному вікні, але старші записи є
+                      // (_hasMore) — без цього юзер бачив би той самий
+                      // порожній екран, що й "нема взагалі жодного запису",
+                      // без кнопки "Показати ще", і застрягав би без
+                      // жодного способу дістатись старіших даних.
+                      if (_entries.isEmpty)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 32),
+                          child: Center(
+                            child: Text(
+                              l10n.notCheckedInToday,
+                              style: const TextStyle(color: AppColors.inkMuted),
+                            ),
+                          ),
+                        ),
                       ..._entries.map(_buildEntryCard),
                       if (_hasMore)
                         Padding(
