@@ -371,11 +371,18 @@ class _ShareRow extends StatelessWidget {
               ),
             ),
             Icon(
+              // Контурна галочка акцентного кольору, не заповнена зелена —
+              // ОС не повертає жоден сигнал "юзер справді опублікував" (ні
+              // для прямого запуску Instagram/Facebook/TikTok, ні для
+              // системного шер-вікна "Інше"), тому "done" тут чесно означає
+              // лише "відкрито", а не "успішно поширено". Той самий вигляд
+              // для всіх чотирьох варіантів — не вдавати, ніби для когось
+              // із них є надійніший сигнал, ніж для решти.
               done
-                  ? PhosphorIconsFill.checkCircle
+                  ? PhosphorIconsLight.checkCircle
                   : PhosphorIconsLight.caretRight,
               size: 20,
-              color: done ? MoodLevel.zbs.color : AppColors.inkMuted,
+              color: done ? AppColors.accent : AppColors.inkMuted,
             ),
           ],
         ),
