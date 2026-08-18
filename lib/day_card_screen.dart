@@ -441,196 +441,220 @@ class _DayCard extends StatelessWidget {
       // де накладається чужий фон (сторіс, месенджер), не контрольована:
       // хост сам домальовує туди щось своє (тінь стікера тощо), і виходить
       // видима "виїмка" в кутах. Суцільний прямокутник цього не має.
+      // Гострота кутів пом'якшена косметично — див. віньєтку внизу build().
       width: _cardWidth,
       height: _cardHeight,
       color: const Color(0xFF141414),
-      child: hasPhoto
-          ? Stack(
-              fit: StackFit.expand,
-              children: [
-                // Кадр картки завжди 9:16, а не kPhotoAspectRatio (квадрат
-                // у рамці позиціювання при чек-іні) — той квадрат обраний
-                // під місце для кнопок у формі, тут такого обмеження нема.
-                // Фото фізично не обрізане під квадрат, лиш показане в
-                // ньому — тому ширший кадр із тим самим photoAlignY/Scale
-                // просто розкриває більше того самого кадрування, а не
-                // показує щось інше, ніж юзер підбирав.
-                ScaledPhoto(
-                  scale: entry.photoScale,
-                  child: Image.memory(
-                    photoBytes!,
-                    fit: BoxFit.cover,
-                    alignment: Alignment(0, entry.photoAlignY),
-                  ),
-                ),
-                // Знизу — темніший і вищий скрім (там основний текст,
-                // потребує найбільше контрасту), зверху — коротший і
-                // легший (там лише дата). Обидва тримають текст читабельним
-                // незалежно від того, яке саме фото — світле небо, темний
-                // ліс чи щось строкате.
-                const DecoratedBox(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.bottomCenter,
-                      end: Alignment.topCenter,
-                      colors: [Color(0xE6000000), Color(0x00000000)],
-                      stops: [0, 0.55],
-                    ),
-                  ),
-                ),
-                const DecoratedBox(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [Color(0x99000000), Color(0x00000000)],
-                      stops: [0, 0.18],
-                    ),
-                  ),
-                ),
-                Positioned(
-                  top: 20,
-                  left: 20,
-                  child: Text(
-                    '$dateLabel · $weekdayName',
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: Color(0xD9FFFFFF),
-                      shadows: photoTextShadow,
-                    ),
-                  ),
-                ),
-                Positioned(
-                  left: 20,
-                  right: 20,
-                  bottom: 20,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      headline,
-                      if (hasNote) ...[
-                        const SizedBox(height: 8),
-                        Text(
-                          noteText,
-                          maxLines: 4,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            fontSize: 14,
-                            color: Color(0xD9FFFFFF),
-                            height: 1.4,
-                            shadows: photoTextShadow,
-                          ),
-                        ),
-                      ],
-                      const SizedBox(height: 14),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            updatedLabel ?? '',
-                            style: const TextStyle(
-                              fontSize: 11,
-                              color: Color(0x99FFFFFF),
-                            ),
-                          ),
-                          const Text(
-                            'nepogano.app',
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: Color(0x99FFFFFF),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            )
-          : DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: RadialGradient(
-                  center: const Alignment(0, -0.5),
-                  radius: 1.1,
-                  colors: [
-                    entry.mood.color.withValues(alpha: 0.32),
-                    const Color(0xFF141414),
-                  ],
-                  stops: const [0, 0.75],
-                ),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          hasPhoto
+              ? Stack(
+                  fit: StackFit.expand,
                   children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          dateLabel,
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: Colors.grey.shade400,
-                          ),
-                        ),
-                        Text(
-                          weekdayName,
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: Colors.grey.shade400,
-                          ),
-                        ),
-                      ],
+                    // Кадр картки завжди 9:16, а не kPhotoAspectRatio (квадрат
+                    // у рамці позиціювання при чек-іні) — той квадрат обраний
+                    // під місце для кнопок у формі, тут такого обмеження нема.
+                    // Фото фізично не обрізане під квадрат, лиш показане в
+                    // ньому — тому ширший кадр із тим самим photoAlignY/Scale
+                    // просто розкриває більше того самого кадрування, а не
+                    // показує щось інше, ніж юзер підбирав.
+                    ScaledPhoto(
+                      scale: entry.photoScale,
+                      child: Image.memory(
+                        photoBytes!,
+                        fit: BoxFit.cover,
+                        alignment: Alignment(0, entry.photoAlignY),
+                      ),
                     ),
-                    Expanded(
-                      child: Center(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            headline,
-                            if (hasNote) ...[
-                              const SizedBox(height: 16),
+                    // Знизу — темніший і вищий скрім (там основний текст,
+                    // потребує найбільше контрасту), зверху — коротший і
+                    // легший (там лише дата). Обидва тримають текст читабельним
+                    // незалежно від того, яке саме фото — світле небо, темний
+                    // ліс чи щось строкате.
+                    const DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.bottomCenter,
+                          end: Alignment.topCenter,
+                          colors: [Color(0xE6000000), Color(0x00000000)],
+                          stops: [0, 0.55],
+                        ),
+                      ),
+                    ),
+                    const DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [Color(0x99000000), Color(0x00000000)],
+                          stops: [0, 0.18],
+                        ),
+                      ),
+                    ),
+                    Positioned(
+                      top: 20,
+                      left: 20,
+                      child: Text(
+                        '$dateLabel · $weekdayName',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Color(0xD9FFFFFF),
+                          shadows: photoTextShadow,
+                        ),
+                      ),
+                    ),
+                    Positioned(
+                      left: 20,
+                      right: 20,
+                      bottom: 20,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          headline,
+                          if (hasNote) ...[
+                            const SizedBox(height: 8),
+                            Text(
+                              noteText,
+                              maxLines: 4,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontSize: 14,
+                                color: Color(0xD9FFFFFF),
+                                height: 1.4,
+                                shadows: photoTextShadow,
+                              ),
+                            ),
+                          ],
+                          const SizedBox(height: 14),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
                               Text(
-                                noteText,
-                                textAlign: TextAlign.center,
-                                maxLines: 6,
-                                overflow: TextOverflow.ellipsis,
+                                updatedLabel ?? '',
                                 style: const TextStyle(
-                                  fontSize: 15,
-                                  color: AppColors.ink,
-                                  height: 1.4,
+                                  fontSize: 11,
+                                  color: Color(0x99FFFFFF),
+                                ),
+                              ),
+                              const Text(
+                                'nepogano.app',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: Color(0x99FFFFFF),
                                 ),
                               ),
                             ],
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
                     ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  ],
+                )
+              : DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: RadialGradient(
+                      center: const Alignment(0, -0.5),
+                      radius: 1.1,
+                      colors: [
+                        entry.mood.color.withValues(alpha: 0.32),
+                        const Color(0xFF141414),
+                      ],
+                      stops: const [0, 0.75],
+                    ),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          updatedLabel ?? '',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey.shade600,
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              dateLabel,
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Colors.grey.shade400,
+                              ),
+                            ),
+                            Text(
+                              weekdayName,
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Colors.grey.shade400,
+                              ),
+                            ),
+                          ],
+                        ),
+                        Expanded(
+                          child: Center(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                headline,
+                                if (hasNote) ...[
+                                  const SizedBox(height: 16),
+                                  Text(
+                                    noteText,
+                                    textAlign: TextAlign.center,
+                                    maxLines: 6,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                      fontSize: 15,
+                                      color: AppColors.ink,
+                                      height: 1.4,
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
                           ),
                         ),
-                        Text(
-                          'nepogano.app',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey.shade600,
-                          ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              updatedLabel ?? '',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey.shade600,
+                              ),
+                            ),
+                            Text(
+                              'nepogano.app',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey.shade600,
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
-                  ],
+                  ),
+                ),
+          // Легка віньєтка поверх усього: чисто косметичне пом'якшення
+          // гострих кутів (оптична ілюзія через градієнт, не прозорість) —
+          // сама картка лишається суцільним непрозорим прямокутником, тож
+          // безпечна для full-screen фону в Instagram/TikTok (коментар
+          // вище). Найтемніша рівно в кутах (найдальші точки від центру),
+          // прозора в межах більшої частини кадру, де сидять фото й текст.
+          const IgnorePointer(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: RadialGradient(
+                  center: Alignment.center,
+                  radius: 0.9,
+                  colors: [Colors.transparent, Color(0x40000000)],
+                  stops: [0.55, 1],
                 ),
               ),
             ),
+          ),
+        ],
+      ),
     );
   }
 }
