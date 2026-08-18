@@ -419,7 +419,7 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String friendGuessStats(int correct, int total, int percent) {
+  String friendGuessStats(String correct, String total, int percent) {
     return 'Вгадує тебе: $correct/$total ($percent%)';
   }
 

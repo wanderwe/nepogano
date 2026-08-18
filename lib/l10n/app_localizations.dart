@@ -864,7 +864,7 @@ abstract class AppLocalizations {
   ///
   /// In uk, this message translates to:
   /// **'Вгадує тебе: {correct}/{total} ({percent}%)'**
-  String friendGuessStats(int correct, int total, int percent);
+  String friendGuessStats(String correct, String total, int percent);
 
   /// No description provided for @friendNeverGuessed.
   ///

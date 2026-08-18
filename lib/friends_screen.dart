@@ -24,6 +24,16 @@ String _entryKey(String userId, DateTime date) =>
 bool _isSameDay(DateTime a, DateTime b) =>
     a.year == b.year && a.month == b.month && a.day == b.day;
 
+/// Скорочує великі числа для статистики вгадувань (1234 -> "1.2k"), щоб
+/// рядок не розтягувався разом із роками накопичених вгадувань. Ціле число
+/// без десяткової частини, якщо округлення дало рівну тисячу (1000 -> "1k").
+String _formatGuessCount(int n) {
+  if (n < 1000) return '$n';
+  final thousands = (n / 100).round() / 10;
+  final isWhole = thousands == thousands.truncateToDouble();
+  return '${isWhole ? thousands.toStringAsFixed(0) : thousands.toStringAsFixed(1)}k';
+}
+
 /// Один чек-ін конкретного друга за конкретний день у вікні "нещодавно" —
 /// дозволяє бачити й вгадувати кожен день окремо, а не тільки останній.
 class _FriendDayEntry {
@@ -1517,14 +1527,21 @@ class _FriendsScreenState extends State<FriendsScreen> {
                   Text(
                     (friend.guessesTotal ?? 0) > 0
                         ? l10n.friendGuessStats(
-                            friend.guessesCorrect ?? 0,
-                            friend.guessesTotal!,
+                            _formatGuessCount(friend.guessesCorrect ?? 0),
+                            _formatGuessCount(friend.guessesTotal!),
                             (((friend.guessesCorrect ?? 0) /
                                         friend.guessesTotal!) *
                                     100)
                                 .round(),
                           )
                         : l10n.friendNeverGuessed,
+                    // Скорочення чисел (_formatGuessCount) покриває звичний
+                    // випадок, це — чиста страховка на екстремальний
+                    // edge-case (дуже вузький екран/великий шрифт
+                    // доступності): рядок фізично не може зламати висоту
+                    // картки друга, хай там що станеться з довжиною тексту.
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
                       fontSize: 12,
                       color: AppColors.accent,

@@ -161,8 +161,8 @@
   "friendGuessStats": "Guesses you: {correct}/{total} ({percent}%)",
   "@friendGuessStats": {
     "placeholders": {
-      "correct": { "type": "int" },
-      "total": { "type": "int" },
+      "correct": { "type": "String" },
+      "total": { "type": "String" },
       "percent": { "type": "int" }
     }
   },
