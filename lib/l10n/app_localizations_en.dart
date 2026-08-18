@@ -402,7 +402,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get removeAvatar => 'Remove photo';
 
   @override
-  String get removeAvatarConfirmTitle => 'Remove your profile photo?';
+  String get removeAvatarConfirmTitle => 'Remove photo?';
 
   @override
   String get removeAvatarConfirmBody =>

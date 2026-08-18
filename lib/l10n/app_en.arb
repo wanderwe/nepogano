@@ -146,7 +146,7 @@
   "couldNotSaveDisplayName": "Couldn't save your name.",
   "couldNotSaveAvatar": "Couldn't save your avatar.",
   "removeAvatar": "Remove photo",
-  "removeAvatarConfirmTitle": "Remove your profile photo?",
+  "removeAvatarConfirmTitle": "Remove photo?",
   "removeAvatarConfirmBody": "The first letter of your name will show instead.",
   "couldNotRemoveAvatar": "Couldn't remove the photo.",
   "notCheckedInToday": "No news in a while",
