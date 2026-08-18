@@ -43,6 +43,24 @@ Future<String> uploadAvatar(File file) async {
   return path;
 }
 
+/// Прибирає файл із бакета й обидва кеші (пам'ять + диск) — той самий шлях
+/// {user_id}/avatar.jpg, що й [uploadAvatar], тому не потребує аргументу.
+Future<void> deleteAvatar() async {
+  final supabase = Supabase.instance.client;
+  final userId = supabase.auth.currentUser!.id;
+  final path = _avatarPathFor(userId);
+
+  await supabase.storage.from(_bucket).remove([path]);
+
+  _avatarCache.remove(path);
+  try {
+    final cacheFile = await _diskCacheFile(path);
+    if (cacheFile.existsSync()) await cacheFile.delete();
+  } catch (_) {
+    // Диск-кеш — лише прискорення, відсутність файлу для видалення не біда.
+  }
+}
+
 final Map<String, Uint8List> _avatarCache = {};
 
 Future<Uint8List?> downloadAvatar(String path) async {

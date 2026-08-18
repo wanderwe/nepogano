@@ -399,6 +399,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get couldNotSaveAvatar => 'Couldn\'t save your avatar.';
 
   @override
+  String get removeAvatar => 'Remove photo';
+
+  @override
+  String get removeAvatarConfirmTitle => 'Remove your profile photo?';
+
+  @override
+  String get removeAvatarConfirmBody =>
+      'The first letter of your name will show instead.';
+
+  @override
+  String get couldNotRemoveAvatar => 'Couldn\'t remove the photo.';
+
+  @override
   String get notCheckedInToday => 'No news in a while';
 
   @override

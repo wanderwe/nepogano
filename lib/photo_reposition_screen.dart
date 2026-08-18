@@ -78,8 +78,15 @@ class _PhotoRepositionScreenState extends State<PhotoRepositionScreen> {
                               1.0,
                               3.0,
                             );
+                            // Мінус, не плюс: фото має "триматись" пальця,
+                            // як у стандартних фоторедакторах (Instagram,
+                            // Google Photos) — тягнеш вниз, і сама картинка
+                            // з'їжджає вниз під пальцем, відкриваючи те, що
+                            // було зверху. Плюс тут давав інвертовану
+                            // поведінку: вниз показувало низ фото замість
+                            // верху.
                             _alignY =
-                                (_alignY +
+                                (_alignY -
                                         details.focalPointDelta.dy /
                                             (constraints.maxHeight / 2))
                                     .clamp(-1.0, 1.0);

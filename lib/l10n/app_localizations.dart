@@ -824,6 +824,30 @@ abstract class AppLocalizations {
   /// **'Не вдалось зберегти аватарку.'**
   String get couldNotSaveAvatar;
 
+  /// No description provided for @removeAvatar.
+  ///
+  /// In uk, this message translates to:
+  /// **'Видалити фото'**
+  String get removeAvatar;
+
+  /// No description provided for @removeAvatarConfirmTitle.
+  ///
+  /// In uk, this message translates to:
+  /// **'Видалити фото профілю?'**
+  String get removeAvatarConfirmTitle;
+
+  /// No description provided for @removeAvatarConfirmBody.
+  ///
+  /// In uk, this message translates to:
+  /// **'Замість фото буде показано першу літеру імені.'**
+  String get removeAvatarConfirmBody;
+
+  /// No description provided for @couldNotRemoveAvatar.
+  ///
+  /// In uk, this message translates to:
+  /// **'Не вдалось видалити фото.'**
+  String get couldNotRemoveAvatar;
+
   /// No description provided for @notCheckedInToday.
   ///
   /// In uk, this message translates to:

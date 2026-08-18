@@ -399,6 +399,19 @@ class AppLocalizationsUk extends AppLocalizations {
   String get couldNotSaveAvatar => 'Не вдалось зберегти аватарку.';
 
   @override
+  String get removeAvatar => 'Видалити фото';
+
+  @override
+  String get removeAvatarConfirmTitle => 'Видалити фото профілю?';
+
+  @override
+  String get removeAvatarConfirmBody =>
+      'Замість фото буде показано першу літеру імені.';
+
+  @override
+  String get couldNotRemoveAvatar => 'Не вдалось видалити фото.';
+
+  @override
   String get notCheckedInToday => 'Давно не було новин';
 
   @override

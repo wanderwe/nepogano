@@ -84,13 +84,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 label: l10n.chooseFromGallery,
                 onTap: () => Navigator.of(context).pop(_AvatarAction.gallery),
               ),
-              if (_avatarBytes != null)
+              if (_avatarBytes != null) ...[
                 _MenuRow(
                   icon: PhosphorIconsLight.arrowsOutCardinal,
                   label: l10n.repositionPhoto,
                   onTap: () =>
                       Navigator.of(context).pop(_AvatarAction.reposition),
                 ),
+                _MenuRow(
+                  icon: PhosphorIconsLight.trash,
+                  label: l10n.removeAvatar,
+                  color: Colors.redAccent,
+                  onTap: () => Navigator.of(context).pop(_AvatarAction.remove),
+                ),
+              ],
             ],
           ),
         ),
@@ -100,6 +107,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     if (action == _AvatarAction.reposition) {
       await _repositionExistingAvatar();
+      return;
+    }
+    if (action == _AvatarAction.remove) {
+      await _removeAvatar();
       return;
     }
 
@@ -118,9 +129,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
         builder: (_) => PhotoRepositionScreen(image: FileImage(file)),
       ),
     );
-    if (!mounted) return;
-    final alignY = result?.$1 ?? 0;
-    final scale = result?.$2 ?? 1;
+    if (result == null || !mounted) return;
+    final alignY = result.$1;
+    final scale = result.$2;
 
     setState(() => _uploadingAvatar = true);
     try {
@@ -189,6 +200,51 @@ class _ProfileScreenState extends State<ProfileScreen> {
             content: Text(AppLocalizations.of(context).couldNotSaveAvatar),
           ),
         );
+      }
+    }
+  }
+
+  Future<void> _removeAvatar() async {
+    final l10n = AppLocalizations.of(context);
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AppDialog(
+        title: l10n.removeAvatarConfirmTitle,
+        content: Text(
+          l10n.removeAvatarConfirmBody,
+          style: const TextStyle(color: AppColors.inkMuted),
+        ),
+        primaryLabel: l10n.cancel,
+        onPrimary: () => Navigator.of(context).pop(false),
+        secondaryLabel: l10n.delete,
+        secondaryColor: Colors.redAccent,
+        onSecondary: () => Navigator.of(context).pop(true),
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
+    setState(() => _uploadingAvatar = true);
+    try {
+      await deleteAvatar();
+      await _supabase
+          .from('profiles')
+          .update({'avatar_path': null, 'avatar_align_y': 0, 'avatar_scale': 1})
+          .eq('user_id', _supabase.auth.currentUser!.id);
+      if (mounted) {
+        setState(() {
+          _avatarPath = null;
+          _avatarBytes = null;
+          _avatarAlignY = 0;
+          _avatarScale = 1;
+          _uploadingAvatar = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _uploadingAvatar = false);
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(l10n.couldNotRemoveAvatar)));
       }
     }
   }
@@ -447,21 +503,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 }
 
-enum _AvatarAction { camera, gallery, reposition }
+enum _AvatarAction { camera, gallery, reposition, remove }
 
 class _MenuRow extends StatelessWidget {
   final IconData icon;
   final String label;
   final VoidCallback onTap;
+  final Color? color;
 
   const _MenuRow({
     required this.icon,
     required this.label,
     required this.onTap,
+    this.color,
   });
 
   @override
   Widget build(BuildContext context) {
+    final textColor = color ?? AppColors.ink;
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(14),
@@ -469,12 +528,9 @@ class _MenuRow extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
         child: Row(
           children: [
-            Icon(icon, size: 20, color: AppColors.ink),
+            Icon(icon, size: 20, color: textColor),
             const SizedBox(width: 16),
-            Text(
-              label,
-              style: const TextStyle(fontSize: 16, color: AppColors.ink),
-            ),
+            Text(label, style: TextStyle(fontSize: 16, color: textColor)),
           ],
         ),
       ),
