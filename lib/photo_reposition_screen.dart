@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'l10n/app_localizations.dart';
@@ -28,6 +30,49 @@ class _PhotoRepositionScreenState extends State<PhotoRepositionScreen> {
   late double _alignY = widget.initialAlignY;
   late double _scale = widget.initialScale;
   double _gestureStartScale = 1;
+
+  ImageStream? _imageStream;
+  late final ImageStreamListener _imageStreamListener;
+  Size? _naturalSize;
+
+  @override
+  void initState() {
+    super.initState();
+    // Розмір фото в пікселях потрібен, щоб порахувати, скільки САМЕ
+    // "зайвого" звисає за рамкою після BoxFit.cover — без цього палець і
+    // формула не знають, на яку відстань реально є куди панорамувати.
+    _imageStreamListener = ImageStreamListener((info, _) {
+      if (!mounted) return;
+      setState(() {
+        _naturalSize = Size(
+          info.image.width.toDouble(),
+          info.image.height.toDouble(),
+        );
+      });
+    });
+    _imageStream = widget.image.resolve(const ImageConfiguration())
+      ..addListener(_imageStreamListener);
+  }
+
+  @override
+  void dispose() {
+    _imageStream?.removeListener(_imageStreamListener);
+    super.dispose();
+  }
+
+  /// Скільки пікселів фото (у координатах рамки) звисає зверху й знизу
+  /// разом після BoxFit.cover у квадратну рамку розміром [boxSize] — саме
+  /// цю відстань перетягування має "з'їсти" цілком, від -1 до +1. Null,
+  /// поки реальний розмір фото ще не резолвнувся, або якщо звисати
+  /// нічому (майже квадратне чи ширше за рамку фото — панорамувати
+  /// вертикально просто нема куди).
+  double? _verticalOverflow(double boxSize) {
+    final size = _naturalSize;
+    if (size == null || size.width <= 0 || size.height <= 0) return null;
+    final coverScale = math.max(boxSize / size.width, boxSize / size.height);
+    final overflow = size.height * coverScale - boxSize;
+    return overflow > 0 ? overflow : null;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -82,14 +127,31 @@ class _PhotoRepositionScreenState extends State<PhotoRepositionScreen> {
                             // як у стандартних фоторедакторах (Instagram,
                             // Google Photos) — тягнеш вниз, і сама картинка
                             // з'їжджає вниз під пальцем, відкриваючи те, що
-                            // було зверху. Плюс тут давав інвертовану
-                            // поведінку: вниз показувало низ фото замість
-                            // верху.
-                            _alignY =
-                                (_alignY -
-                                        details.focalPointDelta.dy /
-                                            (constraints.maxHeight / 2))
-                                    .clamp(-1.0, 1.0);
+                            // було зверху.
+                            //
+                            // Ділимо на РЕАЛЬНИЙ overflow конкретного фото
+                            // (не на висоту рамки) і додатково на _scale —
+                            // інакше швидкість перетягування "стрибала" між
+                            // фото різних пропорцій (майже квадратне фото
+                            // майже нема куди панорамувати — те саме
+                            // перетягування пальцем відчувалось як "повільно"
+                            // проти витягнутого портрета), і додатково
+                            // "прискорювалась" саму собою, щойно
+                            // наближуєш пінчем (Transform.scale в
+                            // ScaledPhoto множить видимий зсув). Формула
+                            // нижче тримає 1px пальця ≈ 1px видимого зсуву
+                            // завжди, незалежно від фото й поточного зуму.
+                            final overflow = _verticalOverflow(
+                              constraints.maxHeight,
+                            );
+                            if (overflow != null) {
+                              _alignY =
+                                  (_alignY -
+                                          details.focalPointDelta.dy *
+                                              2 /
+                                              (overflow * _scale))
+                                      .clamp(-1.0, 1.0);
+                            }
                           });
                         },
                         child: ScaledPhoto(
