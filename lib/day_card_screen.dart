@@ -225,18 +225,6 @@ class _MultiShareSheetState extends State<_MultiShareSheet> {
     if (mounted) setState(() => _done.add('instagram'));
   }
 
-  Future<void> _shareFacebook() async {
-    final ok = await SocialShare.toPackage(
-      widget.imagePath,
-      'com.facebook.katana',
-    );
-    if (!ok && mounted) {
-      _showNotInstalled('Facebook');
-      return;
-    }
-    if (mounted) setState(() => _done.add('facebook'));
-  }
-
   Future<void> _shareTikTok() async {
     var ok = await SocialShare.toPackage(
       widget.imagePath,
@@ -298,24 +286,23 @@ class _MultiShareSheetState extends State<_MultiShareSheet> {
                 style: const TextStyle(fontSize: 13, color: AppColors.inkMuted),
               ),
               const SizedBox(height: 20),
-              // Прямий шер у ці три застосунки реалізований лише нативним
-              // Android-каналом (MainActivity.kt) — на iOS немає відповідача
-              // на цей MethodChannel, тож кнопки мовчки провалювались із
-              // фейковим "не встановлено" для кожного юзера, завжди. "Інше"
+              // Прямий шер реалізований лише нативним Android-каналом
+              // (MainActivity.kt) — на iOS немає відповідача на цей
+              // MethodChannel, тож кнопки мовчки провалювались із фейковим
+              // "не встановлено" для кожного юзера, завжди. "Інше"
               // (share_plus, вже крос-платформене) лишається на iOS єдиним
-              // шляхом — той самий системний шер-лист відкриває Instagram/
-              // Facebook/TikTok серед інших варіантів, просто без прямого
-              // "у Stories" переходу.
+              // шляхом. Facebook свідомо прибраний: немає публічного
+              // Stories-контракту, як в Instagram (`ADD_TO_STORY`), тож
+              // прямий шер падав на власний внутрішній вибір застосунку
+              // Facebook замість чіткого переходу в Stories — а Instagram
+              // Stories й так вміє дублювати в Facebook Stories зі своїх
+              // налаштувань, окрема кнопка тут переважно дублювала цю
+              // можливість.
               if (Platform.isAndroid) ...[
                 _ShareRow(
                   label: 'Instagram Stories',
                   done: _done.contains('instagram'),
                   onTap: _shareInstagram,
-                ),
-                _ShareRow(
-                  label: 'Facebook',
-                  done: _done.contains('facebook'),
-                  onTap: _shareFacebook,
                 ),
                 _ShareRow(
                   label: 'TikTok',
@@ -373,11 +360,11 @@ class _ShareRow extends StatelessWidget {
             Icon(
               // Контурна галочка акцентного кольору, не заповнена зелена —
               // ОС не повертає жоден сигнал "юзер справді опублікував" (ні
-              // для прямого запуску Instagram/Facebook/TikTok, ні для
-              // системного шер-вікна "Інше"), тому "done" тут чесно означає
-              // лише "відкрито", а не "успішно поширено". Той самий вигляд
-              // для всіх чотирьох варіантів — не вдавати, ніби для когось
-              // із них є надійніший сигнал, ніж для решти.
+              // для прямого запуску Instagram/TikTok, ні для системного
+              // шер-вікна "Інше"), тому "done" тут чесно означає лише
+              // "відкрито", а не "успішно поширено". Той самий вигляд для
+              // всіх варіантів — не вдавати, ніби для когось із них є
+              // надійніший сигнал, ніж для решти.
               done
                   ? PhosphorIconsLight.checkCircle
                   : PhosphorIconsLight.caretRight,
