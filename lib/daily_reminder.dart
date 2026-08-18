@@ -102,6 +102,18 @@ Future<void> scheduleLetterUnlockNotification({
   final granted = await _requestPermission();
   if (!granted) return;
 
+  // iOS обмежує кожен застосунок 64 запланованими локальними сповіщеннями
+  // одночасно (Android такого ліміту не має) — якщо в юзера вже назбиралось
+  // багато незапечатаних листів, зайве планування мовчки провалилось би
+  // системою без жодної помилки в коді. Лишаємо запас під щоденне
+  // нагадування (scheduleDailyReminder) і не намагаємось запланувати понад
+  // поріг — банер про розкриті капсули (_pendingUnlockedLetters) і так
+  // з'явиться при наступному відкритті застосунку незалежно від сповіщення.
+  if (Platform.isIOS) {
+    final pending = await _plugin.pendingNotificationRequests();
+    if (pending.length >= 60) return;
+  }
+
   await _plugin.zonedSchedule(
     id: letterId.hashCode & 0x7FFFFFFF,
     title: title,
