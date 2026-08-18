@@ -486,8 +486,7 @@ class AppLocalizationsUk extends AppLocalizations {
       'Усі коментарі позначено переглянутими';
 
   @override
-  String get commentActivityMarkAllReadConfirmTitle =>
-      'Позначити всі переглянутими?';
+  String get commentActivityMarkAllReadConfirmTitle => 'Прочитати все?';
 
   @override
   String get commentActivityMarkAllReadConfirmBody =>
