@@ -183,16 +183,25 @@ class _DayCardScreenState extends State<DayCardScreen> {
                     label: Text(l10n.share),
                   ),
                 ),
-                const SizedBox(height: 12),
-                SizedBox(
-                  width: double.infinity,
-                  child: TextButton(
-                    onPressed: (_sharing || _photoLoading)
-                        ? null
-                        : _openMultiShareSheet,
-                    child: Text(l10n.shareOnSocial),
+                // Instagram Stories й TikTok — обидва Android-only (TikTok
+                // назавжди, Instagram тимчасово: задокументований, наразі
+                // не вирішений баг Instagram/iOS 17-18 з UIPasteboard-шером,
+                // не наша помилка коду — див. ARCHITECTURE.md). Без жодного
+                // з двох кнопка на iOS звужувалась би до єдиного рядка
+                // "Інше", що просто дублює основну кнопку "Поділитись" вище
+                // — тому ховаємо цілком, а не показуємо порожній список.
+                if (Platform.isAndroid) ...[
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    width: double.infinity,
+                    child: TextButton(
+                      onPressed: (_sharing || _photoLoading)
+                          ? null
+                          : _openMultiShareSheet,
+                      child: Text(l10n.shareOnSocial),
+                    ),
                   ),
-                ),
+                ],
                 const SizedBox(height: 16),
               ],
             ),
@@ -286,33 +295,28 @@ class _MultiShareSheetState extends State<_MultiShareSheet> {
                 style: const TextStyle(fontSize: 13, color: AppColors.inkMuted),
               ),
               const SizedBox(height: 20),
-              // Instagram Stories тепер має нативного відповідача на обох
-              // платформах (MainActivity.kt / AppDelegate.swift), той самий
-              // публічний контракт, різний лише механізм (intent vs
-              // pasteboard+URL scheme) — тому без гейту по платформі.
-              // TikTok лишається лише на Android: там це загальний
-              // ACTION_SEND, спрямований на пакет TikTok, а публічного
-              // еквівалента такого "спрямованого інтенту" на iOS немає —
-              // прямий шер туди вимагав би реєстрації в TikTok for
-              // Developers і їхнього SDK, окрема, набагато більша задача.
-              // Facebook свідомо прибраний: немає публічного
-              // Stories-контракту, як в Instagram (`ADD_TO_STORY`), тож
-              // прямий шер падав на власний внутрішній вибір застосунку
-              // Facebook замість чіткого переходу в Stories — а Instagram
-              // Stories й так вміє дублювати в Facebook Stories зі своїх
-              // налаштувань, окрема кнопка тут переважно дублювала цю
-              // можливість.
-              _ShareRow(
-                label: 'Instagram Stories',
-                done: _done.contains('instagram'),
-                onTap: _shareInstagram,
-              ),
-              if (Platform.isAndroid)
+              // Обидва рядки Android-only. Instagram Stories технічно МАЄ
+              // нативного відповідача й на iOS (AppDelegate.swift) — той
+              // самий публічний UIPasteboard+URL scheme механізм, що
+              // задокументований Meta — але сам системний Instagram зараз
+              // ламає його на iOS 17-18 (підтверджений сторонніми
+              // розробниками баг, не наша помилка коду, див.
+              // ARCHITECTURE.md), тож кнопку сховано з UI цілком (гейт
+              // вище, DayCardScreen), поки Instagram не полагодить свою
+              // частину. TikTok на iOS ніколи й не мав шляху без реєстрації
+              // в TikTok for Developers.
+              if (Platform.isAndroid) ...[
+                _ShareRow(
+                  label: 'Instagram Stories',
+                  done: _done.contains('instagram'),
+                  onTap: _shareInstagram,
+                ),
                 _ShareRow(
                   label: 'TikTok',
                   done: _done.contains('tiktok'),
                   onTap: _shareTikTok,
                 ),
+              ],
               _ShareRow(
                 label: l10n.other,
                 done: _done.contains('other'),
