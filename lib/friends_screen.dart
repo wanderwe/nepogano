@@ -861,6 +861,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
     final controller = TextEditingController();
     final code = await showDialog<String>(
       context: context,
+      barrierDismissible: false,
       builder: (context) => StatefulBuilder(
         builder: (context, setState) => AppDialog(
           title: l10n.enterFriendCode,
@@ -905,6 +906,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
     final controller = TextEditingController();
     final email = await showDialog<String>(
       context: context,
+      barrierDismissible: false,
       builder: (context) => StatefulBuilder(
         builder: (context, setState) => AppDialog(
           title: l10n.inviteFriendByEmail,
@@ -956,6 +958,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
     final controller = TextEditingController();
     final name = await showDialog<String>(
       context: context,
+      barrierDismissible: false,
       builder: (context) => StatefulBuilder(
         builder: (context, setState) => AppDialog(
           title: l10n.newFolder,
@@ -1033,6 +1036,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
     final controller = TextEditingController(text: folder.name);
     final name = await showDialog<String>(
       context: context,
+      barrierDismissible: false,
       builder: (context) => StatefulBuilder(
         builder: (context, setState) => AppDialog(
           title: l10n.renameFolder,

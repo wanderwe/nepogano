@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import 'daily_reminder.dart';
 import 'date_labels.dart';
 import 'l10n/app_localizations.dart';
 import 'style.dart';
@@ -763,23 +762,6 @@ class _ComposeLetterSheetState extends State<_ComposeLetterSheet> {
         'letter_id': letterId,
         'body': text,
       });
-
-      // Локальна нотифікація планується на ЦЬОМУ пристрої, тобто пристрої
-      // автора. Для листа другові це не розбудить телефон отримувача —
-      // локальні нотифікації не можуть розбудити ЧУЖИЙ пристрій, для цього
-      // потрібен справжній server-side push (окремий проєкт, свідомо не
-      // робимо зараз). Автор все одно отримає нагадування собі (і сам
-      // теж відновлює доступ до листа з дати розкриття), а отримувач
-      // побачить лист лише коли сам відкриє застосунок після цієї дати.
-      if (mounted) {
-        final l10n = AppLocalizations.of(context);
-        await scheduleLetterUnlockNotification(
-          letterId: letterId,
-          unlockAt: unlockAt,
-          title: l10n.timeCapsulesMenuLabel,
-          body: l10n.timeCapsulesBannerReady,
-        );
-      }
 
       if (mounted) Navigator.of(context).pop(true);
     } catch (_) {

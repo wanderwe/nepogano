@@ -306,6 +306,7 @@ class _CommentsSectionState extends State<CommentsSection> {
     final controller = TextEditingController(text: comment.body);
     final newBody = await showDialog<String>(
       context: context,
+      barrierDismissible: false,
       builder: (context) => StatefulBuilder(
         builder: (context, setState) => AppDialog(
           title: l10n.edit,

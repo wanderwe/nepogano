@@ -198,6 +198,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final controller = TextEditingController(text: _displayName ?? '');
     final name = await showDialog<String>(
       context: context,
+      barrierDismissible: false,
       builder: (context) => StatefulBuilder(
         builder: (context, setState) => AppDialog(
           title: l10n.editDisplayName,

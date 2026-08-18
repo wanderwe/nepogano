@@ -10,9 +10,6 @@ const _channelName = 'Щоденне нагадування';
 const _notificationId = 1;
 const _reminderHour = 20;
 
-const _letterChannelId = 'time_capsule';
-const _letterChannelName = 'Капсули часу';
-
 final _plugin = FlutterLocalNotificationsPlugin();
 
 /// Готує плагін і локальний часовий пояс — виклик один раз при старті
@@ -84,47 +81,6 @@ tz.TZDateTime get _next20 {
     scheduledLocal = scheduledLocal.add(const Duration(days: 1));
   }
   return tz.TZDateTime.from(scheduledLocal, tz.local);
-}
-
-/// Одноразова нотифікація на дату розкриття конкретної капсули часу — на
-/// відміну від щоденного нагадування, не повторюється й не має
-/// matchDateTimeComponents. `id` виводиться з UUID листа (a не з рахунку),
-/// щоб не збігтись із daily reminder (id=1) і щоб скасування/переплановування
-/// одного листа не чіпало інші. inexactAllowWhileIdle — той самий компроміс,
-/// що й для щоденного нагадування: кілька хвилин різниці не критичні, а
-/// точний режим вимагав би окремого чутливого дозволу.
-Future<void> scheduleLetterUnlockNotification({
-  required String letterId,
-  required DateTime unlockAt,
-  required String title,
-  required String body,
-}) async {
-  final granted = await _requestPermission();
-  if (!granted) return;
-
-  // iOS обмежує кожен застосунок 64 запланованими локальними сповіщеннями
-  // одночасно (Android такого ліміту не має) — якщо в юзера вже назбиралось
-  // багато незапечатаних листів, зайве планування мовчки провалилось би
-  // системою без жодної помилки в коді. Лишаємо запас під щоденне
-  // нагадування (scheduleDailyReminder) і не намагаємось запланувати понад
-  // поріг — банер про розкриті капсули (_pendingUnlockedLetters) і так
-  // з'явиться при наступному відкритті застосунку незалежно від сповіщення.
-  if (Platform.isIOS) {
-    final pending = await _plugin.pendingNotificationRequests();
-    if (pending.length >= 60) return;
-  }
-
-  await _plugin.zonedSchedule(
-    id: letterId.hashCode & 0x7FFFFFFF,
-    title: title,
-    body: body,
-    scheduledDate: tz.TZDateTime.from(unlockAt, tz.local),
-    notificationDetails: const NotificationDetails(
-      android: AndroidNotificationDetails(_letterChannelId, _letterChannelName),
-      iOS: DarwinNotificationDetails(),
-    ),
-    androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
-  );
 }
 
 Future<bool> _requestPermission() async {

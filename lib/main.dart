@@ -1082,6 +1082,7 @@ class _CheckInScreenState extends State<CheckInScreen>
     var kind = 'child';
     final result = await showDialog<Map<String, String>>(
       context: context,
+      barrierDismissible: false,
       builder: (context) => StatefulBuilder(
         builder: (context, setState) {
           return AppDialog(
@@ -1335,6 +1336,7 @@ class _CheckInScreenState extends State<CheckInScreen>
     final controller = TextEditingController(text: subject.name);
     final name = await showDialog<String>(
       context: context,
+      barrierDismissible: false,
       builder: (context) => StatefulBuilder(
         builder: (context, setState) => AppDialog(
           title: l10n.renameDiary,
@@ -1755,10 +1757,15 @@ class _CheckInScreenState extends State<CheckInScreen>
       ),
     );
     if (!mounted) return;
+    // result == null означає, що юзер натиснув "X" і скасував розташування
+    // — тут це має скасовувати весь процес додавання фото, не лише саму
+    // операцію позиціювання. Раніше фото все одно додавалось із дефолтним
+    // align/scale, навіть якщо юзер щойно явно натиснув "скасувати".
+    if (result == null) return;
     setState(() {
       _pickedPhotoFile = file;
-      _photoAlignY = result?.$1 ?? 0;
-      _photoScale = result?.$2 ?? 1;
+      _photoAlignY = result.$1;
+      _photoScale = result.$2;
       _removePhoto = false;
     });
   }
