@@ -744,6 +744,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get timeCapsuleToSelfLabel => 'Letter to yourself';
 
   @override
+  String get timeCapsuleRecipientDeletedLabel =>
+      'To a friend (account deleted)';
+
+  @override
   String timeCapsuleToFriendLabel(String name) {
     return 'Letter for $name';
   }

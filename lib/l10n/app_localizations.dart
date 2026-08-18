@@ -1424,6 +1424,12 @@ abstract class AppLocalizations {
   /// **'Лист собі'**
   String get timeCapsuleToSelfLabel;
 
+  /// No description provided for @timeCapsuleRecipientDeletedLabel.
+  ///
+  /// In uk, this message translates to:
+  /// **'Другу (акаунт видалено)'**
+  String get timeCapsuleRecipientDeletedLabel;
+
   /// No description provided for @timeCapsuleToFriendLabel.
   ///
   /// In uk, this message translates to:

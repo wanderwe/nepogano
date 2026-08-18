@@ -62,6 +62,11 @@ class _Letter {
   final DateTime? authorOpenedAt;
   final DateTime? recipientOpenedAt;
   final DateTime? recipientSeenAt;
+  // true, якщо recipient_id став null через видалення акаунта отримувача
+  // (тригер on auth.users), а не тому, що лист від початку писався собі —
+  // без цього прапорця UI не міг би розрізнити ці два випадки, і лист
+  // другові, чий акаунт видалили, помилково показувався б як "лист собі".
+  final bool recipientAccountDeleted;
   // Присутнє, лише коли RLS дозволив прочитати future_letter_bodies —
   // тобто фактично коли лист уже розкрито. До того часу null навіть якщо
   // рядок технічно існує на сервері.
@@ -80,6 +85,7 @@ class _Letter {
     this.authorOpenedAt,
     this.recipientOpenedAt,
     this.recipientSeenAt,
+    this.recipientAccountDeleted = false,
     this.body,
     this.otherPartyName,
   });
@@ -100,6 +106,9 @@ String _formatDate(DateTime date, BuildContext context) {
 }
 
 String _letterLabel(_Letter letter, String myId, AppLocalizations l10n) {
+  if (letter.recipientAccountDeleted) {
+    return l10n.timeCapsuleRecipientDeletedLabel;
+  }
   if (letter.recipientId == null) return l10n.timeCapsuleToSelfLabel;
   final name = letter.otherPartyName ?? '';
   return letter.authorId == myId
@@ -153,7 +162,7 @@ class _TimeCapsulesScreenState extends State<TimeCapsulesScreen> {
       final rows = await _supabase
           .from('future_letters')
           .select(
-            'id, author_id, recipient_id, unlock_at, author_opened_at, recipient_opened_at, recipient_seen_at, future_letter_bodies(body)',
+            'id, author_id, recipient_id, recipient_account_deleted, unlock_at, author_opened_at, recipient_opened_at, recipient_seen_at, future_letter_bodies(body)',
           )
           .or(
             'and(author_id.eq.$myId,author_deleted_at.is.null),'
@@ -210,6 +219,8 @@ class _TimeCapsulesScreenState extends State<TimeCapsulesScreen> {
           recipientSeenAt: recipientSeenAtRaw != null
               ? DateTime.parse(recipientSeenAtRaw).toLocal()
               : null,
+          recipientAccountDeleted:
+              row['recipient_account_deleted'] as bool? ?? false,
           body: bodyRow?['body'] as String?,
           otherPartyName: otherId != null ? nameById[otherId] : null,
         );

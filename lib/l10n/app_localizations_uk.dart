@@ -747,6 +747,9 @@ class AppLocalizationsUk extends AppLocalizations {
   String get timeCapsuleToSelfLabel => 'Лист собі';
 
   @override
+  String get timeCapsuleRecipientDeletedLabel => 'Другу (акаунт видалено)';
+
+  @override
   String timeCapsuleToFriendLabel(String name) {
     return 'Лист для $name';
   }

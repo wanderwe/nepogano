@@ -348,6 +348,7 @@
   "timeCapsulesDelayYear": "1 рік",
   "timeCapsulesSeal": "Запечатати",
   "timeCapsuleToSelfLabel": "Лист собі",
+  "timeCapsuleRecipientDeletedLabel": "Другу (акаунт видалено)",
   "timeCapsuleToFriendLabel": "Лист для {name}",
   "@timeCapsuleToFriendLabel": {
     "placeholders": {
