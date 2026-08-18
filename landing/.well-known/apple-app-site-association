@@ -1,0 +1,11 @@
+{
+  "applinks": {
+    "apps": [],
+    "details": [
+      {
+        "appID": "35VGZ6PTCX.com.nepogano.app",
+        "paths": ["/join/*"]
+      }
+    ]
+  }
+}

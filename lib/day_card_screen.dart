@@ -298,21 +298,31 @@ class _MultiShareSheetState extends State<_MultiShareSheet> {
                 style: const TextStyle(fontSize: 13, color: AppColors.inkMuted),
               ),
               const SizedBox(height: 20),
-              _ShareRow(
-                label: 'Instagram Stories',
-                done: _done.contains('instagram'),
-                onTap: _shareInstagram,
-              ),
-              _ShareRow(
-                label: 'Facebook',
-                done: _done.contains('facebook'),
-                onTap: _shareFacebook,
-              ),
-              _ShareRow(
-                label: 'TikTok',
-                done: _done.contains('tiktok'),
-                onTap: _shareTikTok,
-              ),
+              // Прямий шер у ці три застосунки реалізований лише нативним
+              // Android-каналом (MainActivity.kt) — на iOS немає відповідача
+              // на цей MethodChannel, тож кнопки мовчки провалювались із
+              // фейковим "не встановлено" для кожного юзера, завжди. "Інше"
+              // (share_plus, вже крос-платформене) лишається на iOS єдиним
+              // шляхом — той самий системний шер-лист відкриває Instagram/
+              // Facebook/TikTok серед інших варіантів, просто без прямого
+              // "у Stories" переходу.
+              if (Platform.isAndroid) ...[
+                _ShareRow(
+                  label: 'Instagram Stories',
+                  done: _done.contains('instagram'),
+                  onTap: _shareInstagram,
+                ),
+                _ShareRow(
+                  label: 'Facebook',
+                  done: _done.contains('facebook'),
+                  onTap: _shareFacebook,
+                ),
+                _ShareRow(
+                  label: 'TikTok',
+                  done: _done.contains('tiktok'),
+                  onTap: _shareTikTok,
+                ),
+              ],
               _ShareRow(
                 label: l10n.other,
                 done: _done.contains('other'),

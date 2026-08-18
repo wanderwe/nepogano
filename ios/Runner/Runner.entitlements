@@ -6,5 +6,16 @@
 	<array>
 		<string>Default</string>
 	</array>
+	<!-- Universal Links для https://nepogano.app/join/<code> — той самий
+	     запит у друзі, що вже працює на Android через verified App Link
+	     (AndroidManifest.xml). Без цього entitlement той самий лінк на iOS
+	     просто відкриває Safari замість застосунку, хоча код для обробки
+	     хоста/шляху в main.dart вже крос-платформений і чекає на виклик.
+	     Потребує landing/.well-known/apple-app-site-association на хостингу
+	     (Team ID + Bundle ID: 35VGZ6PTCX.com.nepogano.app). -->
+	<key>com.apple.developer.associated-domains</key>
+	<array>
+		<string>applinks:nepogano.app</string>
+	</array>
 </dict>
 </plist>
