@@ -15,6 +15,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get delete => 'Delete';
 
   @override
+  String get discardLetterConfirmTitle => 'Discard this letter?';
+
+  @override
+  String get discardLetterConfirmBody => 'The text you wrote will be lost.';
+
+  @override
+  String get keepWriting => 'Keep writing';
+
+  @override
+  String get discardLetter => 'Discard';
+
+  @override
   String get save => 'Save';
 
   @override
@@ -221,6 +233,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get noAccountYetQuestion => 'No account yet?';
+
+  @override
+  String get unnamedFriend => 'Friend';
 
   @override
   String get continueWithGoogle => 'Continue with Google';

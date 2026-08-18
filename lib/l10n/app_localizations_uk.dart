@@ -15,6 +15,19 @@ class AppLocalizationsUk extends AppLocalizations {
   String get delete => 'Видалити';
 
   @override
+  String get discardLetterConfirmTitle => 'Не зберігати лист?';
+
+  @override
+  String get discardLetterConfirmBody =>
+      'Текст, який ти написав, буде втрачено.';
+
+  @override
+  String get keepWriting => 'Писати далі';
+
+  @override
+  String get discardLetter => 'Не зберігати';
+
+  @override
   String get save => 'Зберегти';
 
   @override
@@ -220,6 +233,9 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get noAccountYetQuestion => 'Немає акаунту?';
+
+  @override
+  String get unnamedFriend => 'Друг';
 
   @override
   String get continueWithGoogle => 'Продовжити з Google';

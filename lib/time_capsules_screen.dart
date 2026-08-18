@@ -256,6 +256,12 @@ class _TimeCapsulesScreenState extends State<TimeCapsulesScreen> {
     final saved = await showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
+      // Свайп/тап повз вимкнено — лист може бути до 5000 символів, і
+      // випадкове закриття без підтвердження стирало б усе написане.
+      // Закрити можна лише явною кнопкою "X" усередині шторки, яка сама
+      // питає підтвердження, якщо текст не порожній.
+      isDismissible: false,
+      enableDrag: false,
       builder: (_) => const _ComposeLetterSheet(),
     );
     if (saved == true) {
@@ -788,134 +794,187 @@ class _ComposeLetterSheetState extends State<_ComposeLetterSheet> {
     }
   }
 
+  /// true — можна закривати (текст порожній або юзер підтвердив втрату).
+  Future<bool> _confirmDiscard() async {
+    if (_controller.text.trim().isEmpty) return true;
+    final l10n = AppLocalizations.of(context);
+    final discard = await showDialog<bool>(
+      context: context,
+      builder: (context) => AppDialog(
+        title: l10n.discardLetterConfirmTitle,
+        content: Text(
+          l10n.discardLetterConfirmBody,
+          style: const TextStyle(color: AppColors.inkMuted),
+        ),
+        primaryLabel: l10n.keepWriting,
+        onPrimary: () => Navigator.of(context).pop(false),
+        secondaryLabel: l10n.discardLetter,
+        secondaryColor: Colors.redAccent,
+        onSecondary: () => Navigator.of(context).pop(true),
+      ),
+    );
+    return discard ?? false;
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return Padding(
-      padding: EdgeInsets.fromLTRB(
-        20,
-        20,
-        20,
-        // Клавіатура (viewInsets) ДО padding.bottom — цей другий доданок
-        // бракувало: без нього кнопка ховалась під системною навігацією
-        // Android (жестовою панеллю чи 3-кнопковою), бо на iOS safe-area
-        // знизу вже враховувалась інакше й проблема там не виникала.
-        20 +
-            MediaQuery.of(context).viewInsets.bottom +
-            MediaQuery.of(context).padding.bottom,
-      ),
-      child: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            TextField(
-              controller: _controller,
-              maxLines: 8,
-              minLines: 5,
-              maxLength: _bodyMaxLength,
-              decoration: appFieldDecoration(l10n.timeCapsulesComposeHint),
-            ),
-            // Тільки якщо є хоч один друг — інакше вибір завжди однаковий
-            // (лише "Я") і не додає нічого, крім зайвого рядка. Окремий
-            // піквер із пошуком замість ряду чіпів — той не масштабується,
-            // якщо в юзера десятки чи сотні друзів (стіна плиток замість
-            // списку).
-            if (_friends.isNotEmpty) ...[
-              // Без окремого підпису "Кому" — значення дропдауна (напр.
-              // "собі") разом із шевроном і так зрозуміле без пояснення.
-              const SizedBox(height: 12),
-              GestureDetector(
-                onTap: () async {
-                  final picked =
-                      await showModalBottomSheet<_RecipientPickResult>(
-                        context: context,
-                        isScrollControlled: true,
-                        builder: (_) => _RecipientPickerSheet(
-                          friends: _friends,
-                          selectedId: _recipientId,
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) return;
+        final canDiscard = await _confirmDiscard();
+        if (canDiscard && mounted) {
+          Navigator.of(context).pop();
+        }
+      },
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(
+          20,
+          20,
+          20,
+          // Клавіатура (viewInsets) ДО padding.bottom — цей другий доданок
+          // бракувало: без нього кнопка ховалась під системною навігацією
+          // Android (жестовою панеллю чи 3-кнопковою), бо на iOS safe-area
+          // знизу вже враховувалась інакше й проблема там не виникала.
+          20 +
+              MediaQuery.of(context).viewInsets.bottom +
+              MediaQuery.of(context).padding.bottom,
+        ),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Align(
+                alignment: Alignment.centerRight,
+                child: GestureDetector(
+                  onTap: () async {
+                    if (await _confirmDiscard() && context.mounted) {
+                      Navigator.of(context).pop();
+                    }
+                  },
+                  behavior: HitTestBehavior.opaque,
+                  child: const Padding(
+                    padding: EdgeInsets.all(4),
+                    child: Icon(
+                      PhosphorIconsLight.x,
+                      size: 20,
+                      color: AppColors.inkMuted,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+              TextField(
+                controller: _controller,
+                maxLines: 8,
+                minLines: 5,
+                maxLength: _bodyMaxLength,
+                decoration: appFieldDecoration(l10n.timeCapsulesComposeHint),
+              ),
+              // Тільки якщо є хоч один друг — інакше вибір завжди однаковий
+              // (лише "Я") і не додає нічого, крім зайвого рядка. Окремий
+              // піквер із пошуком замість ряду чіпів — той не масштабується,
+              // якщо в юзера десятки чи сотні друзів (стіна плиток замість
+              // списку).
+              if (_friends.isNotEmpty) ...[
+                // Без окремого підпису "Кому" — значення дропдауна (напр.
+                // "собі") разом із шевроном і так зрозуміле без пояснення.
+                const SizedBox(height: 12),
+                GestureDetector(
+                  onTap: () async {
+                    final picked =
+                        await showModalBottomSheet<_RecipientPickResult>(
+                          context: context,
+                          isScrollControlled: true,
+                          builder: (_) => _RecipientPickerSheet(
+                            friends: _friends,
+                            selectedId: _recipientId,
+                          ),
+                        );
+                    if (picked != null)
+                      setState(() => _recipientId = picked.id);
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 14,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.surface,
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            _recipientId == null
+                                ? l10n.timeCapsulesRecipientSelf
+                                : _friends
+                                      .firstWhere((f) => f.id == _recipientId)
+                                      .name,
+                            style: const TextStyle(color: AppColors.ink),
+                          ),
                         ),
-                      );
-                  if (picked != null) setState(() => _recipientId = picked.id);
-                },
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 14,
-                  ),
-                  decoration: BoxDecoration(
-                    color: AppColors.surface,
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          _recipientId == null
-                              ? l10n.timeCapsulesRecipientSelf
-                              : _friends
-                                    .firstWhere((f) => f.id == _recipientId)
-                                    .name,
-                          style: const TextStyle(color: AppColors.ink),
+                        const Icon(
+                          PhosphorIconsLight.caretDown,
+                          size: 16,
+                          color: AppColors.inkMuted,
                         ),
-                      ),
-                      const Icon(
-                        PhosphorIconsLight.caretDown,
-                        size: 16,
-                        color: AppColors.inkMuted,
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
+                ),
+              ],
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                children: [
+                  AppChip(
+                    label: l10n.timeCapsulesDelayMonth,
+                    selected: _delayMonths == 1,
+                    onTap: () => setState(() => _delayMonths = 1),
+                  ),
+                  AppChip(
+                    label: l10n.timeCapsulesDelayHalfYear,
+                    selected: _delayMonths == 6,
+                    onTap: () => setState(() => _delayMonths = 6),
+                  ),
+                  AppChip(
+                    label: l10n.timeCapsulesDelayYear,
+                    selected: _delayMonths == 12,
+                    onTap: () => setState(() => _delayMonths = 12),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: FilledButton(
+                  style: FilledButton.styleFrom(
+                    backgroundColor: AppColors.accent,
+                    foregroundColor: AppColors.accentInk,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                  ),
+                  onPressed: _saving ? null : _save,
+                  child: _saving
+                      ? const SizedBox(
+                          height: 18,
+                          width: 18,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: AppColors.accentInk,
+                          ),
+                        )
+                      : Text(l10n.timeCapsulesSeal),
                 ),
               ),
             ],
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              children: [
-                AppChip(
-                  label: l10n.timeCapsulesDelayMonth,
-                  selected: _delayMonths == 1,
-                  onTap: () => setState(() => _delayMonths = 1),
-                ),
-                AppChip(
-                  label: l10n.timeCapsulesDelayHalfYear,
-                  selected: _delayMonths == 6,
-                  onTap: () => setState(() => _delayMonths = 6),
-                ),
-                AppChip(
-                  label: l10n.timeCapsulesDelayYear,
-                  selected: _delayMonths == 12,
-                  onTap: () => setState(() => _delayMonths = 12),
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-            SizedBox(
-              width: double.infinity,
-              height: 48,
-              child: FilledButton(
-                style: FilledButton.styleFrom(
-                  backgroundColor: AppColors.accent,
-                  foregroundColor: AppColors.accentInk,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                ),
-                onPressed: _saving ? null : _save,
-                child: _saving
-                    ? const SizedBox(
-                        height: 18,
-                        width: 18,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: AppColors.accentInk,
-                        ),
-                      )
-                    : Text(l10n.timeCapsulesSeal),
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );

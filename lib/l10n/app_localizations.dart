@@ -110,6 +110,30 @@ abstract class AppLocalizations {
   /// **'Видалити'**
   String get delete;
 
+  /// No description provided for @discardLetterConfirmTitle.
+  ///
+  /// In uk, this message translates to:
+  /// **'Не зберігати лист?'**
+  String get discardLetterConfirmTitle;
+
+  /// No description provided for @discardLetterConfirmBody.
+  ///
+  /// In uk, this message translates to:
+  /// **'Текст, який ти написав, буде втрачено.'**
+  String get discardLetterConfirmBody;
+
+  /// No description provided for @keepWriting.
+  ///
+  /// In uk, this message translates to:
+  /// **'Писати далі'**
+  String get keepWriting;
+
+  /// No description provided for @discardLetter.
+  ///
+  /// In uk, this message translates to:
+  /// **'Не зберігати'**
+  String get discardLetter;
+
   /// No description provided for @save.
   ///
   /// In uk, this message translates to:
@@ -499,6 +523,12 @@ abstract class AppLocalizations {
   /// In uk, this message translates to:
   /// **'Немає акаунту?'**
   String get noAccountYetQuestion;
+
+  /// No description provided for @unnamedFriend.
+  ///
+  /// In uk, this message translates to:
+  /// **'Друг'**
+  String get unnamedFriend;
 
   /// No description provided for @continueWithGoogle.
   ///

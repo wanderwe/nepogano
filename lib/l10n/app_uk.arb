@@ -3,6 +3,10 @@
 
   "cancel": "Скасувати",
   "delete": "Видалити",
+  "discardLetterConfirmTitle": "Не зберігати лист?",
+  "discardLetterConfirmBody": "Текст, який ти написав, буде втрачено.",
+  "keepWriting": "Писати далі",
+  "discardLetter": "Не зберігати",
   "save": "Зберегти",
   "update": "Оновити",
   "edit": "Редагувати",
@@ -79,6 +83,7 @@
   "signIn": "Увійти",
   "alreadyHaveAccountQuestion": "Вже є акаунт?",
   "noAccountYetQuestion": "Немає акаунту?",
+  "unnamedFriend": "Друг",
   "continueWithGoogle": "Продовжити з Google",
   "signInWithApple": "Увійти через Apple",
 

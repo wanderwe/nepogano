@@ -857,7 +857,12 @@ class _CheckInScreenState extends State<CheckInScreen>
                           color: AppColors.accent,
                         ),
                         const SizedBox(width: 12),
-                        Text(person.name, style: const TextStyle(fontSize: 15)),
+                        Text(
+                          person.name.isEmpty
+                              ? l10n.unnamedFriend
+                              : person.name,
+                          style: const TextStyle(fontSize: 15),
+                        ),
                       ],
                     ),
                   ),
@@ -871,12 +876,16 @@ class _CheckInScreenState extends State<CheckInScreen>
     if (!mounted) return;
     if (tappedUserId != null) {
       final person = nudges.from.firstWhere((p) => p.userId == tappedUserId);
+      // displayEmail лишається порожнім (немає звідки взяти email для
+      // цього флоу) — тому displayName підставляємо явно, з фолбеком, а не
+      // покладаємось на внутрішній fallback PersonDetailScreen на
+      // displayEmail (він теж був би порожнім, тайтл вийшов би пустий).
       await Navigator.of(context).push(
         MaterialPageRoute(
           builder: (_) => PersonDetailScreen(
             userId: person.userId,
             displayEmail: '',
-            displayName: person.name.isEmpty ? null : person.name,
+            displayName: person.name.isEmpty ? l10n.unnamedFriend : person.name,
           ),
         ),
       );
@@ -1878,9 +1887,15 @@ class _CheckInScreenState extends State<CheckInScreen>
   }
 
   DayCardScreen _buildDayCardScreen() {
+    // firstWhere без orElse впав би, якби активну сутність видалив
+    // співавтор на своєму пристрої до того, як цей пристрій встиг
+    // синхронізувати _subjects.
     final subjectName = _activeSubjectId == null
         ? null
-        : _subjects.firstWhere((s) => s.id == _activeSubjectId).name;
+        : _subjects
+              .cast<Subject?>()
+              .firstWhere((s) => s?.id == _activeSubjectId, orElse: () => null)
+              ?.name;
     return DayCardScreen(
       subjectName: subjectName,
       entry: CheckinEntry(
@@ -2374,8 +2389,12 @@ class _CheckInScreenState extends State<CheckInScreen>
                           final activeName = _activeSubjectId == null
                               ? null
                               : _subjects
-                                    .firstWhere((s) => s.id == _activeSubjectId)
-                                    .name;
+                                    .cast<Subject?>()
+                                    .firstWhere(
+                                      (s) => s?.id == _activeSubjectId,
+                                      orElse: () => null,
+                                    )
+                                    ?.name;
                           await Navigator.of(context).push(
                             MaterialPageRoute(
                               builder: (_) => HistoryScreen(
@@ -2384,6 +2403,12 @@ class _CheckInScreenState extends State<CheckInScreen>
                               ),
                             ),
                           );
+                          // На відміну від Друзів/Коментарів/Капсул, цей
+                          // пуш ніколи не оновлював активність коментарів
+                          // після повернення — якщо додав коментар до
+                          // сьогоднішнього запису прямо в Історії, банер
+                          // на головному екрані про це не дізнавався.
+                          if (mounted) _checkCommentActivity();
                         },
                         icon: const Icon(
                           PhosphorIconsLight.calendarBlank,

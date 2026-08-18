@@ -3,6 +3,10 @@
 
   "cancel": "Cancel",
   "delete": "Delete",
+  "discardLetterConfirmTitle": "Discard this letter?",
+  "discardLetterConfirmBody": "The text you wrote will be lost.",
+  "keepWriting": "Keep writing",
+  "discardLetter": "Discard",
   "save": "Save",
   "update": "Update",
   "edit": "Edit",
@@ -73,6 +77,7 @@
   "signIn": "Sign in",
   "alreadyHaveAccountQuestion": "Already have an account?",
   "noAccountYetQuestion": "No account yet?",
+  "unnamedFriend": "Friend",
   "continueWithGoogle": "Continue with Google",
   "signInWithApple": "Sign in with Apple",
 
