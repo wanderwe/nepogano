@@ -155,7 +155,7 @@
   "couldNotSaveDisplayName": "Не вдалось зберегти ім'я.",
   "couldNotSaveAvatar": "Не вдалось зберегти аватарку.",
   "removeAvatar": "Видалити фото",
-  "removeAvatarConfirmTitle": "Видалити фото профілю?",
+  "removeAvatarConfirmTitle": "Видалити фото?",
   "removeAvatarConfirmBody": "Замість фото буде показано першу літеру імені.",
   "couldNotRemoveAvatar": "Не вдалось видалити фото.",
   "notCheckedInToday": "Давно не було новин",

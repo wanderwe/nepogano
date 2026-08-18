@@ -402,7 +402,7 @@ class AppLocalizationsUk extends AppLocalizations {
   String get removeAvatar => 'Видалити фото';
 
   @override
-  String get removeAvatarConfirmTitle => 'Видалити фото профілю?';
+  String get removeAvatarConfirmTitle => 'Видалити фото?';
 
   @override
   String get removeAvatarConfirmBody =>

@@ -833,7 +833,7 @@ abstract class AppLocalizations {
   /// No description provided for @removeAvatarConfirmTitle.
   ///
   /// In uk, this message translates to:
-  /// **'Видалити фото профілю?'**
+  /// **'Видалити фото?'**
   String get removeAvatarConfirmTitle;
 
   /// No description provided for @removeAvatarConfirmBody.
