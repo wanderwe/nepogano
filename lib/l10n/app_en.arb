@@ -158,7 +158,7 @@
       "percent": { "type": "int" }
     }
   },
-  "friendGuessStats": "Guesses you: {correct} out of {total} ({percent}%)",
+  "friendGuessStats": "Guesses you: {correct}/{total} ({percent}%)",
   "@friendGuessStats": {
     "placeholders": {
       "correct": { "type": "int" },

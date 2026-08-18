@@ -420,7 +420,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String friendGuessStats(int correct, int total, int percent) {
-    return 'Guesses you: $correct out of $total ($percent%)';
+    return 'Guesses you: $correct/$total ($percent%)';
   }
 
   @override

@@ -167,7 +167,7 @@
       "percent": { "type": "int" }
     }
   },
-  "friendGuessStats": "Вгадує тебе: {correct} із {total} ({percent}%)",
+  "friendGuessStats": "Вгадує тебе: {correct}/{total} ({percent}%)",
   "@friendGuessStats": {
     "placeholders": {
       "correct": { "type": "int" },
