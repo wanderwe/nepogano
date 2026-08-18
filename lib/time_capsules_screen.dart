@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'date_labels.dart';
@@ -7,6 +8,7 @@ import 'l10n/app_localizations.dart';
 import 'style.dart';
 
 const _bodyMaxLength = 5000;
+const _introBannerDismissedKey = 'time_capsules_intro_banner_dismissed';
 
 enum _LetterState { locked, unlockedUnread, opened }
 
@@ -138,6 +140,12 @@ class _TimeCapsulesScreenState extends State<TimeCapsulesScreen> {
   // рядок ще підсвічувався крапкою під час цього перегляду, навіть якщо
   // recipient_seen_at уже проставився фоновим запитом нижче.
   Set<String> _newlyReceivedIds = {};
+  // Порожній стан (_EmptyState) пояснює механіку капсул часу, але
+  // показується лише коли список порожній — якщо юзер ще ЖОДНОГО разу не
+  // писав лист сам, а йому вже хтось надіслав, він одразу бачить заповнений
+  // список і повністю пропускає це пояснення. Банер нижче покриває саме цей
+  // випадок, не блокуючи доступ до вже отриманого листа.
+  bool _introBannerDismissed = false;
   // Позначення recipient_seen_at — await у _load() сам собою НІЧОГО не
   // блокує в навігації: юзер може вийти (кнопка "назад", свайп) раніше,
   // ніж запит устигне завершитись, і батьківський екран одразу перечитає
@@ -148,7 +156,28 @@ class _TimeCapsulesScreenState extends State<TimeCapsulesScreen> {
   @override
   void initState() {
     super.initState();
+    _loadIntroBannerDismissed();
     _load();
+  }
+
+  Future<void> _loadIntroBannerDismissed() async {
+    final prefs = await SharedPreferences.getInstance();
+    final dismissed = prefs.getBool(_introBannerDismissedKey) ?? false;
+    if (mounted && dismissed) setState(() => _introBannerDismissed = true);
+  }
+
+  Future<void> _dismissIntroBanner() async {
+    setState(() => _introBannerDismissed = true);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_introBannerDismissedKey, true);
+  }
+
+  bool get _showIntroBanner {
+    if (_introBannerDismissed || _letters.isEmpty) return false;
+    final myId = _supabase.auth.currentUser?.id;
+    // Якщо є хоч один лист, де я автор — я вже проходив через _EmptyState
+    // (єдиний спосіб написати перший лист), тож пояснення зайве.
+    return !_letters.any((l) => l.authorId == myId);
   }
 
   Future<void> _load() async {
@@ -402,32 +431,12 @@ class _TimeCapsulesScreenState extends State<TimeCapsulesScreen> {
             ? const Center(child: CircularProgressIndicator())
             : _letters.isEmpty
             ? _EmptyState(onWrite: _openCompose)
-            : ListView.builder(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
-                itemCount: _letters.length,
-                itemBuilder: (context, index) {
-                  final letter = _letters[index];
-                  final myId = _supabase.auth.currentUser!.id;
-                  final myState = letter.stateFor(myId);
-                  // Автор може передумати будь-коли; отримувач — лише
-                  // прочитавши, щоб не стерти чужу працю навіть не глянувши.
-                  final canDelete =
-                      letter.authorId == myId || myState == _LetterState.opened;
-                  return _LetterRow(
-                    letter: letter,
-                    myId: myId,
-                    onTap: () => _openLetter(letter),
-                    onDelete: canDelete ? () => _confirmDelete(letter) : null,
-                    // "Новий" для щойно розкритого — той самий виняток, що й
-                    // бейдж на меню: не для автора, що просто не перечитує
-                    // вже надісланий другові лист (не потребує його уваги).
-                    showNewDot:
-                        _newlyReceivedIds.contains(letter.id) ||
-                        (myState == _LetterState.unlockedUnread &&
-                            (letter.recipientId == null ||
-                                letter.authorId != myId)),
-                  );
-                },
+            : Column(
+                children: [
+                  if (_showIntroBanner)
+                    _IntroBanner(onDismiss: _dismissIntroBanner),
+                  Expanded(child: _buildLetterList(l10n)),
+                ],
               ),
         floatingActionButton: _letters.isEmpty
             ? null
@@ -439,6 +448,101 @@ class _TimeCapsulesScreenState extends State<TimeCapsulesScreen> {
                 label: Text(l10n.timeCapsulesWriteNew),
               ),
         floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+      ),
+    );
+  }
+
+  Widget _buildLetterList(AppLocalizations l10n) {
+    return ListView.builder(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
+      itemCount: _letters.length,
+      itemBuilder: (context, index) {
+        final letter = _letters[index];
+        final myId = _supabase.auth.currentUser!.id;
+        final myState = letter.stateFor(myId);
+        // Автор може передумати будь-коли; отримувач — лише
+        // прочитавши, щоб не стерти чужу працю навіть не глянувши.
+        final canDelete =
+            letter.authorId == myId || myState == _LetterState.opened;
+        return _LetterRow(
+          letter: letter,
+          myId: myId,
+          onTap: () => _openLetter(letter),
+          onDelete: canDelete ? () => _confirmDelete(letter) : null,
+          // "Новий" для щойно розкритого — той самий виняток, що й
+          // бейдж на меню: не для автора, що просто не перечитує
+          // вже надісланий другові лист (не потребує його уваги).
+          showNewDot:
+              _newlyReceivedIds.contains(letter.id) ||
+              (myState == _LetterState.unlockedUnread &&
+                  (letter.recipientId == null || letter.authorId != myId)),
+        );
+      },
+    );
+  }
+}
+
+/// Той самий текст, що в _EmptyState — коротший вигляд для юзера, який
+/// уже має листи (отримані), але сам ще жодного не писав, тож ніколи не
+/// бачив _EmptyState. Не блокує список, просто пояснює зверху, одноразово.
+class _IntroBanner extends StatelessWidget {
+  final VoidCallback onDismiss;
+
+  const _IntroBanner({required this.onDismiss});
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AppColors.accent.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    l10n.timeCapsulesEmptyTitle,
+                    style: const TextStyle(
+                      color: AppColors.accent,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 15,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    l10n.timeCapsulesEmptySubtitle,
+                    style: const TextStyle(
+                      color: AppColors.accent,
+                      fontSize: 13,
+                      height: 1.4,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            GestureDetector(
+              onTap: onDismiss,
+              behavior: HitTestBehavior.opaque,
+              child: const Padding(
+                padding: EdgeInsets.all(6),
+                child: Icon(
+                  PhosphorIconsLight.x,
+                  size: 16,
+                  color: AppColors.accent,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
