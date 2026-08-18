@@ -717,7 +717,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get timeCapsulesEmptySubtitle =>
-      'Choose when: a month, half a year, or a year from now. Until then it\'s sealed, no peeking.';
+      'Pick when: a month, six months, or a year. It\'s sealed until then, keeping today exactly as it really was.';
 
   @override
   String get timeCapsulesWriteFirst => 'Write your first letter';
