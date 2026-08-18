@@ -93,7 +93,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get onboarding4Body =>
-      'Just the people you actually know, no endless feed of strangers. Add friends and try to guess their mood.';
+      'Only the people you actually know, no endless feed of strangers. Add friends and try to guess their mood.';
 
   @override
   String get onboarding5Headline => 'Monthly recap';
