@@ -12,6 +12,10 @@ Guideline 4.8).
 English (U.S.) — так, щоб люди зі storefront поза списком доданих мов
 бачили англійську, а не українську, як фолбек.
 
+## Support URL / Marketing URL (обидві локалі)
+Support URL: https://github.com/wanderwe/nepogano/wiki
+Marketing URL: https://nepogano.app (укр) / https://nepogano.app/en/ (англ)
+
 ## English (U.S.)
 
 ### Subtitle (30 символів)
@@ -44,8 +48,13 @@ Nepogano is built step by step: first a personal reflection tool, then a quiet w
 ### Keywords (100 символів, через кому, без пробілів після коми)
 mood,diary,journal,honest,checkin,reflection,friends,calendar,mood tracker,time capsule *(87 символів)*
 
-### What's New in This Version
+### What's New — version log (найновіша зверху, копіювати верхню в App Store Connect)
 
+#### 1.5.0 (2026-08-19)
+Time Capsules can now be sent to friends, not just yourself.
+Added comments on days, both your own and friends'.
+Your avatar can now be repositioned or removed.
+Small fixes and interface improvements.
 
 ## Ukrainian (uk)
 
@@ -79,5 +88,10 @@ Nepogano будується поступово: спершу особистий 
 ### Keywords (100 символів, через кому, без пробілів після коми)
 настрій,щоденник,чесність,чекін,рефлексія,друзі,календар,трекер настрою,капсула часу *(84 символи)*
 
-### What's New in This Version
+### What's New — журнал версій (найновіша зверху, копіювати верхню в App Store Connect)
 
+#### 1.5.0 (2026-08-19)
+Капсули часу тепер можна надсилати й друзям, не тільки собі.
+Додано коментарі під днями — своїми і друзів.
+Аватарку тепер можна перекадрувати або видалити.
+Дрібні виправлення й покращення інтерфейсу.
