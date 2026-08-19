@@ -322,14 +322,10 @@ class _MultiShareSheetState extends State<_MultiShareSheet> {
                 done: _done.contains('other'),
                 onTap: _shareOther,
               ),
-              const SizedBox(height: 12),
-              SizedBox(
-                width: double.infinity,
-                child: TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: Text(l10n.done),
-                ),
-              ),
+              // Без кнопки "Done" — шторка й так закривається тапом поза
+              // нею чи свайпом вниз (isDismissible за замовчуванням), той
+              // самий принцип, що й в інших шторках застосунку без кнопок
+              // підтвердження.
             ],
           ),
         ),
