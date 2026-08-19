@@ -2100,28 +2100,28 @@ class _CheckInScreenState extends State<CheckInScreen>
         ),
       ),
       const SizedBox(height: 20),
-      // Один компактний рядок замість двох прямокутників-кнопок одна під
-      // одною: жодна з двох дій не "завершує" флоу (запис і так збережено),
-      // тому обидві однаково легкі — той самий регістр, що й тижнева
-      // стрічка нижче (Google Photos/Instagram роблять так само з рядом
-      // дій під уже готовим постом: іконка+підпис, без filled-акценту).
-      Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          TextButton.icon(
-            onPressed: _startEditing,
-            icon: const Icon(PhosphorIconsLight.pencilSimple, size: 18),
-            label: Text(l10n.edit),
-          ),
-          const SizedBox(width: 8),
-          TextButton.icon(
-            onPressed: () => Navigator.of(
-              context,
-            ).push(MaterialPageRoute(builder: (_) => _buildDayCardScreen())),
-            icon: const Icon(PhosphorIconsLight.export, size: 18),
-            label: Text(l10n.dayCard),
-          ),
-        ],
+      SizedBox(
+        width: double.infinity,
+        child: OutlinedButton.icon(
+          onPressed: _startEditing,
+          icon: const Icon(PhosphorIconsLight.pencilSimple, size: 18),
+          label: Text(l10n.edit),
+        ),
+      ),
+      const SizedBox(height: 12),
+      SizedBox(
+        width: double.infinity,
+        // OutlinedButton, не TextButton — та сама рамка й вага, що в
+        // "Редагувати" вище. Обидві дії однаково важливі, різна вага між
+        // ними не мала обґрунтування, і суцільна рамка на всю ширину проти
+        // "голого" тексту-кнопки читалась як випадкова нерівність у стеку.
+        child: OutlinedButton.icon(
+          onPressed: () => Navigator.of(
+            context,
+          ).push(MaterialPageRoute(builder: (_) => _buildDayCardScreen())),
+          icon: const Icon(PhosphorIconsLight.export, size: 18),
+          label: Text(l10n.dayCard),
+        ),
       ),
     ];
   }
