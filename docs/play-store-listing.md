@@ -19,7 +19,7 @@ Nepogano не є ще однією соцмережею, де кожен ден�
 Що вже є:
 • Швидкий щоденний чек-ін настрою з фото й коротким коментарем
 • Особиста історія: календар з кольоровим кодуванням настрою за місяць
-• Картка дня: згенеруй мінімалістичне зображення свого дня і поділись ним у Instagram Stories, TikTok чи будь-де ще
+• Картка дня: перетвори свій день у зображення, щоб поділитись з ким хочеш, поза стрічкою й без лайків. Підходить для Instagram Stories, TikTok чи будь-де ще
 • Друзі: додай найближчих і спробуй вгадати їхній настрій за день. Деталі (нотатка, фото) відкриваються лише після спроби вгадати, і тоді ж можна лишити коментар
 • Окремі приватні щоденники (для дитини, улюбленця чи будь-кого ще) з можливістю відкрити перегляд колу близьких
 • "Капсули часу": напиши листа собі або другові, запечатаний до обраної дати в майбутньому. Прочитати можна лише коли вона настане
@@ -56,7 +56,7 @@ No filters, no guilt-tripping streaks, no like counters. One tap, and the day is
 What's already there:
 • A quick daily mood check-in with a photo and a short note
 • Your personal history: a month view calendar, color-coded by mood
-• Day Card: turn your day into a minimal image and share it to Instagram Stories, TikTok, or anywhere else
+• Day Card: turn your day into an image to share with whoever you want, outside the feed and without likes. Works well for Instagram Stories, TikTok, or anywhere else
 • Friends: add the people closest to you and try to guess their mood for the day. Details (note, photo) unlock only after you guess, and that's when you can leave a comment
 • Separate private diaries (for a kid, a pet, or anyone else) with optional viewing access for your circle of friends
 • "Time Capsules": write a letter to yourself or a friend, sealed until a date you choose in the future. Readable only once it arrives
