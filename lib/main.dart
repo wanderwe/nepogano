@@ -2763,15 +2763,6 @@ class _CheckInScreenState extends State<CheckInScreen>
                 child: MediaQuery.of(context).viewInsets.bottom == 0
                     ? Column(
                         children: [
-                          // Тонкий розділювач замість просто відступу —
-                          // тижнева стрічка структурно й так фіксований
-                          // футер поза скролом (ховається з клавіатурою),
-                          // але візуально це ніяк не читалось: виглядало
-                          // як продовження того самого стеку кнопок вище.
-                          const Padding(
-                            padding: EdgeInsets.only(bottom: 12),
-                            child: Divider(color: AppColors.divider, height: 1),
-                          ),
                           _buildWeekStrip(),
                           const SizedBox(height: 16),
                         ],
