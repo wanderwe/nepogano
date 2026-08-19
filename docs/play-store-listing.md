@@ -49,7 +49,7 @@ Nepogano isn't another social network where every day has to look amazing.
 
 Most days are ordinary. We're used to dressing them up for likes, but this app does the opposite: three honest, everyday ratings, no hype.
 
-Meh. Not bad. Awesome.
+Meh. Fine. Awesome.
 
 No filters, no guilt-tripping streaks, no like counters. One tap, and the day is recorded exactly as it was.
 
