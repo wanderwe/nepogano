@@ -12,6 +12,10 @@ Guideline 4.8).
 English (U.S.) — так, щоб люди зі storefront поза списком доданих мов
 бачили англійську, а не українську, як фолбек.
 
+## Support URL / Marketing URL (обидві локалі)
+Support URL: https://github.com/wanderwe/nepogano/wiki
+Marketing URL: https://nepogano.app (укр) / https://nepogano.app/en/ (англ)
+
 ## English (U.S.)
 
 ### Subtitle (30 символів)
