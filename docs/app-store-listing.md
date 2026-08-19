@@ -15,7 +15,7 @@ English (U.S.) — так, щоб люди зі storefront поза списко
 ## English (U.S.)
 
 ### Subtitle (30 символів)
-Honest daily check-ins *(22 символи)*
+Honest daily mood tracker *(25 символів)* — обрано замість "Honest daily check-ins": Subtitle індексується для пошуку в App Store, а "mood"/"tracker" — сильніші пошукові слова в категорії Lifestyle/Health, ніж "check-in".
 
 ### Promotional Text (170 символів)
 Honest daily check-ins, monthly reflection, and the people who matter. *(70 символів)*
@@ -50,7 +50,7 @@ mood,diary,journal,honest,checkin,reflection,friends,calendar,mood tracker,time 
 ## Ukrainian (uk)
 
 ### Subtitle (30 символів)
-Чесні щоденні чек-іни *(21 символ)*
+Чесний трекер настрою *(21 символ)* — той самий принцип, що й для англійської: "трекер настрою" краще для пошуку, ніж "чек-іни".
 
 ### Promotional Text (170 символів)
 Чесні щоденні чек-іни, ретроспектива місяця і близькі люди поруч. *(65 символів)*
