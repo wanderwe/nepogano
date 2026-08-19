@@ -151,3 +151,28 @@ Nepogano ("застосунок", "ми") поважає вашу приватн
 
 # Content rating (IARC questionnaire)
 Застосунок не містить насильства, контенту для дорослих, азартних ігор. Є функція коментарів між взаємно доданими друзями (закрите коло, не публічне спілкування з незнайомцями). При заповненні анкети IARC це, найімовірніше, потрапить під питання про "user-generated content"/"digital communication" в межах застосунку; варто відповідати чесно на ці конкретні пункти анкети. Очікуваний рейтинг: **Everyone / 3+**.
+
+---
+
+# Історія приміток до випуску (Release notes)
+
+Накопичувати тут кожен реліз — щоб було видно, що вже казали користувачам, і не повторюватись/не губити тон між версіями.
+
+## 1.5.0+18 (19.08.2026)
+
+```
+<uk>
+Капсули часу тепер можна надсилати й друзям, не тільки собі.
+Додано коментарі під днями, своїми і друзів.
+Аватарку тепер можна перекадрувати або видалити.
+Прямий шер картки дня в Instagram Stories.
+Дрібні виправлення й покращення інтерфейсу.
+</uk>
+<en-US>
+Time Capsules can now be sent to friends, not just yourself.
+Added comments on days, both your own and friends'.
+Your avatar can now be repositioned or removed.
+Direct share of your Day Card to Instagram Stories.
+Small fixes and interface improvements.
+</en-US>
+```
