@@ -2010,120 +2010,94 @@ class _CheckInScreenState extends State<CheckInScreen>
 
   List<Widget> _buildSummaryContent(AppLocalizations l10n) {
     return [
-      Stack(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Padding(
-                  // Місце під іконку шеру в куті (нижче), щоб довгий
-                  // заголовок не заходив під неї.
-                  padding: const EdgeInsets.only(right: 32),
-                  child: Text.rich(
-                    TextSpan(
-                      style: appSerif(
-                        fontSize: 22,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.ink,
-                      ),
-                      children: [
-                        TextSpan(text: '${l10n.todayWasPrefix} '),
-                        TextSpan(
-                          text: _selected!.label(context).toLowerCase(),
-                          style: TextStyle(color: _selected!.color),
-                        ),
-                      ],
-                    ),
-                  ),
+      Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text.rich(
+              TextSpan(
+                style: appSerif(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.ink,
                 ),
-                if (_noteController.text.trim().isNotEmpty) ...[
-                  const SizedBox(height: 10),
-                  Text(
-                    _noteController.text.trim(),
-                    // Це власний текст юзера, не метадані (як-от "Оновлено N
-                    // разів" нижче) — має виділятись, а не зливатись з
-                    // приглушеними підписами навколо.
-                    style: const TextStyle(
-                      fontSize: 14,
-                      color: AppColors.ink,
-                      height: 1.4,
-                    ),
+                children: [
+                  TextSpan(text: '${l10n.todayWasPrefix} '),
+                  TextSpan(
+                    text: _selected!.label(context).toLowerCase(),
+                    style: TextStyle(color: _selected!.color),
                   ),
                 ],
-                if (_existingPhotoPath != null) ...[
-                  const SizedBox(height: 14),
-                  FutureBuilder<Uint8List?>(
-                    future: downloadCheckinPhoto(_existingPhotoPath!),
-                    builder: (context, snapshot) {
-                      if (!snapshot.hasData) {
-                        return const AspectRatio(
-                          aspectRatio: kCompactPhotoAspectRatio,
-                          child: Center(
-                            child: SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            ),
-                          ),
-                        );
-                      }
-                      return ClipRRect(
-                        borderRadius: BorderRadius.circular(14),
-                        child: AspectRatio(
-                          aspectRatio: kCompactPhotoAspectRatio,
-                          child: ScaledPhoto(
-                            scale: _photoScale,
-                            child: Image.memory(
-                              snapshot.data!,
-                              fit: BoxFit.cover,
-                              alignment: Alignment(0, _photoAlignY),
-                            ),
-                          ),
+              ),
+            ),
+            if (_noteController.text.trim().isNotEmpty) ...[
+              const SizedBox(height: 10),
+              Text(
+                _noteController.text.trim(),
+                // Це власний текст юзера, не метадані (як-от "Оновлено N
+                // разів" нижче) — має виділятись, а не зливатись з
+                // приглушеними підписами навколо.
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: AppColors.ink,
+                  height: 1.4,
+                ),
+              ),
+            ],
+            if (_existingPhotoPath != null) ...[
+              const SizedBox(height: 14),
+              FutureBuilder<Uint8List?>(
+                future: downloadCheckinPhoto(_existingPhotoPath!),
+                builder: (context, snapshot) {
+                  if (!snapshot.hasData) {
+                    return const AspectRatio(
+                      aspectRatio: kCompactPhotoAspectRatio,
+                      child: Center(
+                        child: SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
                         ),
-                      );
-                    },
-                  ),
-                ],
-                if (_todayEntryId != null)
-                  CommentsSection(
-                    // Без ключа перемикання між щоденниками (_todayEntryId
-                    // міняється, той самий слот у дереві) могло лишити стару
-                    // чернетку/ціль відповіді від попереднього щоденника.
-                    key: ValueKey('comments-$_todayEntryId'),
-                    checkinId: _todayEntryId as String,
-                    canComment: true,
-                    isOwner: true,
-                    showWhenEmpty: false,
-                    isSubject: _activeSubjectId != null,
-                  ),
-              ],
-            ),
-          ),
-          // Раніше окрема кнопка на всю ширину під карткою — переїхала
-          // сюди тим самим патерном, що іконка шеру на рядку запису в
-          // HistoryScreen: маленька, в кутку, не змагається з фото за
-          // увагу, і звільняє окремий рядок знизу.
-          Positioned(
-            top: 12,
-            right: 12,
-            child: IconButton(
-              onPressed: () => Navigator.of(
-                context,
-              ).push(MaterialPageRoute(builder: (_) => _buildDayCardScreen())),
-              icon: const Icon(PhosphorIconsLight.export, size: 18),
-              tooltip: l10n.dayCard,
-              color: AppColors.inkMuted,
-              visualDensity: VisualDensity.compact,
-            ),
-          ),
-        ],
+                      ),
+                    );
+                  }
+                  return ClipRRect(
+                    borderRadius: BorderRadius.circular(14),
+                    child: AspectRatio(
+                      aspectRatio: kCompactPhotoAspectRatio,
+                      child: ScaledPhoto(
+                        scale: _photoScale,
+                        child: Image.memory(
+                          snapshot.data!,
+                          fit: BoxFit.cover,
+                          alignment: Alignment(0, _photoAlignY),
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ],
+            if (_todayEntryId != null)
+              CommentsSection(
+                // Без ключа перемикання між щоденниками (_todayEntryId
+                // міняється, той самий слот у дереві) могло лишити стару
+                // чернетку/ціль відповіді від попереднього щоденника.
+                key: ValueKey('comments-$_todayEntryId'),
+                checkinId: _todayEntryId as String,
+                canComment: true,
+                isOwner: true,
+                showWhenEmpty: false,
+                isSubject: _activeSubjectId != null,
+              ),
+          ],
+        ),
       ),
       const SizedBox(height: 20),
       SizedBox(
@@ -2132,6 +2106,17 @@ class _CheckInScreenState extends State<CheckInScreen>
           onPressed: _startEditing,
           icon: const Icon(PhosphorIconsLight.pencilSimple, size: 18),
           label: Text(l10n.edit),
+        ),
+      ),
+      const SizedBox(height: 12),
+      SizedBox(
+        width: double.infinity,
+        child: TextButton.icon(
+          onPressed: () => Navigator.of(
+            context,
+          ).push(MaterialPageRoute(builder: (_) => _buildDayCardScreen())),
+          icon: const Icon(PhosphorIconsLight.export, size: 18),
+          label: Text(l10n.dayCard),
         ),
       ),
     ];
