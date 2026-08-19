@@ -14,7 +14,7 @@ Nepogano не є ще однією соцмережею, де кожен ден�
 
 Ніяк. Непогано. Чудово.
 
-Жодних фільтрів, жодних стріків із почуттям провини, жодних лічильників лайків. Один тап, і день зафіксовано таким, яким він був насправді.
+Жодних фільтрів, жодних лайків, жодної гонитви за враженнями. Один тап, і день зафіксовано таким, яким він був насправді.
 
 Що вже є:
 • Швидкий щоденний чек-ін настрою з фото й коротким коментарем
@@ -51,7 +51,7 @@ Most days are ordinary. We're used to dressing them up for likes, but this app d
 
 Meh. Fine. Awesome.
 
-No filters, no guilt-tripping streaks, no like counters. One tap, and the day is recorded exactly as it was.
+No filters, no likes, no chasing impressions. One tap, and the day is recorded exactly as it was.
 
 What's already there:
 • A quick daily mood check-in with a photo and a short note
