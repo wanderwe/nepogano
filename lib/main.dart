@@ -2111,7 +2111,11 @@ class _CheckInScreenState extends State<CheckInScreen>
       const SizedBox(height: 12),
       SizedBox(
         width: double.infinity,
-        child: TextButton.icon(
+        // OutlinedButton, не TextButton — та сама рамка й вага, що в
+        // "Редагувати" вище. Обидві дії однаково важливі, різна вага між
+        // ними не мала обґрунтування, і суцільна рамка на всю ширину проти
+        // "голого" тексту-кнопки читалась як випадкова нерівність у стеку.
+        child: OutlinedButton.icon(
           onPressed: () => Navigator.of(
             context,
           ).push(MaterialPageRoute(builder: (_) => _buildDayCardScreen())),
