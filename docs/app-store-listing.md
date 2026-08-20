@@ -26,13 +26,9 @@ Honest daily check-ins, monthly reflection, and the people who matter. *(70 си
 
 ### Description (4000 символів)
 
-Nepogano isn't another social network where every day has to look amazing.
+Nepogano isn't another social network where every day has to look amazing. Most days are ordinary. We're used to dressing them up for attention, but this app does the opposite: three honest, everyday ratings, no hype. Meh. Fine. Awesome.
 
-Most days are ordinary. We're used to dressing them up for likes, but this app does the opposite: three honest, everyday ratings, no hype.
-
-Meh. Fine. Awesome.
-
-No filters, no likes, no chasing impressions. One tap, and the day is recorded exactly as it was.
+No filters, no likes. One tap, and the day is recorded exactly as it was.
 
 What's already there:
 • A quick daily mood check-in with a photo and a short note
@@ -66,13 +62,9 @@ Small fixes and interface improvements.
 
 ### Description (4000 символів)
 
-Nepogano не про те, щоб кожен день виглядав неймовірно, як в інших соцмережах.
+Nepogano не про те, щоб кожен день виглядав неймовірно, як в інших соцмережах. Більшість днів звичайні. Ми звикли прикрашати їх заради вподобань, а тут навпаки: три чесні, побутові оцінки без пафосу. Ніяк. Непогано. Чудово.
 
-Більшість днів звичайні. Ми звикли прикрашати їх заради лайків, а тут навпаки: три чесні, побутові оцінки без пафосу.
-
-Ніяк. Непогано. Чудово.
-
-Жодних фільтрів, жодних лайків, жодної гонитви за враженнями. Один тап, і день зафіксовано таким, яким він був насправді.
+Жодних фільтрів, жодних лайків. Один тап, і день зафіксовано таким, яким він був насправді.
 
 Що вже є:
 • Швидкий щоденний чек-ін настрою з фото й коротким коментарем
