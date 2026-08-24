@@ -160,30 +160,72 @@ Future<_RawResult> _fetchRaw(
   final raw = <_RawRow>[];
   var hasMore = false;
 
+  // Раніше тут спершу забирались [rowLimit] найновіших коментарів З УСЬОГО,
+  // що видно юзеру через RLS (включно з чужими постами, де він просто друг,
+  // який вгадав), і лише ПОТІМ фільтрувались на "мій пост"/"відповідь мені"
+  // — тобто активна чужа стрічка коментарів могла виштовхнути за межі
+  // [rowLimit] справді релевантний коментар ще до фільтрації. Це давало
+  // нестабільний, залежний від моменту запиту результат: бейдж
+  // (hasUnseenCommentActivity) і сам список (loadCommentActivityPage)
+  // виконують цей самий запит у РІЗНИЙ час і могли розійтись. Тепер
+  // релевантність — частина самого SQL-запиту (дві under-query за
+  // checkin_id/parent_id окремо, кожна зі своїм лімітом), а не
+  // постфільтр — ліміт застосовується вже ДО відфільтрованих рядків.
   if (myCheckinIds.isNotEmpty || myCheckinCommentIds.isNotEmpty) {
-    var query = supabase
-        .from('checkin_comments')
-        .select('id, checkin_id, author_id, parent_id, body, created_at')
-        .neq('author_id', myId)
-        // Видалений (soft-delete) коментар не чіпає body в БД — лише
-        // deleted_at, UI сам підставляє "Коментар видалено" замість тексту
-        // (comments_section.dart). Без цього фільтра стрічка показувала б
-        // реальний текст уже видаленого коментаря назавжди.
-        .isFilter('deleted_at', null)
-        .gt('created_at', sinceIso);
-    if (beforeIso != null) query = query.lt('created_at', beforeIso);
-    var ordered = query.order('created_at', ascending: false);
-    final rows = rowLimit == null
-        ? await ordered
-        : await ordered.limit(rowLimit);
-    if (rowLimit != null && (rows as List).length >= rowLimit) hasMore = true;
-    for (final row in rows as List) {
+    final subQueries = <Future<List<dynamic>>>[];
+    if (myCheckinIds.isNotEmpty) {
+      var q = supabase
+          .from('checkin_comments')
+          .select('id, checkin_id, author_id, parent_id, body, created_at')
+          .neq('author_id', myId)
+          // Видалений (soft-delete) коментар не чіпає body в БД — лише
+          // deleted_at, UI сам підставляє "Коментар видалено" замість
+          // тексту (comments_section.dart). Без цього фільтра стрічка
+          // показувала б реальний текст уже видаленого коментаря назавжди.
+          .isFilter('deleted_at', null)
+          .gt('created_at', sinceIso)
+          .inFilter('checkin_id', myCheckinIds.toList());
+      if (beforeIso != null) q = q.lt('created_at', beforeIso);
+      final ordered = q.order('created_at', ascending: false);
+      subQueries.add(rowLimit == null ? ordered : ordered.limit(rowLimit));
+    }
+    if (myCheckinCommentIds.isNotEmpty) {
+      var q = supabase
+          .from('checkin_comments')
+          .select('id, checkin_id, author_id, parent_id, body, created_at')
+          .neq('author_id', myId)
+          .isFilter('deleted_at', null)
+          .gt('created_at', sinceIso)
+          .inFilter('parent_id', myCheckinCommentIds.toList());
+      if (beforeIso != null) q = q.lt('created_at', beforeIso);
+      final ordered = q.order('created_at', ascending: false);
+      subQueries.add(rowLimit == null ? ordered : ordered.limit(rowLimit));
+    }
+
+    final subResults = await Future.wait(subQueries);
+    if (rowLimit != null && subResults.any((r) => r.length >= rowLimit)) {
+      hasMore = true;
+    }
+    final seenIds = <String>{};
+    final merged = <Map<String, dynamic>>[];
+    for (final rows in subResults) {
+      for (final row in rows) {
+        final map = row as Map<String, dynamic>;
+        if (seenIds.add(map['id'] as String)) merged.add(map);
+      }
+    }
+    merged.sort(
+      (a, b) =>
+          (b['created_at'] as String).compareTo(a['created_at'] as String),
+    );
+    final limited = rowLimit == null ? merged : merged.take(rowLimit).toList();
+
+    for (final row in limited) {
       final checkinId = row['checkin_id'] as String;
       final parentId = row['parent_id'] as String?;
       final onMyPost = myCheckinIds.contains(checkinId);
       final replyToMe =
           parentId != null && myCheckinCommentIds.contains(parentId);
-      if (!onMyPost && !replyToMe) continue;
       raw.add(
         _RawRow(
           commentId: row['id'] as String,
@@ -201,29 +243,54 @@ Future<_RawResult> _fetchRaw(
   }
 
   if (mySubjectCheckinIds.isNotEmpty || mySubjectCommentIds.isNotEmpty) {
-    var query = supabase
-        .from('subject_checkin_comments')
-        .select(
-          'id, subject_checkin_id, author_id, parent_id, body, created_at',
-        )
-        .neq('author_id', myId)
-        .isFilter('deleted_at', null)
-        .gt('created_at', sinceIso);
-    if (beforeIso != null) query = query.lt('created_at', beforeIso);
-    var ordered = query.order('created_at', ascending: false);
-    final rows = rowLimit == null
-        ? await ordered
-        : await ordered.limit(rowLimit);
-    if (rowLimit != null && (rows as List).length >= rowLimit) hasMore = true;
+    final subQueries = <Future<List<dynamic>>>[];
+    if (mySubjectCheckinIds.isNotEmpty) {
+      var q = supabase
+          .from('subject_checkin_comments')
+          .select(
+            'id, subject_checkin_id, author_id, parent_id, body, created_at',
+          )
+          .neq('author_id', myId)
+          .isFilter('deleted_at', null)
+          .gt('created_at', sinceIso)
+          .inFilter('subject_checkin_id', mySubjectCheckinIds.toList());
+      if (beforeIso != null) q = q.lt('created_at', beforeIso);
+      final ordered = q.order('created_at', ascending: false);
+      subQueries.add(rowLimit == null ? ordered : ordered.limit(rowLimit));
+    }
+    if (mySubjectCommentIds.isNotEmpty) {
+      var q = supabase
+          .from('subject_checkin_comments')
+          .select(
+            'id, subject_checkin_id, author_id, parent_id, body, created_at',
+          )
+          .neq('author_id', myId)
+          .isFilter('deleted_at', null)
+          .gt('created_at', sinceIso)
+          .inFilter('parent_id', mySubjectCommentIds.toList());
+      if (beforeIso != null) q = q.lt('created_at', beforeIso);
+      final ordered = q.order('created_at', ascending: false);
+      subQueries.add(rowLimit == null ? ordered : ordered.limit(rowLimit));
+    }
 
+    final subResults = await Future.wait(subQueries);
+    if (rowLimit != null && subResults.any((r) => r.length >= rowLimit)) {
+      hasMore = true;
+    }
+    final seenIds = <String>{};
     final relevant = <Map<String, dynamic>>[];
-    for (final row in rows as List) {
-      final checkinId = row['subject_checkin_id'] as String;
-      final parentId = row['parent_id'] as String?;
-      final onMyPost = mySubjectCheckinIds.contains(checkinId);
-      final replyToMe =
-          parentId != null && mySubjectCommentIds.contains(parentId);
-      if (onMyPost || replyToMe) relevant.add(row);
+    for (final rows in subResults) {
+      for (final row in rows) {
+        final map = row as Map<String, dynamic>;
+        if (seenIds.add(map['id'] as String)) relevant.add(map);
+      }
+    }
+    relevant.sort(
+      (a, b) =>
+          (b['created_at'] as String).compareTo(a['created_at'] as String),
+    );
+    if (rowLimit != null && relevant.length > rowLimit) {
+      relevant.removeRange(rowLimit, relevant.length);
     }
 
     if (relevant.isNotEmpty) {
