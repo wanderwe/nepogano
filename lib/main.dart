@@ -2234,9 +2234,22 @@ class _CheckInScreenState extends State<CheckInScreen>
         // тут просто відображаємо очікуваний результат одразу, без повторного запиту.
         _updateCount++;
       } else {
+        // local_date — лише при СТВОРЕННІ, і лише тут (не в спільному
+        // payload вище, щоб UPDATE його ніколи не чіпав). Локальна
+        // календарна дата пристрою на момент створення, тим самим
+        // способом, що вже рахує target_date для вгадувань — інакше
+        // can_comment_on_checkin звіряв би вгадування з created_at::date
+        // (UTC), що для чек-інів, зроблених вночі, могло розходитись з
+        // локальною датою на цілий день (checkin-local-date-timezone-fix-migration.sql).
+        final now = DateTime.now();
+        final localDate = DateTime(
+          now.year,
+          now.month,
+          now.day,
+        ).toIso8601String().split('T').first;
         final inserted = await _supabase
             .from(_table)
-            .insert(payload)
+            .insert({...payload, 'local_date': localDate})
             .select('id, created_at')
             .single();
         _todayEntryId = inserted['id'];
