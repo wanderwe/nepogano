@@ -1643,7 +1643,15 @@ class _CheckInScreenState extends State<CheckInScreen>
           style: const TextStyle(color: AppColors.inkMuted),
         ),
         const SizedBox(height: 12),
-        TextButton(onPressed: _loadTodayEntry, child: Text(l10n.retry)),
+        TextButton(
+          onPressed: _loadTodayEntry,
+          // Акцентний колір замість приглушеного дефолту теми — це єдиний
+          // спосіб вийти з цього стану, той самий принцип, що й "Показати
+          // старіші": критична дія має читатись як дія, а не зливатись з
+          // приглушеним написом над нею.
+          style: TextButton.styleFrom(foregroundColor: AppColors.accent),
+          child: Text(l10n.retry),
+        ),
       ],
     );
   }
