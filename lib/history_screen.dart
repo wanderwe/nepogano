@@ -185,7 +185,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
         month: _visibleMonth,
         subjectName: widget.subjectName,
       );
-    } catch (e) {
+    } catch (e, st) {
+      debugPrint('Export month failed: $e\n$st');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(AppLocalizations.of(context).shareFailed)),
