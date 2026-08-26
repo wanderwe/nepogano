@@ -1,0 +1,388 @@
+import 'dart:io';
+
+import 'package:flutter/material.dart' hide Border;
+import 'package:flutter/services.dart' show rootBundle;
+import 'package:path_provider/path_provider.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:share_plus/share_plus.dart';
+
+import 'date_labels.dart';
+import 'history_screen.dart';
+import 'l10n/app_localizations.dart';
+import 'main.dart';
+import 'share_utils.dart';
+import 'style.dart';
+
+/// Мінімальна кількість записів для конкретного дня тижня в місяці, щоб
+/// його середню оцінку взагалі розглядати — з 1-2 записами "патерн"
+/// це просто шум.
+const _kMinWeekdaySamples = 3;
+
+/// Наскільки нижчою (за шкалою niyak=0..zbs=2) має бути середня оцінка
+/// найгіршого дня тижня за загальномісячну, щоб про це було варто писати.
+const _kWeekdayDipThreshold = 0.4;
+
+PdfColor _toPdfColor(Color color) => PdfColor.fromInt(color.toARGB32());
+
+/// Будує PDF-звіт місяця (календар + розподіл настроїв + інсайти + нотатки)
+/// і відкриває системний шер-лист. Викликається з History-екрана.
+Future<void> shareMonthReport({
+  required BuildContext context,
+  required List<CheckinEntry> monthEntries,
+  required DateTime month,
+  String? subjectName,
+}) async {
+  final l10n = AppLocalizations.of(context);
+  final locale = Localizations.localeOf(context);
+  final moodLabels = {for (final m in MoodLevel.values) m: m.label(context)};
+
+  final interData = await rootBundle.load('assets/fonts/Inter-Variable.ttf');
+  final loraData = await rootBundle.load('assets/fonts/Lora-Variable.ttf');
+  final baseFont = pw.Font.ttf(interData);
+  final headingFont = pw.Font.ttf(loraData);
+
+  final entriesByDay = <int, CheckinEntry>{};
+  for (final entry in monthEntries) {
+    entriesByDay[entry.createdAt.day] = entry;
+  }
+  final sortedAsc = [...monthEntries]
+    ..sort((a, b) => a.createdAt.compareTo(b.createdAt));
+
+  final doc = pw.Document();
+  doc.addPage(
+    pw.MultiPage(
+      theme: pw.ThemeData.withFont(base: baseFont, bold: headingFont),
+      margin: const pw.EdgeInsets.symmetric(horizontal: 32, vertical: 36),
+      header: (ctx) => ctx.pageNumber == 1
+          ? pw.SizedBox()
+          : pw.Container(
+              alignment: pw.Alignment.centerRight,
+              margin: const pw.EdgeInsets.only(bottom: 12),
+              child: pw.Text(
+                '${monthName(month.month, locale)} ${month.year}',
+                style: pw.TextStyle(fontSize: 9, color: PdfColors.grey500),
+              ),
+            ),
+      footer: (ctx) => pw.Container(
+        alignment: pw.Alignment.centerLeft,
+        margin: const pw.EdgeInsets.only(top: 8),
+        child: pw.Text(
+          l10n.reportFooterBrand,
+          style: pw.TextStyle(fontSize: 8, color: PdfColors.grey500),
+        ),
+      ),
+      build: (ctx) => [
+        _buildHeader(l10n, locale, month, subjectName, headingFont),
+        pw.SizedBox(height: 24),
+        _buildCalendar(monthEntries, month, locale, baseFont),
+        pw.SizedBox(height: 24),
+        _buildMoodDistribution(l10n, entriesByDay, moodLabels),
+        pw.SizedBox(height: 20),
+        ..._buildInsights(l10n, locale, entriesByDay, month),
+        pw.SizedBox(height: 24),
+        if (sortedAsc.isNotEmpty)
+          _buildNotesSection(l10n, sortedAsc, headingFont),
+      ],
+    ),
+  );
+
+  final bytes = await doc.save();
+  final dir = await getTemporaryDirectory();
+  final monthSlug = '${month.year}-${month.month.toString().padLeft(2, '0')}';
+  final file = File('${dir.path}/nepogano_$monthSlug.pdf');
+  await file.writeAsBytes(bytes, flush: true);
+
+  if (!context.mounted) return;
+  await SharePlus.instance.share(
+    ShareParams(
+      files: [XFile(file.path)],
+      sharePositionOrigin: shareOriginFrom(context),
+    ),
+  );
+}
+
+pw.Widget _buildHeader(
+  AppLocalizations l10n,
+  Locale locale,
+  DateTime month,
+  String? subjectName,
+  pw.Font headingFont,
+) {
+  final title = subjectName == null
+      ? '${monthName(month.month, locale)} ${month.year}'
+      : '${monthName(month.month, locale)} ${month.year} · $subjectName';
+  return pw.Column(
+    crossAxisAlignment: pw.CrossAxisAlignment.start,
+    children: [
+      pw.Text(
+        'Непогано',
+        style: pw.TextStyle(
+          font: headingFont,
+          fontSize: 14,
+          color: _toPdfColor(AppColors.accent),
+        ),
+      ),
+      pw.SizedBox(height: 4),
+      pw.Text(title, style: pw.TextStyle(font: headingFont, fontSize: 24)),
+    ],
+  );
+}
+
+pw.Widget _buildCalendar(
+  List<CheckinEntry> monthEntries,
+  DateTime month,
+  Locale locale,
+  pw.Font baseFont,
+) {
+  final entriesByDay = <int, CheckinEntry>{};
+  for (final entry in monthEntries) {
+    entriesByDay[entry.createdAt.day] = entry;
+  }
+  final daysInMonth = DateTime(month.year, month.month + 1, 0).day;
+  final leadingBlanks = DateTime(month.year, month.month, 1).weekday - 1;
+  final totalCells = leadingBlanks + daysInMonth;
+  final rows = (totalCells / 7).ceil();
+
+  return pw.Column(
+    crossAxisAlignment: pw.CrossAxisAlignment.start,
+    children: [
+      pw.Row(
+        children: List.generate(7, (i) => i + 1)
+            .map(
+              (weekday) => pw.Expanded(
+                child: pw.Center(
+                  child: pw.Text(
+                    weekdayLabel(weekday, locale),
+                    style: pw.TextStyle(fontSize: 9, color: PdfColors.grey500),
+                  ),
+                ),
+              ),
+            )
+            .toList(),
+      ),
+      pw.SizedBox(height: 6),
+      for (var r = 0; r < rows; r++)
+        pw.Padding(
+          padding: const pw.EdgeInsets.only(bottom: 5),
+          child: pw.Row(
+            children: List.generate(7, (c) {
+              final index = r * 7 + c;
+              final day = index - leadingBlanks + 1;
+              if (index < leadingBlanks || day > daysInMonth) {
+                return pw.Expanded(child: pw.SizedBox(height: 26));
+              }
+              final entry = entriesByDay[day];
+              return pw.Expanded(
+                child: pw.Padding(
+                  padding: const pw.EdgeInsets.symmetric(horizontal: 2),
+                  child: pw.Container(
+                    height: 26,
+                    alignment: pw.Alignment.center,
+                    decoration: pw.BoxDecoration(
+                      color: entry != null
+                          ? _toPdfColor(entry.mood.color)
+                          : PdfColors.grey100,
+                      borderRadius: pw.BorderRadius.circular(5),
+                    ),
+                    child: pw.Text(
+                      '$day',
+                      style: pw.TextStyle(
+                        fontSize: 9,
+                        color: entry != null
+                            ? PdfColors.white
+                            : PdfColors.grey500,
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            }),
+          ),
+        ),
+    ],
+  );
+}
+
+pw.Widget _buildMoodDistribution(
+  AppLocalizations l10n,
+  Map<int, CheckinEntry> entriesByDay,
+  Map<MoodLevel, String> moodLabels,
+) {
+  final counts = <MoodLevel, int>{};
+  for (final entry in entriesByDay.values) {
+    counts[entry.mood] = (counts[entry.mood] ?? 0) + 1;
+  }
+  final moodsWithData = MoodLevel.values
+      .where((m) => (counts[m] ?? 0) > 0)
+      .toList();
+  if (moodsWithData.isEmpty) return pw.SizedBox();
+
+  return pw.Column(
+    crossAxisAlignment: pw.CrossAxisAlignment.start,
+    children: [
+      pw.Text(
+        l10n.reportMoodDistribution,
+        style: pw.TextStyle(fontSize: 11, color: PdfColors.grey600),
+      ),
+      pw.SizedBox(height: 10),
+      pw.Row(
+        children: moodsWithData.map((mood) {
+          return pw.Expanded(
+            flex: counts[mood]!,
+            child: pw.Container(
+              height: 8,
+              margin: pw.EdgeInsets.only(
+                right: mood == moodsWithData.last ? 0 : 3,
+              ),
+              decoration: pw.BoxDecoration(
+                color: _toPdfColor(mood.color),
+                borderRadius: pw.BorderRadius.circular(4),
+              ),
+            ),
+          );
+        }).toList(),
+      ),
+      pw.SizedBox(height: 10),
+      pw.Wrap(
+        spacing: 16,
+        runSpacing: 4,
+        children: moodsWithData.map((mood) {
+          return pw.Row(
+            mainAxisSize: pw.MainAxisSize.min,
+            children: [
+              pw.Container(
+                width: 7,
+                height: 7,
+                decoration: pw.BoxDecoration(
+                  color: _toPdfColor(mood.color),
+                  shape: pw.BoxShape.circle,
+                ),
+              ),
+              pw.SizedBox(width: 5),
+              pw.Text(
+                '${moodLabels[mood]} · ${counts[mood]}',
+                style: pw.TextStyle(fontSize: 10, color: PdfColors.grey700),
+              ),
+            ],
+          );
+        }).toList(),
+      ),
+    ],
+  );
+}
+
+List<pw.Widget> _buildInsights(
+  AppLocalizations l10n,
+  Locale locale,
+  Map<int, CheckinEntry> entriesByDay,
+  DateTime month,
+) {
+  final today = DateTime.now();
+  final isCurrentMonth = month.year == today.year && month.month == today.month;
+  final daysInMonth = DateTime(month.year, month.month + 1, 0).day;
+  final consideredDays = isCurrentMonth ? today.day : daysInMonth;
+  final filled = entriesByDay.length;
+  final missed = (consideredDays - filled).clamp(0, consideredDays);
+
+  final lines = <String>[l10n.reportDaysFilled(filled, consideredDays, missed)];
+
+  final byWeekday = <int, List<int>>{};
+  var totalMoodSum = 0;
+  var totalMoodCount = 0;
+  for (final entry in entriesByDay.entries) {
+    final date = DateTime(month.year, month.month, entry.key);
+    byWeekday.putIfAbsent(date.weekday, () => []).add(entry.value.mood.index);
+    totalMoodSum += entry.value.mood.index;
+    totalMoodCount++;
+  }
+  if (totalMoodCount > 0) {
+    final overallAvg = totalMoodSum / totalMoodCount;
+    int? worstWeekday;
+    var worstAvg = double.infinity;
+    for (final e in byWeekday.entries) {
+      if (e.value.length < _kMinWeekdaySamples) continue;
+      final avg = e.value.reduce((a, b) => a + b) / e.value.length;
+      if (avg < worstAvg) {
+        worstAvg = avg;
+        worstWeekday = e.key;
+      }
+    }
+    if (worstWeekday != null &&
+        (overallAvg - worstAvg) >= _kWeekdayDipThreshold) {
+      lines.add(
+        l10n.reportWeekdayInsight(weekdayNameFull(worstWeekday, locale)),
+      );
+    }
+  }
+
+  return [
+    for (final line in lines)
+      pw.Padding(
+        padding: const pw.EdgeInsets.only(bottom: 4),
+        child: pw.Row(
+          crossAxisAlignment: pw.CrossAxisAlignment.start,
+          children: [
+            pw.Text('· ', style: const pw.TextStyle(fontSize: 11)),
+            pw.Expanded(
+              child: pw.Text(
+                line,
+                style: pw.TextStyle(fontSize: 11, color: PdfColors.grey800),
+              ),
+            ),
+          ],
+        ),
+      ),
+  ];
+}
+
+pw.Widget _buildNotesSection(
+  AppLocalizations l10n,
+  List<CheckinEntry> sortedAsc,
+  pw.Font headingFont,
+) {
+  return pw.Column(
+    crossAxisAlignment: pw.CrossAxisAlignment.start,
+    children: [
+      pw.Text(
+        l10n.reportNotesSection,
+        style: pw.TextStyle(font: headingFont, fontSize: 15),
+      ),
+      pw.SizedBox(height: 10),
+      for (final entry in sortedAsc)
+        pw.Padding(
+          padding: const pw.EdgeInsets.only(bottom: 10),
+          child: pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              pw.Row(
+                children: [
+                  pw.Container(
+                    width: 7,
+                    height: 7,
+                    margin: const pw.EdgeInsets.only(right: 6),
+                    decoration: pw.BoxDecoration(
+                      color: _toPdfColor(entry.mood.color),
+                      shape: pw.BoxShape.circle,
+                    ),
+                  ),
+                  pw.Text(
+                    '${entry.createdAt.day}.${entry.createdAt.month}.${entry.createdAt.year}',
+                    style: pw.TextStyle(fontSize: 10, color: PdfColors.grey600),
+                  ),
+                ],
+              ),
+              if (entry.note != null && entry.note!.trim().isNotEmpty)
+                pw.Padding(
+                  padding: const pw.EdgeInsets.only(top: 3, left: 13),
+                  child: pw.Text(
+                    entry.note!.trim(),
+                    style: const pw.TextStyle(fontSize: 11),
+                  ),
+                ),
+            ],
+          ),
+        ),
+    ],
+  );
+}

@@ -332,6 +332,25 @@
 
   "thisMonth": "This month",
 
+  "exportMonth": "Export month",
+  "exportMonthDisabledHint": "No entries this month yet to report on.",
+  "reportMoodDistribution": "Mood distribution",
+  "reportDaysFilled": "{filled} of {total} days logged ({missed} missed)",
+  "@reportDaysFilled": {
+    "placeholders": {
+      "filled": { "type": "int" },
+      "total": { "type": "int" },
+      "missed": { "type": "int" }
+    }
+  },
+  "reportWeekdayInsight": "Mood tends to dip on {weekday}",
+  "@reportWeekdayInsight": {
+    "placeholders": { "weekday": { "type": "String" } }
+  },
+  "reportNotesSection": "Notes this month",
+  "reportNoNote": "No note",
+  "reportFooterBrand": "Made with the Nepogano app · nepogano.app",
+
   "timeCapsulesMenuLabel": "Time capsules",
   "timeCapsulesRecipientSelf": "Myself",
   "timeCapsulesEmptyTitle": "A letter into the future",

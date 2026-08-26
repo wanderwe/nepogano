@@ -341,6 +341,25 @@
 
   "thisMonth": "Цей місяць",
 
+  "exportMonth": "Експортувати місяць",
+  "exportMonthDisabledHint": "У цьому місяці ще немає записів для звіту.",
+  "reportMoodDistribution": "Розподіл настроїв",
+  "reportDaysFilled": "Заповнено {filled} з {total} днів (пропущено {missed})",
+  "@reportDaysFilled": {
+    "placeholders": {
+      "filled": { "type": "int" },
+      "total": { "type": "int" },
+      "missed": { "type": "int" }
+    }
+  },
+  "reportWeekdayInsight": "Настрій частіше просідає у {weekday}",
+  "@reportWeekdayInsight": {
+    "placeholders": { "weekday": { "type": "String" } }
+  },
+  "reportNotesSection": "Нотатки місяця",
+  "reportNoNote": "Без нотатки",
+  "reportFooterBrand": "Створено в застосунку Непогано · nepogano.app",
+
   "timeCapsulesMenuLabel": "Капсули часу",
   "timeCapsulesRecipientSelf": "собі",
   "timeCapsulesEmptyTitle": "Лист у майбутнє",

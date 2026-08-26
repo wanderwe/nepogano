@@ -723,6 +723,35 @@ class AppLocalizationsEn extends AppLocalizations {
   String get thisMonth => 'This month';
 
   @override
+  String get exportMonth => 'Export month';
+
+  @override
+  String get exportMonthDisabledHint =>
+      'No entries this month yet to report on.';
+
+  @override
+  String get reportMoodDistribution => 'Mood distribution';
+
+  @override
+  String reportDaysFilled(int filled, int total, int missed) {
+    return '$filled of $total days logged ($missed missed)';
+  }
+
+  @override
+  String reportWeekdayInsight(String weekday) {
+    return 'Mood tends to dip on $weekday';
+  }
+
+  @override
+  String get reportNotesSection => 'Notes this month';
+
+  @override
+  String get reportNoNote => 'No note';
+
+  @override
+  String get reportFooterBrand => 'Made with the Nepogano app · nepogano.app';
+
+  @override
   String get timeCapsulesMenuLabel => 'Time capsules';
 
   @override

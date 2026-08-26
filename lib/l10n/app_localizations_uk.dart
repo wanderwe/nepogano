@@ -725,6 +725,36 @@ class AppLocalizationsUk extends AppLocalizations {
   String get thisMonth => 'Цей місяць';
 
   @override
+  String get exportMonth => 'Експортувати місяць';
+
+  @override
+  String get exportMonthDisabledHint =>
+      'У цьому місяці ще немає записів для звіту.';
+
+  @override
+  String get reportMoodDistribution => 'Розподіл настроїв';
+
+  @override
+  String reportDaysFilled(int filled, int total, int missed) {
+    return 'Заповнено $filled з $total днів (пропущено $missed)';
+  }
+
+  @override
+  String reportWeekdayInsight(String weekday) {
+    return 'Настрій частіше просідає у $weekday';
+  }
+
+  @override
+  String get reportNotesSection => 'Нотатки місяця';
+
+  @override
+  String get reportNoNote => 'Без нотатки';
+
+  @override
+  String get reportFooterBrand =>
+      'Створено в застосунку Непогано · nepogano.app';
+
+  @override
   String get timeCapsulesMenuLabel => 'Капсули часу';
 
   @override

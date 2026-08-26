@@ -8,6 +8,7 @@ import 'date_labels.dart';
 import 'day_card_screen.dart';
 import 'l10n/app_localizations.dart';
 import 'main.dart';
+import 'month_report.dart';
 import 'photo_storage.dart';
 import 'style.dart';
 
@@ -70,6 +71,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
   // повертатись нагору гортанням незручно, тож показуємо кнопку швидкого
   // повернення, як тільки прокрутка відходить від самого верху.
   bool _showScrollTop = false;
+  bool _exporting = false;
 
   @override
   void initState() {
@@ -172,6 +174,28 @@ class _HistoryScreenState extends State<HistoryScreen> {
     }
   }
 
+  Future<void> _exportMonth() async {
+    final entries = _monthEntriesDesc;
+    if (entries.isEmpty || _exporting) return;
+    setState(() => _exporting = true);
+    try {
+      await shareMonthReport(
+        context: context,
+        monthEntries: entries,
+        month: _visibleMonth,
+        subjectName: widget.subjectName,
+      );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(AppLocalizations.of(context).shareFailed)),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _exporting = false);
+    }
+  }
+
   void _changeMonth(int delta) {
     setState(() {
       _visibleMonth = DateTime(_visibleMonth.year, _visibleMonth.month + delta);
@@ -258,6 +282,25 @@ class _HistoryScreenState extends State<HistoryScreen> {
                       style: appScreenTitle(),
                     ),
                   ),
+                  if (!_loading && _error == null)
+                    IconButton(
+                      onPressed: _monthEntriesDesc.isEmpty || _exporting
+                          ? null
+                          : _exportMonth,
+                      icon: _exporting
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(
+                              PhosphorIconsLight.downloadSimple,
+                              size: 20,
+                            ),
+                      tooltip: _monthEntriesDesc.isEmpty
+                          ? l10n.exportMonthDisabledHint
+                          : l10n.exportMonth,
+                    ),
                 ],
               ),
               const SizedBox(height: 8),

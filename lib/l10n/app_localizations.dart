@@ -1382,6 +1382,54 @@ abstract class AppLocalizations {
   /// **'Цей місяць'**
   String get thisMonth;
 
+  /// No description provided for @exportMonth.
+  ///
+  /// In uk, this message translates to:
+  /// **'Експортувати місяць'**
+  String get exportMonth;
+
+  /// No description provided for @exportMonthDisabledHint.
+  ///
+  /// In uk, this message translates to:
+  /// **'У цьому місяці ще немає записів для звіту.'**
+  String get exportMonthDisabledHint;
+
+  /// No description provided for @reportMoodDistribution.
+  ///
+  /// In uk, this message translates to:
+  /// **'Розподіл настроїв'**
+  String get reportMoodDistribution;
+
+  /// No description provided for @reportDaysFilled.
+  ///
+  /// In uk, this message translates to:
+  /// **'Заповнено {filled} з {total} днів (пропущено {missed})'**
+  String reportDaysFilled(int filled, int total, int missed);
+
+  /// No description provided for @reportWeekdayInsight.
+  ///
+  /// In uk, this message translates to:
+  /// **'Настрій частіше просідає у {weekday}'**
+  String reportWeekdayInsight(String weekday);
+
+  /// No description provided for @reportNotesSection.
+  ///
+  /// In uk, this message translates to:
+  /// **'Нотатки місяця'**
+  String get reportNotesSection;
+
+  /// No description provided for @reportNoNote.
+  ///
+  /// In uk, this message translates to:
+  /// **'Без нотатки'**
+  String get reportNoNote;
+
+  /// No description provided for @reportFooterBrand.
+  ///
+  /// In uk, this message translates to:
+  /// **'Створено в застосунку Непогано · nepogano.app'**
+  String get reportFooterBrand;
+
   /// No description provided for @timeCapsulesMenuLabel.
   ///
   /// In uk, this message translates to:
