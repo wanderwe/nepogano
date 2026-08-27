@@ -33,10 +33,10 @@ import 'time_capsules_screen.dart';
 const supabaseUrl = 'https://wxxvqscmalcuurhvzufl.supabase.co';
 const supabaseAnonKey = 'sb_publishable_H5DIUfH_i4_Mm5VKSoAoNA__tT60BUI';
 
-/// Нотатка чек-іну — навмисно суттєво менше за ліміт капсули часу
+/// Нотатка чек-іну — рівно вдвічі менше за ліміт капсули часу
 /// (`_bodyMaxLength` = 5000 у `time_capsules_screen.dart`): чек-ін це
 /// швидкий щоденний ритуал, не лист і не есе.
-const _noteMaxLength = 3000;
+const _noteMaxLength = 2500;
 
 /// Показує SnackBar незалежно від того, який екран зараз активний —
 /// потрібно, щоб підтвердити додавання в друзі за диплінком.
