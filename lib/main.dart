@@ -33,6 +33,11 @@ import 'time_capsules_screen.dart';
 const supabaseUrl = 'https://wxxvqscmalcuurhvzufl.supabase.co';
 const supabaseAnonKey = 'sb_publishable_H5DIUfH_i4_Mm5VKSoAoNA__tT60BUI';
 
+/// Нотатка чек-іну — навмисно суттєво менше за ліміт капсули часу
+/// (`_bodyMaxLength` = 5000 у `time_capsules_screen.dart`): чек-ін це
+/// швидкий щоденний ритуал, не лист і не есе.
+const _noteMaxLength = 3000;
+
 /// Показує SnackBar незалежно від того, який екран зараз активний —
 /// потрібно, щоб підтвердити додавання в друзі за диплінком.
 final scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
@@ -1957,6 +1962,7 @@ class _CheckInScreenState extends State<CheckInScreen>
                   TextField(
                     controller: _noteController,
                     maxLines: 3,
+                    maxLength: _noteMaxLength,
                     // "Готово" на клавіатурі одразу зберігає — без цього
                     // єдиний спосіб зберегти з відкритою клавіатурою це
                     // скролити й шукати кнопку "Зберегти" нижче фото,
