@@ -1427,7 +1427,7 @@ abstract class AppLocalizations {
   /// No description provided for @reportFooterBrand.
   ///
   /// In uk, this message translates to:
-  /// **'Nepogano · nepogano.app'**
+  /// **'nepogano.app'**
   String get reportFooterBrand;
 
   /// No description provided for @timeCapsulesMenuLabel.

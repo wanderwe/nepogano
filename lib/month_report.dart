@@ -317,11 +317,21 @@ List<pw.Widget> _buildInsights(
   ];
 }
 
+// Повна ширина сторінки на телефоні читалась як суцільна нескінченна
+// стрічка (рядки завдовжки на весь екран) — дві колонки коротшають рядок
+// до звичної газетної довжини. `Partitions`/`Partition` — не звичайний
+// `Row` (той зламав би перенос на наступну сторінку): це спеціальний
+// віджет пакета `pdf`, що вміє коректно продовжувати кожну колонку
+// окремо, коли `MultiPage` починає нову сторінку.
 pw.Widget _buildNotesSection(
   AppLocalizations l10n,
   List<CheckinEntry> sortedAsc,
   pw.Font headingFont,
 ) {
+  final mid = (sortedAsc.length / 2).ceil();
+  final leftColumn = sortedAsc.take(mid).toList();
+  final rightColumn = sortedAsc.skip(mid).toList();
+
   return pw.Column(
     crossAxisAlignment: pw.CrossAxisAlignment.start,
     children: [
@@ -330,9 +340,23 @@ pw.Widget _buildNotesSection(
         style: pw.TextStyle(font: headingFont, fontSize: 15, color: _pdfInk),
       ),
       pw.SizedBox(height: 10),
-      for (final entry in sortedAsc)
+      pw.Partitions(
+        children: [
+          pw.Partition(child: _buildNoteEntries(leftColumn, rightGap: 16)),
+          pw.Partition(child: _buildNoteEntries(rightColumn)),
+        ],
+      ),
+    ],
+  );
+}
+
+pw.Column _buildNoteEntries(List<CheckinEntry> entries, {double rightGap = 0}) {
+  return pw.Column(
+    crossAxisAlignment: pw.CrossAxisAlignment.start,
+    children: [
+      for (final entry in entries)
         pw.Padding(
-          padding: const pw.EdgeInsets.only(bottom: 10),
+          padding: pw.EdgeInsets.only(bottom: 10, right: rightGap),
           child: pw.Column(
             crossAxisAlignment: pw.CrossAxisAlignment.start,
             children: [

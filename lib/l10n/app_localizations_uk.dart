@@ -751,7 +751,7 @@ class AppLocalizationsUk extends AppLocalizations {
   String get reportNoNote => 'Без нотатки';
 
   @override
-  String get reportFooterBrand => 'Nepogano · nepogano.app';
+  String get reportFooterBrand => 'nepogano.app';
 
   @override
   String get timeCapsulesMenuLabel => 'Капсули часу';
