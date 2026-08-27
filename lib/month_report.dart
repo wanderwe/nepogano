@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:isolate';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart' hide Border;
@@ -27,6 +28,43 @@ final _pdfInk = _toPdfColor(AppColors.ink);
 final _pdfInkMuted = _toPdfColor(AppColors.inkMuted);
 final _pdfAccent = _toPdfColor(AppColors.accent);
 
+/// Усе, що потрібно фоновому ізоляту, щоб побудувати звіт — лише прості дані
+/// (без `BuildContext`/`AppLocalizations`, їх не можна передати між
+/// ізолятами). Локалізовані рядки резолвляться в l10n на головному ізоляті
+/// ДО виклику [Isolate.run], а не всередині — саме тому тут готові рядки,
+/// а не сам об'єкт `l10n`.
+class _ReportData {
+  final List<CheckinEntry> monthEntries;
+  final List<CheckinEntry> sortedAsc;
+  final DateTime month;
+  final String? subjectName;
+  final Locale locale;
+  final Map<MoodLevel, String> moodLabels;
+  final Uint8List interFontBytes;
+  final Uint8List loraFontBytes;
+  final Map<String, Uint8List> photosById;
+  final String daysFilledText;
+  final String moodDistributionLabel;
+  final String notesSectionLabel;
+  final String footerBrand;
+
+  _ReportData({
+    required this.monthEntries,
+    required this.sortedAsc,
+    required this.month,
+    required this.subjectName,
+    required this.locale,
+    required this.moodLabels,
+    required this.interFontBytes,
+    required this.loraFontBytes,
+    required this.photosById,
+    required this.daysFilledText,
+    required this.moodDistributionLabel,
+    required this.notesSectionLabel,
+    required this.footerBrand,
+  });
+}
+
 /// Будує PDF-звіт місяця (календар + розподіл настроїв + інсайти + нотатки)
 /// і відкриває системний шер-лист. Викликається з History-екрана.
 Future<void> shareMonthReport({
@@ -39,21 +77,26 @@ Future<void> shareMonthReport({
   final locale = Localizations.localeOf(context);
   final moodLabels = {for (final m in MoodLevel.values) m: m.label(context)};
 
-  // Статичні (не variable) збірки — пакет `pdf` не вміє парсити variable
-  // TTF-файли, якими користується решта застосунку (див. коментар у pubspec.yaml).
-  final interData = await rootBundle.load(
-    'assets/fonts/Inter-Static-Regular.ttf',
-  );
-  final loraData = await rootBundle.load('assets/fonts/Lora-Static-Bold.ttf');
-  final baseFont = pw.Font.ttf(interData);
-  final headingFont = pw.Font.ttf(loraData);
-
   final entriesByDay = <int, CheckinEntry>{};
   for (final entry in monthEntries) {
     entriesByDay[entry.createdAt.day] = entry;
   }
   final sortedAsc = [...monthEntries]
     ..sort((a, b) => a.createdAt.compareTo(b.createdAt));
+
+  final today = DateTime.now();
+  final isCurrentMonth = month.year == today.year && month.month == today.month;
+  final daysInMonth = DateTime(month.year, month.month + 1, 0).day;
+  final consideredDays = isCurrentMonth ? today.day : daysInMonth;
+  final filled = entriesByDay.length;
+  final missed = (consideredDays - filled).clamp(0, consideredDays);
+
+  // Статичні (не variable) збірки — пакет `pdf` не вміє парсити variable
+  // TTF-файли, якими користується решта застосунку (див. коментар у pubspec.yaml).
+  final interData = await rootBundle.load(
+    'assets/fonts/Inter-Static-Regular.ttf',
+  );
+  final loraData = await rootBundle.load('assets/fonts/Lora-Static-Bold.ttf');
 
   // Фото завантажуються заздалегідь, до побудови дерева `pw`-віджетів —
   // на відміну від звичайних Flutter-віджетів, у пакета `pdf` немає
@@ -69,6 +112,53 @@ Future<void> shareMonthReport({
     for (var i = 0; i < photoEntries.length; i++)
       if (photoResults[i] != null) photoEntries[i].id: photoResults[i]!,
   };
+
+  final data = _ReportData(
+    monthEntries: monthEntries,
+    sortedAsc: sortedAsc,
+    month: month,
+    subjectName: subjectName,
+    locale: locale,
+    moodLabels: moodLabels,
+    interFontBytes: interData.buffer.asUint8List(),
+    loraFontBytes: loraData.buffer.asUint8List(),
+    photosById: photosById,
+    daysFilledText: l10n.reportDaysFilled(filled, consideredDays, missed),
+    moodDistributionLabel: l10n.reportMoodDistribution,
+    notesSectionLabel: l10n.reportNotesSection,
+    footerBrand: l10n.reportFooterBrand,
+  );
+
+  // Побудова дерева pw-віджетів і `doc.save()` (кодування зображень у PDF)
+  // — важка синхронна CPU-робота без жодної точки await усередині. На
+  // головному ізоляті вона блокує UI-потік цілком, тож навіть спінер
+  // завантаження застигає замість крутитись — саме це юзер побачив і
+  // сприйняв як "зависання". `Isolate.run` виносить цю роботу на фоновий
+  // потік, головний ізолят лишається вільним малювати кадри.
+  final bytes = await Isolate.run(() => _buildReportBytes(data));
+
+  final dir = await getTemporaryDirectory();
+  final monthSlug = '${month.year}-${month.month.toString().padLeft(2, '0')}';
+  final file = File('${dir.path}/nepogano_$monthSlug.pdf');
+  await file.writeAsBytes(bytes, flush: true);
+
+  if (!context.mounted) return;
+  await SharePlus.instance.share(
+    ShareParams(
+      files: [XFile(file.path)],
+      sharePositionOrigin: shareOriginFrom(context),
+    ),
+  );
+}
+
+Future<Uint8List> _buildReportBytes(_ReportData data) async {
+  final baseFont = pw.Font.ttf(data.interFontBytes.buffer.asByteData());
+  final headingFont = pw.Font.ttf(data.loraFontBytes.buffer.asByteData());
+
+  final entriesByDay = <int, CheckinEntry>{};
+  for (final entry in data.monthEntries) {
+    entriesByDay[entry.createdAt.day] = entry;
+  }
 
   final doc = pw.Document();
   doc.addPage(
@@ -90,7 +180,7 @@ Future<void> shareMonthReport({
               alignment: pw.Alignment.centerRight,
               margin: const pw.EdgeInsets.only(bottom: 12),
               child: pw.Text(
-                '${monthName(month.month, locale)} ${month.year}',
+                '${monthName(data.month.month, data.locale)} ${data.month.year}',
                 style: pw.TextStyle(fontSize: 9, color: _pdfInkMuted),
               ),
             ),
@@ -98,50 +188,34 @@ Future<void> shareMonthReport({
         alignment: pw.Alignment.centerLeft,
         margin: const pw.EdgeInsets.only(top: 8),
         child: pw.Text(
-          l10n.reportFooterBrand,
+          data.footerBrand,
           style: pw.TextStyle(fontSize: 8, color: _pdfInkMuted),
         ),
       ),
       build: (ctx) => [
-        _buildHeader(l10n, locale, month, subjectName, headingFont),
+        _buildHeader(data, headingFont),
         pw.SizedBox(height: 24),
-        _buildCalendar(monthEntries, month, locale, baseFont),
+        _buildCalendar(data.monthEntries, data.month, data.locale, baseFont),
         pw.SizedBox(height: 24),
-        _buildMoodDistribution(l10n, entriesByDay, moodLabels),
+        _buildMoodDistribution(data, entriesByDay),
         pw.SizedBox(height: 20),
-        _buildInsights(l10n, entriesByDay, month),
+        pw.Text(
+          data.daysFilledText,
+          style: pw.TextStyle(fontSize: 11, color: _pdfInk),
+        ),
         pw.SizedBox(height: 24),
-        if (sortedAsc.isNotEmpty)
-          _buildNotesSection(l10n, sortedAsc, headingFont, photosById),
+        if (data.sortedAsc.isNotEmpty) _buildNotesSection(data, headingFont),
       ],
     ),
   );
 
-  final bytes = await doc.save();
-  final dir = await getTemporaryDirectory();
-  final monthSlug = '${month.year}-${month.month.toString().padLeft(2, '0')}';
-  final file = File('${dir.path}/nepogano_$monthSlug.pdf');
-  await file.writeAsBytes(bytes, flush: true);
-
-  if (!context.mounted) return;
-  await SharePlus.instance.share(
-    ShareParams(
-      files: [XFile(file.path)],
-      sharePositionOrigin: shareOriginFrom(context),
-    ),
-  );
+  return doc.save();
 }
 
-pw.Widget _buildHeader(
-  AppLocalizations l10n,
-  Locale locale,
-  DateTime month,
-  String? subjectName,
-  pw.Font headingFont,
-) {
-  final title = subjectName == null
-      ? '${monthName(month.month, locale)} ${month.year}'
-      : '${monthName(month.month, locale)} ${month.year} · $subjectName';
+pw.Widget _buildHeader(_ReportData data, pw.Font headingFont) {
+  final title = data.subjectName == null
+      ? '${monthName(data.month.month, data.locale)} ${data.month.year}'
+      : '${monthName(data.month.month, data.locale)} ${data.month.year} · ${data.subjectName}';
   return pw.Column(
     crossAxisAlignment: pw.CrossAxisAlignment.start,
     children: [
@@ -232,9 +306,8 @@ pw.Widget _buildCalendar(
 }
 
 pw.Widget _buildMoodDistribution(
-  AppLocalizations l10n,
+  _ReportData data,
   Map<int, CheckinEntry> entriesByDay,
-  Map<MoodLevel, String> moodLabels,
 ) {
   final counts = <MoodLevel, int>{};
   for (final entry in entriesByDay.values) {
@@ -249,7 +322,7 @@ pw.Widget _buildMoodDistribution(
     crossAxisAlignment: pw.CrossAxisAlignment.start,
     children: [
       pw.Text(
-        l10n.reportMoodDistribution,
+        data.moodDistributionLabel,
         style: pw.TextStyle(fontSize: 11, color: _pdfInkMuted),
       ),
       pw.SizedBox(height: 10),
@@ -288,7 +361,7 @@ pw.Widget _buildMoodDistribution(
               ),
               pw.SizedBox(width: 5),
               pw.Text(
-                '${moodLabels[mood]} · ${counts[mood]}',
+                '${data.moodLabels[mood]} · ${counts[mood]}',
                 style: pw.TextStyle(fontSize: 10, color: _pdfInkMuted),
               ),
             ],
@@ -305,28 +378,9 @@ pw.Widget _buildMoodDistribution(
 // навіть якщо формально пройде поріг "нижче за середнє". Показувати це
 // як впевнене твердження вводило б в оману сильніше, ніж просто не
 // показувати нічого. Для такого інсайту треба вікно в кілька місяців,
-// не один.
-// Один рядок, без маркера-крапки на початку — той мав сенс, поки під ним
-// був ще другий пункт (прогноз по днях тижня, прибраний як статистично
-// ненадійний на місячному вікні). Самотня крапка перед єдиним реченням
-// виглядала як сирота, не як список.
-pw.Widget _buildInsights(
-  AppLocalizations l10n,
-  Map<int, CheckinEntry> entriesByDay,
-  DateTime month,
-) {
-  final today = DateTime.now();
-  final isCurrentMonth = month.year == today.year && month.month == today.month;
-  final daysInMonth = DateTime(month.year, month.month + 1, 0).day;
-  final consideredDays = isCurrentMonth ? today.day : daysInMonth;
-  final filled = entriesByDay.length;
-  final missed = (consideredDays - filled).clamp(0, consideredDays);
-
-  return pw.Text(
-    l10n.reportDaysFilled(filled, consideredDays, missed),
-    style: pw.TextStyle(fontSize: 11, color: _pdfInk),
-  );
-}
+// не один. Сам рядок ("Заповнено N з M днів") резолвиться через l10n на
+// головному ізоляті заздалегідь (`data.daysFilledText`) — тут лишається
+// тільки цифри/логіка, без `AppLocalizations`.
 
 // Повна ширина сторінки на телефоні читалась як суцільна нескінченна
 // стрічка (рядки завдовжки на весь екран). Пробував справжні 2 колонки
@@ -339,29 +393,21 @@ pw.Widget _buildInsights(
 // зовнішньої `Column` (як і було до колонок) — це те, що вміє коректно
 // розбиватись між сторінками — а `LayoutBuilder` обгортає лише ОДИН
 // запис за раз, щоб виміряти доступну ширину й підрізати праву частину.
-pw.Widget _buildNotesSection(
-  AppLocalizations l10n,
-  List<CheckinEntry> sortedAsc,
-  pw.Font headingFont,
-  Map<String, Uint8List> photosById,
-) {
+pw.Widget _buildNotesSection(_ReportData data, pw.Font headingFont) {
   return pw.Column(
     crossAxisAlignment: pw.CrossAxisAlignment.start,
     children: [
       pw.Text(
-        l10n.reportNotesSection,
+        data.notesSectionLabel,
         style: pw.TextStyle(font: headingFont, fontSize: 15, color: _pdfInk),
       ),
       pw.SizedBox(height: 10),
-      for (final entry in sortedAsc)
-        _buildNoteEntry(entry, photosById[entry.id]),
+      for (final entry in data.sortedAsc)
+        _buildNoteEntry(entry, data.photosById[entry.id]),
     ],
   );
 }
 
-// Фото завжди ПІД текстом, фіксованого мініатюрного розміру — не поруч
-// із текстом: колонка й так звужена вдвічі, а довжина нотатки заздалегідь
-// невідома (від одного слова до кількох абзаців), тож розміщення поруч
 // (Виправлення після реального перегляду: фото ПІД текстом розтягувало
 // кожен запис і ламало ритм читання списку — 6 сторінок замість 2,
 // відчувалось як гортання окремих карток, а не читання переліку днів.
