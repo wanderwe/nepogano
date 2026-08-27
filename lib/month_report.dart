@@ -13,7 +13,6 @@ import 'date_labels.dart';
 import 'history_screen.dart';
 import 'l10n/app_localizations.dart';
 import 'main.dart';
-import 'photo_storage.dart';
 import 'share_utils.dart';
 import 'style.dart';
 
@@ -42,7 +41,6 @@ class _ReportData {
   final Map<MoodLevel, String> moodLabels;
   final Uint8List interFontBytes;
   final Uint8List loraFontBytes;
-  final Map<String, Uint8List> photosById;
   final String daysFilledText;
   final String moodDistributionLabel;
   final String notesSectionLabel;
@@ -57,7 +55,6 @@ class _ReportData {
     required this.moodLabels,
     required this.interFontBytes,
     required this.loraFontBytes,
-    required this.photosById,
     required this.daysFilledText,
     required this.moodDistributionLabel,
     required this.notesSectionLabel,
@@ -98,21 +95,6 @@ Future<void> shareMonthReport({
   );
   final loraData = await rootBundle.load('assets/fonts/Lora-Static-Bold.ttf');
 
-  // Фото завантажуються заздалегідь, до побудови дерева `pw`-віджетів —
-  // на відміну від звичайних Flutter-віджетів, у пакета `pdf` немає
-  // FutureBuilder-подібного механізму: усе дерево будується синхронно.
-  // Той самий `downloadCheckinPhoto`, що й так вже викликається при
-  // відкритті Історії за цей місяць — тож для юзера це не новий трафік,
-  // а перевикористання того, що й без цього довантажилось би на екран.
-  final photoEntries = sortedAsc.where((e) => e.photoPath != null).toList();
-  final photoResults = await Future.wait(
-    photoEntries.map((e) => downloadCheckinPhoto(e.photoPath!)),
-  );
-  final photosById = <String, Uint8List>{
-    for (var i = 0; i < photoEntries.length; i++)
-      if (photoResults[i] != null) photoEntries[i].id: photoResults[i]!,
-  };
-
   final data = _ReportData(
     monthEntries: monthEntries,
     sortedAsc: sortedAsc,
@@ -122,7 +104,6 @@ Future<void> shareMonthReport({
     moodLabels: moodLabels,
     interFontBytes: interData.buffer.asUint8List(),
     loraFontBytes: loraData.buffer.asUint8List(),
-    photosById: photosById,
     daysFilledText: l10n.reportDaysFilled(filled, consideredDays, missed),
     moodDistributionLabel: l10n.reportMoodDistribution,
     notesSectionLabel: l10n.reportNotesSection,
@@ -402,22 +383,17 @@ pw.Widget _buildNotesSection(_ReportData data, pw.Font headingFont) {
         style: pw.TextStyle(font: headingFont, fontSize: 15, color: _pdfInk),
       ),
       pw.SizedBox(height: 10),
-      for (final entry in data.sortedAsc)
-        _buildNoteEntry(entry, data.photosById[entry.id]),
+      for (final entry in data.sortedAsc) _buildNoteEntry(entry),
     ],
   );
 }
 
-// (Виправлення після реального перегляду: фото ПІД текстом розтягувало
-// кожен запис і ламало ритм читання списку — 6 сторінок замість 2,
-// відчувалось як гортання окремих карток, а не читання переліку днів.
-// Мініатюра поруч із текстом, як капшн-і-фото, компактніша й порожній
-// простір біля короткого запису тут не виглядає "зламаним" — це звичний
-// вигляд підпису біля мініатюри.)
-pw.Widget _buildNoteEntry(CheckinEntry entry, Uint8List? photoBytes) {
-  const thumbHeight = 56.0;
-  final thumbWidth = thumbHeight * kCompactPhotoAspectRatio;
-
+// Фото навмисно НЕ вбудовуються (пробували — і мініатюру під текстом, і
+// поруч із текстом, обидва варіанти на реальному контенті виглядали
+// невдало: під текстом розтягувало кожен запис і ламало ритм читання
+// списку, поруч — не завжди вдало компонувалось з дуже різною довжиною
+// нотаток). Лишили голий текст, найчитабельніший варіант із перевірених.
+pw.Widget _buildNoteEntry(CheckinEntry entry) {
   return pw.LayoutBuilder(
     builder: (context, constraints) {
       final rightGap = constraints!.maxWidth * 0.5;
@@ -446,50 +422,9 @@ pw.Widget _buildNoteEntry(CheckinEntry entry, Uint8List? photoBytes) {
             if (entry.note != null && entry.note!.trim().isNotEmpty)
               pw.Padding(
                 padding: const pw.EdgeInsets.only(top: 3, left: 13),
-                child: photoBytes == null
-                    ? pw.Text(
-                        entry.note!.trim(),
-                        style: pw.TextStyle(fontSize: 11, color: _pdfInk),
-                      )
-                    : pw.Row(
-                        crossAxisAlignment: pw.CrossAxisAlignment.start,
-                        children: [
-                          pw.ClipRRect(
-                            horizontalRadius: 6,
-                            verticalRadius: 6,
-                            child: pw.SizedBox(
-                              height: thumbHeight,
-                              width: thumbWidth,
-                              child: pw.Image(
-                                pw.MemoryImage(photoBytes),
-                                fit: pw.BoxFit.cover,
-                              ),
-                            ),
-                          ),
-                          pw.SizedBox(width: 8),
-                          pw.Expanded(
-                            child: pw.Text(
-                              entry.note!.trim(),
-                              style: pw.TextStyle(fontSize: 11, color: _pdfInk),
-                            ),
-                          ),
-                        ],
-                      ),
-              )
-            else if (photoBytes != null)
-              pw.Padding(
-                padding: const pw.EdgeInsets.only(top: 3, left: 13),
-                child: pw.ClipRRect(
-                  horizontalRadius: 6,
-                  verticalRadius: 6,
-                  child: pw.SizedBox(
-                    height: thumbHeight,
-                    width: thumbWidth,
-                    child: pw.Image(
-                      pw.MemoryImage(photoBytes),
-                      fit: pw.BoxFit.cover,
-                    ),
-                  ),
+                child: pw.Text(
+                  entry.note!.trim(),
+                  style: pw.TextStyle(fontSize: 11, color: _pdfInk),
                 ),
               ),
           ],

@@ -1628,6 +1628,10 @@ class _PersonDetailScreenState extends State<PersonDetailScreen> {
   bool _loadingMore = false;
   bool _hasMore = true;
 
+  /// Той самий фікс, що в Історії й на головному екрані — довга нотатка
+  /// друга без обрізання змушувала нескінченно свайпати повз неї.
+  final Set<String> _expandedNoteIds = {};
+
   @override
   void initState() {
     super.initState();
@@ -2039,8 +2043,14 @@ class _PersonDetailScreenState extends State<PersonDetailScreen> {
             ),
             if ((entry.note ?? '').isNotEmpty) ...[
               const SizedBox(height: 8),
-              Text(
-                entry.note!,
+              ExpandableNote(
+                text: entry.note!,
+                expanded: _expandedNoteIds.contains(entry.id),
+                onToggle: () => setState(() {
+                  if (!_expandedNoteIds.add(entry.id)) {
+                    _expandedNoteIds.remove(entry.id);
+                  }
+                }),
                 style: const TextStyle(
                   fontSize: 13,
                   color: AppColors.ink,
