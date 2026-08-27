@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart' hide Border;
 import 'package:flutter/services.dart' show rootBundle;
@@ -11,6 +12,7 @@ import 'date_labels.dart';
 import 'history_screen.dart';
 import 'l10n/app_localizations.dart';
 import 'main.dart';
+import 'photo_storage.dart';
 import 'share_utils.dart';
 import 'style.dart';
 
@@ -53,6 +55,21 @@ Future<void> shareMonthReport({
   final sortedAsc = [...monthEntries]
     ..sort((a, b) => a.createdAt.compareTo(b.createdAt));
 
+  // Фото завантажуються заздалегідь, до побудови дерева `pw`-віджетів —
+  // на відміну від звичайних Flutter-віджетів, у пакета `pdf` немає
+  // FutureBuilder-подібного механізму: усе дерево будується синхронно.
+  // Той самий `downloadCheckinPhoto`, що й так вже викликається при
+  // відкритті Історії за цей місяць — тож для юзера це не новий трафік,
+  // а перевикористання того, що й без цього довантажилось би на екран.
+  final photoEntries = sortedAsc.where((e) => e.photoPath != null).toList();
+  final photoResults = await Future.wait(
+    photoEntries.map((e) => downloadCheckinPhoto(e.photoPath!)),
+  );
+  final photosById = <String, Uint8List>{
+    for (var i = 0; i < photoEntries.length; i++)
+      if (photoResults[i] != null) photoEntries[i].id: photoResults[i]!,
+  };
+
   final doc = pw.Document();
   doc.addPage(
     pw.MultiPage(
@@ -92,10 +109,10 @@ Future<void> shareMonthReport({
         pw.SizedBox(height: 24),
         _buildMoodDistribution(l10n, entriesByDay, moodLabels),
         pw.SizedBox(height: 20),
-        ..._buildInsights(l10n, entriesByDay, month),
+        _buildInsights(l10n, entriesByDay, month),
         pw.SizedBox(height: 24),
         if (sortedAsc.isNotEmpty)
-          _buildNotesSection(l10n, sortedAsc, headingFont),
+          _buildNotesSection(l10n, sortedAsc, headingFont, photosById),
       ],
     ),
   );
@@ -289,7 +306,11 @@ pw.Widget _buildMoodDistribution(
 // як впевнене твердження вводило б в оману сильніше, ніж просто не
 // показувати нічого. Для такого інсайту треба вікно в кілька місяців,
 // не один.
-List<pw.Widget> _buildInsights(
+// Один рядок, без маркера-крапки на початку — той мав сенс, поки під ним
+// був ще другий пункт (прогноз по днях тижня, прибраний як статистично
+// ненадійний на місячному вікні). Самотня крапка перед єдиним реченням
+// виглядала як сирота, не як список.
+pw.Widget _buildInsights(
   AppLocalizations l10n,
   Map<int, CheckinEntry> entriesByDay,
   DateTime month,
@@ -301,20 +322,10 @@ List<pw.Widget> _buildInsights(
   final filled = entriesByDay.length;
   final missed = (consideredDays - filled).clamp(0, consideredDays);
 
-  return [
-    pw.Row(
-      crossAxisAlignment: pw.CrossAxisAlignment.start,
-      children: [
-        pw.Text('· ', style: pw.TextStyle(fontSize: 11, color: _pdfInk)),
-        pw.Expanded(
-          child: pw.Text(
-            l10n.reportDaysFilled(filled, consideredDays, missed),
-            style: pw.TextStyle(fontSize: 11, color: _pdfInk),
-          ),
-        ),
-      ],
-    ),
-  ];
+  return pw.Text(
+    l10n.reportDaysFilled(filled, consideredDays, missed),
+    style: pw.TextStyle(fontSize: 11, color: _pdfInk),
+  );
 }
 
 // Повна ширина сторінки на телефоні читалась як суцільна нескінченна
@@ -323,7 +334,7 @@ List<pw.Widget> _buildInsights(
 // влазить ціле, кидає весь блок на наступну сторінку (порожня половина
 // першої сторінки, як показав юзер). Та сама проблема була б із будь-яким
 // одним великим `LayoutBuilder`-обгортанням навколо всього списку — він
-// сам не вміє тектиу через сторінки, тож блок так само стрибав би
+// сам не вміє текти через сторінки, тож блок так само стрибав би
 // цілком. Рішення: кожен запис лишається ОКРЕМИМ прямим елементом
 // зовнішньої `Column` (як і було до колонок) — це те, що вміє коректно
 // розбиватись між сторінками — а `LayoutBuilder` обгортає лише ОДИН
@@ -332,6 +343,7 @@ pw.Widget _buildNotesSection(
   AppLocalizations l10n,
   List<CheckinEntry> sortedAsc,
   pw.Font headingFont,
+  Map<String, Uint8List> photosById,
 ) {
   return pw.Column(
     crossAxisAlignment: pw.CrossAxisAlignment.start,
@@ -341,12 +353,18 @@ pw.Widget _buildNotesSection(
         style: pw.TextStyle(font: headingFont, fontSize: 15, color: _pdfInk),
       ),
       pw.SizedBox(height: 10),
-      for (final entry in sortedAsc) _buildNoteEntry(entry),
+      for (final entry in sortedAsc)
+        _buildNoteEntry(entry, photosById[entry.id]),
     ],
   );
 }
 
-pw.Widget _buildNoteEntry(CheckinEntry entry) {
+// Фото завжди ПІД текстом, фіксованого мініатюрного розміру — не поруч
+// із текстом: колонка й так звужена вдвічі, а довжина нотатки заздалегідь
+// невідома (від одного слова до кількох абзаців), тож розміщення поруч
+// лишало б то величезну порожню діру біля короткого запису, то тісноту
+// біля довгого. Фіксований розмір знизу від тексту уникає цього завжди.
+pw.Widget _buildNoteEntry(CheckinEntry entry, Uint8List? photoBytes) {
   return pw.LayoutBuilder(
     builder: (context, constraints) {
       final rightGap = constraints!.maxWidth * 0.5;
@@ -378,6 +396,22 @@ pw.Widget _buildNoteEntry(CheckinEntry entry) {
                 child: pw.Text(
                   entry.note!.trim(),
                   style: pw.TextStyle(fontSize: 11, color: _pdfInk),
+                ),
+              ),
+            if (photoBytes != null)
+              pw.Padding(
+                padding: const pw.EdgeInsets.only(top: 6, left: 13),
+                child: pw.ClipRRect(
+                  horizontalRadius: 6,
+                  verticalRadius: 6,
+                  child: pw.SizedBox(
+                    height: 90,
+                    width: 90 * kCompactPhotoAspectRatio,
+                    child: pw.Image(
+                      pw.MemoryImage(photoBytes),
+                      fit: pw.BoxFit.cover,
+                    ),
+                  ),
                 ),
               ),
           ],
