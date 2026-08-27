@@ -17,6 +17,61 @@ const kPhotoAspectRatio = 1.0;
 /// [kPhotoAspectRatio]-рамці, і виглядало неочікувано порівняно з карткою дня.
 const kCompactPhotoAspectRatio = 4 / 3;
 
+/// Нотатка обрізана до [maxLines] рядків з "...", тап розгортає/згортає
+/// повний текст. Тап реагує лише коли текст справді не влазить у ліміт —
+/// коротка нотатка не повинна виглядати клікабельною без причини. Спільний
+/// для головного екрана (підсумок дня) і Історії — обидва мали ту саму
+/// проблему: довга нотатка змушувала нескінченно свайпати повз неї до
+/// кнопок/наступного запису.
+class ExpandableNote extends StatelessWidget {
+  final String text;
+  final bool expanded;
+  final VoidCallback onToggle;
+  final TextStyle style;
+  final int maxLines;
+
+  const ExpandableNote({
+    super.key,
+    required this.text,
+    required this.expanded,
+    required this.onToggle,
+    this.style = const TextStyle(fontSize: 13, color: AppColors.ink),
+    this.maxLines = 5,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (expanded) {
+      return GestureDetector(
+        onTap: onToggle,
+        child: Text(text, style: style),
+      );
+    }
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final painter = TextPainter(
+          text: TextSpan(text: text, style: style),
+          maxLines: maxLines,
+          textDirection: Directionality.of(context),
+        )..layout(maxWidth: constraints.maxWidth);
+        final overflows = painter.didExceedMaxLines;
+
+        final textWidget = Text(
+          text,
+          style: style,
+          maxLines: maxLines,
+          overflow: TextOverflow.ellipsis,
+        );
+
+        return overflows
+            ? GestureDetector(onTap: onToggle, child: textWidget)
+            : textWidget;
+      },
+    );
+  }
+}
+
 /// Скільки днів назад можна побачити й здогадати чек-іни друга чи (за тим
 /// самим ритуалом) відкритого щоденника сутності — спільне для
 /// `PersonDetailScreen` і `SubjectDetailScreen`, тому тут, а не в одному з

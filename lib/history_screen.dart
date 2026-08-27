@@ -74,7 +74,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
   bool _exporting = false;
 
   /// Id записів, чия нотатка розгорнута повністю — за замовчуванням довгі
-  /// нотатки обрізані (`_ExpandableNote`), інакше один "пост-простирадло"
+  /// нотатки обрізані (`ExpandableNote`, `style.dart`), інакше один "пост-простирадло"
   /// змушує нескінченно свайпати, щоб дістатись наступного дня в стрічці.
   final Set<String> _expandedNoteIds = {};
 
@@ -639,7 +639,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                     ],
                     if (entry.note != null && entry.note!.isNotEmpty) ...[
                       const SizedBox(height: 4),
-                      _ExpandableNote(
+                      ExpandableNote(
                         text: entry.note!,
                         expanded: _expandedNoteIds.contains(entry.id),
                         onToggle: () => setState(() {
@@ -707,57 +707,6 @@ class _HistoryScreenState extends State<HistoryScreen> {
           ),
         );
       }).toList(),
-    );
-  }
-}
-
-/// Нотатка обрізана до [_kNoteMaxLines] рядків з "...", тап розгортає/згортає
-/// повний текст. Тап реагує лише коли текст справді не влазить у ліміт —
-/// коротка нотатка не повинна виглядати клікабельною без причини.
-const _kNoteMaxLines = 5;
-
-class _ExpandableNote extends StatelessWidget {
-  final String text;
-  final bool expanded;
-  final VoidCallback onToggle;
-
-  const _ExpandableNote({
-    required this.text,
-    required this.expanded,
-    required this.onToggle,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    const style = TextStyle(fontSize: 13, color: AppColors.ink);
-
-    if (expanded) {
-      return GestureDetector(
-        onTap: onToggle,
-        child: Text(text, style: style),
-      );
-    }
-
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final painter = TextPainter(
-          text: TextSpan(text: text, style: style),
-          maxLines: _kNoteMaxLines,
-          textDirection: Directionality.of(context),
-        )..layout(maxWidth: constraints.maxWidth);
-        final overflows = painter.didExceedMaxLines;
-
-        final textWidget = Text(
-          text,
-          style: style,
-          maxLines: _kNoteMaxLines,
-          overflow: TextOverflow.ellipsis,
-        );
-
-        return overflows
-            ? GestureDetector(onTap: onToggle, child: textWidget)
-            : textWidget;
-      },
     );
   }
 }

@@ -728,6 +728,7 @@ class _CheckInScreenState extends State<CheckInScreen>
   MoodLevel? _selected;
   final TextEditingController _noteController = TextEditingController();
   bool _saving = false;
+  bool _noteExpanded = false;
   Object? _todayEntryId;
   DateTime? _todayEntrySavedAt;
   List<CheckinEntry> _weekEntries = [];
@@ -1027,6 +1028,7 @@ class _CheckInScreenState extends State<CheckInScreen>
       _activeSubjectId = id;
       _selected = null;
       _noteController.text = '';
+      _noteExpanded = false;
       _todayEntryId = null;
       _todayEntrySavedAt = null;
       _existingPhotoPath = null;
@@ -1713,6 +1715,7 @@ class _CheckInScreenState extends State<CheckInScreen>
         _todayEntryId = row['id'];
         _selected = moodFromDbValue(row['mood'] as String);
         _noteController.text = (row['note'] as String?) ?? '';
+        _noteExpanded = false;
         _todayEntrySavedAt = DateTime.parse(
           row['created_at'] as String,
         ).toLocal();
@@ -2056,8 +2059,10 @@ class _CheckInScreenState extends State<CheckInScreen>
             ),
             if (_noteController.text.trim().isNotEmpty) ...[
               const SizedBox(height: 10),
-              Text(
-                _noteController.text.trim(),
+              ExpandableNote(
+                text: _noteController.text.trim(),
+                expanded: _noteExpanded,
+                onToggle: () => setState(() => _noteExpanded = !_noteExpanded),
                 // Це власний текст юзера, не метадані (як-от "Оновлено N
                 // разів" нижче) — має виділятись, а не зливатись з
                 // приглушеними підписами навколо.
