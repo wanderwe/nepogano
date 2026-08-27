@@ -362,9 +362,16 @@ pw.Widget _buildNotesSection(
 // Фото завжди ПІД текстом, фіксованого мініатюрного розміру — не поруч
 // із текстом: колонка й так звужена вдвічі, а довжина нотатки заздалегідь
 // невідома (від одного слова до кількох абзаців), тож розміщення поруч
-// лишало б то величезну порожню діру біля короткого запису, то тісноту
-// біля довгого. Фіксований розмір знизу від тексту уникає цього завжди.
+// (Виправлення після реального перегляду: фото ПІД текстом розтягувало
+// кожен запис і ламало ритм читання списку — 6 сторінок замість 2,
+// відчувалось як гортання окремих карток, а не читання переліку днів.
+// Мініатюра поруч із текстом, як капшн-і-фото, компактніша й порожній
+// простір біля короткого запису тут не виглядає "зламаним" — це звичний
+// вигляд підпису біля мініатюри.)
 pw.Widget _buildNoteEntry(CheckinEntry entry, Uint8List? photoBytes) {
+  const thumbHeight = 56.0;
+  final thumbWidth = thumbHeight * kCompactPhotoAspectRatio;
+
   return pw.LayoutBuilder(
     builder: (context, constraints) {
       final rightGap = constraints!.maxWidth * 0.5;
@@ -393,20 +400,45 @@ pw.Widget _buildNoteEntry(CheckinEntry entry, Uint8List? photoBytes) {
             if (entry.note != null && entry.note!.trim().isNotEmpty)
               pw.Padding(
                 padding: const pw.EdgeInsets.only(top: 3, left: 13),
-                child: pw.Text(
-                  entry.note!.trim(),
-                  style: pw.TextStyle(fontSize: 11, color: _pdfInk),
-                ),
-              ),
-            if (photoBytes != null)
+                child: photoBytes == null
+                    ? pw.Text(
+                        entry.note!.trim(),
+                        style: pw.TextStyle(fontSize: 11, color: _pdfInk),
+                      )
+                    : pw.Row(
+                        crossAxisAlignment: pw.CrossAxisAlignment.start,
+                        children: [
+                          pw.ClipRRect(
+                            horizontalRadius: 6,
+                            verticalRadius: 6,
+                            child: pw.SizedBox(
+                              height: thumbHeight,
+                              width: thumbWidth,
+                              child: pw.Image(
+                                pw.MemoryImage(photoBytes),
+                                fit: pw.BoxFit.cover,
+                              ),
+                            ),
+                          ),
+                          pw.SizedBox(width: 8),
+                          pw.Expanded(
+                            child: pw.Text(
+                              entry.note!.trim(),
+                              style: pw.TextStyle(fontSize: 11, color: _pdfInk),
+                            ),
+                          ),
+                        ],
+                      ),
+              )
+            else if (photoBytes != null)
               pw.Padding(
-                padding: const pw.EdgeInsets.only(top: 6, left: 13),
+                padding: const pw.EdgeInsets.only(top: 3, left: 13),
                 child: pw.ClipRRect(
                   horizontalRadius: 6,
                   verticalRadius: 6,
                   child: pw.SizedBox(
-                    height: 90,
-                    width: 90 * kCompactPhotoAspectRatio,
+                    height: thumbHeight,
+                    width: thumbWidth,
                     child: pw.Image(
                       pw.MemoryImage(photoBytes),
                       fit: pw.BoxFit.cover,
