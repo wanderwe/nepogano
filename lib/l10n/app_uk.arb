@@ -54,7 +54,7 @@
   "no": "Ні",
   "yesDelete": "Так, видалити",
   "howAreThingsToday": "Як справи сьогодні?",
-  "dailyReminderTitle": "Непогано",
+  "dailyReminderTitle": "Nepogano",
   "dailyReminderBody": "Як пройшов день? Занотуй, поки не забув.",
   "alreadySavedToday": "Вже збережено о {time}",
   "@alreadySavedToday": {
@@ -358,7 +358,7 @@
   },
   "reportNotesSection": "Нотатки місяця",
   "reportNoNote": "Без нотатки",
-  "reportFooterBrand": "Створено в застосунку Непогано · nepogano.app",
+  "reportFooterBrand": "Nepogano · nepogano.app",
 
   "timeCapsulesMenuLabel": "Капсули часу",
   "timeCapsulesRecipientSelf": "собі",

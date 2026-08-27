@@ -395,7 +395,7 @@ abstract class AppLocalizations {
   /// No description provided for @dailyReminderTitle.
   ///
   /// In uk, this message translates to:
-  /// **'Непогано'**
+  /// **'Nepogano'**
   String get dailyReminderTitle;
 
   /// No description provided for @dailyReminderBody.
@@ -1427,7 +1427,7 @@ abstract class AppLocalizations {
   /// No description provided for @reportFooterBrand.
   ///
   /// In uk, this message translates to:
-  /// **'Створено в застосунку Непогано · nepogano.app'**
+  /// **'Nepogano · nepogano.app'**
   String get reportFooterBrand;
 
   /// No description provided for @timeCapsulesMenuLabel.

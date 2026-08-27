@@ -163,7 +163,7 @@ class AppLocalizationsUk extends AppLocalizations {
   String get howAreThingsToday => 'Як справи сьогодні?';
 
   @override
-  String get dailyReminderTitle => 'Непогано';
+  String get dailyReminderTitle => 'Nepogano';
 
   @override
   String get dailyReminderBody => 'Як пройшов день? Занотуй, поки не забув.';
@@ -751,8 +751,7 @@ class AppLocalizationsUk extends AppLocalizations {
   String get reportNoNote => 'Без нотатки';
 
   @override
-  String get reportFooterBrand =>
-      'Створено в застосунку Непогано · nepogano.app';
+  String get reportFooterBrand => 'Nepogano · nepogano.app';
 
   @override
   String get timeCapsulesMenuLabel => 'Капсули часу';

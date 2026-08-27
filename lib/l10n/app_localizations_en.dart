@@ -749,7 +749,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get reportNoNote => 'No note';
 
   @override
-  String get reportFooterBrand => 'Made with the Nepogano app · nepogano.app';
+  String get reportFooterBrand => 'Nepogano · nepogano.app';
 
   @override
   String get timeCapsulesMenuLabel => 'Time capsules';

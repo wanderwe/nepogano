@@ -14,16 +14,16 @@ import 'main.dart';
 import 'share_utils.dart';
 import 'style.dart';
 
-/// Мінімальна кількість записів для конкретного дня тижня в місяці, щоб
-/// його середню оцінку взагалі розглядати — з 1-2 записами "патерн"
-/// це просто шум.
-const _kMinWeekdaySamples = 3;
-
-/// Наскільки нижчою (за шкалою niyak=0..zbs=2) має бути середня оцінка
-/// найгіршого дня тижня за загальномісячну, щоб про це було варто писати.
-const _kWeekdayDipThreshold = 0.4;
-
 PdfColor _toPdfColor(Color color) => PdfColor.fromInt(color.toARGB32());
+
+// Темна тема звіту — той самий AppColors, що й сам застосунок, а не
+// "офісний" білий папір. PDF як архів все одно рідко друкують, а
+// візуально відірваний від бренду звіт читався як щось стороннє.
+final _pdfBackground = _toPdfColor(AppColors.background);
+final _pdfSurface = _toPdfColor(AppColors.surface);
+final _pdfInk = _toPdfColor(AppColors.ink);
+final _pdfInkMuted = _toPdfColor(AppColors.inkMuted);
+final _pdfAccent = _toPdfColor(AppColors.accent);
 
 /// Будує PDF-звіт місяця (календар + розподіл настроїв + інсайти + нотатки)
 /// і відкриває системний шер-лист. Викликається з History-екрана.
@@ -56,8 +56,17 @@ Future<void> shareMonthReport({
   final doc = pw.Document();
   doc.addPage(
     pw.MultiPage(
-      theme: pw.ThemeData.withFont(base: baseFont, bold: headingFont),
-      margin: const pw.EdgeInsets.symmetric(horizontal: 32, vertical: 36),
+      pageTheme: pw.PageTheme(
+        margin: const pw.EdgeInsets.symmetric(horizontal: 32, vertical: 36),
+        theme: pw.ThemeData.withFont(base: baseFont, bold: headingFont)
+            .copyWith(
+              defaultTextStyle: pw.TextStyle(font: baseFont, color: _pdfInk),
+            ),
+        buildBackground: (ctx) => pw.FullPage(
+          ignoreMargins: true,
+          child: pw.Container(color: _pdfBackground),
+        ),
+      ),
       header: (ctx) => ctx.pageNumber == 1
           ? pw.SizedBox()
           : pw.Container(
@@ -65,7 +74,7 @@ Future<void> shareMonthReport({
               margin: const pw.EdgeInsets.only(bottom: 12),
               child: pw.Text(
                 '${monthName(month.month, locale)} ${month.year}',
-                style: pw.TextStyle(fontSize: 9, color: PdfColors.grey500),
+                style: pw.TextStyle(fontSize: 9, color: _pdfInkMuted),
               ),
             ),
       footer: (ctx) => pw.Container(
@@ -73,7 +82,7 @@ Future<void> shareMonthReport({
         margin: const pw.EdgeInsets.only(top: 8),
         child: pw.Text(
           l10n.reportFooterBrand,
-          style: pw.TextStyle(fontSize: 8, color: PdfColors.grey500),
+          style: pw.TextStyle(fontSize: 8, color: _pdfInkMuted),
         ),
       ),
       build: (ctx) => [
@@ -83,7 +92,7 @@ Future<void> shareMonthReport({
         pw.SizedBox(height: 24),
         _buildMoodDistribution(l10n, entriesByDay, moodLabels),
         pw.SizedBox(height: 20),
-        ..._buildInsights(l10n, locale, entriesByDay, month),
+        ..._buildInsights(l10n, entriesByDay, month),
         pw.SizedBox(height: 24),
         if (sortedAsc.isNotEmpty)
           _buildNotesSection(l10n, sortedAsc, headingFont),
@@ -120,15 +129,14 @@ pw.Widget _buildHeader(
     crossAxisAlignment: pw.CrossAxisAlignment.start,
     children: [
       pw.Text(
-        'Непогано',
-        style: pw.TextStyle(
-          font: headingFont,
-          fontSize: 14,
-          color: _toPdfColor(AppColors.accent),
-        ),
+        'Nepogano',
+        style: pw.TextStyle(font: headingFont, fontSize: 14, color: _pdfAccent),
       ),
       pw.SizedBox(height: 4),
-      pw.Text(title, style: pw.TextStyle(font: headingFont, fontSize: 24)),
+      pw.Text(
+        title,
+        style: pw.TextStyle(font: headingFont, fontSize: 24, color: _pdfInk),
+      ),
     ],
   );
 }
@@ -158,7 +166,7 @@ pw.Widget _buildCalendar(
                 child: pw.Center(
                   child: pw.Text(
                     weekdayLabel(weekday, locale),
-                    style: pw.TextStyle(fontSize: 9, color: PdfColors.grey500),
+                    style: pw.TextStyle(fontSize: 9, color: _pdfInkMuted),
                   ),
                 ),
               ),
@@ -186,16 +194,14 @@ pw.Widget _buildCalendar(
                     decoration: pw.BoxDecoration(
                       color: entry != null
                           ? _toPdfColor(entry.mood.color)
-                          : PdfColors.grey100,
+                          : _pdfSurface,
                       borderRadius: pw.BorderRadius.circular(5),
                     ),
                     child: pw.Text(
                       '$day',
                       style: pw.TextStyle(
                         fontSize: 9,
-                        color: entry != null
-                            ? PdfColors.white
-                            : PdfColors.grey500,
+                        color: entry != null ? PdfColors.white : _pdfInkMuted,
                       ),
                     ),
                   ),
@@ -227,7 +233,7 @@ pw.Widget _buildMoodDistribution(
     children: [
       pw.Text(
         l10n.reportMoodDistribution,
-        style: pw.TextStyle(fontSize: 11, color: PdfColors.grey600),
+        style: pw.TextStyle(fontSize: 11, color: _pdfInkMuted),
       ),
       pw.SizedBox(height: 10),
       pw.Row(
@@ -266,7 +272,7 @@ pw.Widget _buildMoodDistribution(
               pw.SizedBox(width: 5),
               pw.Text(
                 '${moodLabels[mood]} · ${counts[mood]}',
-                style: pw.TextStyle(fontSize: 10, color: PdfColors.grey700),
+                style: pw.TextStyle(fontSize: 10, color: _pdfInkMuted),
               ),
             ],
           );
@@ -276,9 +282,15 @@ pw.Widget _buildMoodDistribution(
   );
 }
 
+// Патерн по дню тижня ("настрій частіше просідає у суботу") свідомо НЕ
+// рахується тут: у межах одного місяця кожен день тижня трапляється лише
+// ~4 рази — цього недостатньо для чесного висновку про закономірність,
+// навіть якщо формально пройде поріг "нижче за середнє". Показувати це
+// як впевнене твердження вводило б в оману сильніше, ніж просто не
+// показувати нічого. Для такого інсайту треба вікно в кілька місяців,
+// не один.
 List<pw.Widget> _buildInsights(
   AppLocalizations l10n,
-  Locale locale,
   Map<int, CheckinEntry> entriesByDay,
   DateTime month,
 ) {
@@ -289,54 +301,19 @@ List<pw.Widget> _buildInsights(
   final filled = entriesByDay.length;
   final missed = (consideredDays - filled).clamp(0, consideredDays);
 
-  final lines = <String>[l10n.reportDaysFilled(filled, consideredDays, missed)];
-
-  final byWeekday = <int, List<int>>{};
-  var totalMoodSum = 0;
-  var totalMoodCount = 0;
-  for (final entry in entriesByDay.entries) {
-    final date = DateTime(month.year, month.month, entry.key);
-    byWeekday.putIfAbsent(date.weekday, () => []).add(entry.value.mood.index);
-    totalMoodSum += entry.value.mood.index;
-    totalMoodCount++;
-  }
-  if (totalMoodCount > 0) {
-    final overallAvg = totalMoodSum / totalMoodCount;
-    int? worstWeekday;
-    var worstAvg = double.infinity;
-    for (final e in byWeekday.entries) {
-      if (e.value.length < _kMinWeekdaySamples) continue;
-      final avg = e.value.reduce((a, b) => a + b) / e.value.length;
-      if (avg < worstAvg) {
-        worstAvg = avg;
-        worstWeekday = e.key;
-      }
-    }
-    if (worstWeekday != null &&
-        (overallAvg - worstAvg) >= _kWeekdayDipThreshold) {
-      lines.add(
-        l10n.reportWeekdayInsight(weekdayNameFull(worstWeekday, locale)),
-      );
-    }
-  }
-
   return [
-    for (final line in lines)
-      pw.Padding(
-        padding: const pw.EdgeInsets.only(bottom: 4),
-        child: pw.Row(
-          crossAxisAlignment: pw.CrossAxisAlignment.start,
-          children: [
-            pw.Text('· ', style: const pw.TextStyle(fontSize: 11)),
-            pw.Expanded(
-              child: pw.Text(
-                line,
-                style: pw.TextStyle(fontSize: 11, color: PdfColors.grey800),
-              ),
-            ),
-          ],
+    pw.Row(
+      crossAxisAlignment: pw.CrossAxisAlignment.start,
+      children: [
+        pw.Text('· ', style: pw.TextStyle(fontSize: 11, color: _pdfInk)),
+        pw.Expanded(
+          child: pw.Text(
+            l10n.reportDaysFilled(filled, consideredDays, missed),
+            style: pw.TextStyle(fontSize: 11, color: _pdfInk),
+          ),
         ),
-      ),
+      ],
+    ),
   ];
 }
 
@@ -350,7 +327,7 @@ pw.Widget _buildNotesSection(
     children: [
       pw.Text(
         l10n.reportNotesSection,
-        style: pw.TextStyle(font: headingFont, fontSize: 15),
+        style: pw.TextStyle(font: headingFont, fontSize: 15, color: _pdfInk),
       ),
       pw.SizedBox(height: 10),
       for (final entry in sortedAsc)
@@ -372,7 +349,7 @@ pw.Widget _buildNotesSection(
                   ),
                   pw.Text(
                     '${entry.createdAt.day}.${entry.createdAt.month}.${entry.createdAt.year}',
-                    style: pw.TextStyle(fontSize: 10, color: PdfColors.grey600),
+                    style: pw.TextStyle(fontSize: 10, color: _pdfInkMuted),
                   ),
                 ],
               ),
@@ -381,7 +358,7 @@ pw.Widget _buildNotesSection(
                   padding: const pw.EdgeInsets.only(top: 3, left: 13),
                   child: pw.Text(
                     entry.note!.trim(),
-                    style: const pw.TextStyle(fontSize: 11),
+                    style: pw.TextStyle(fontSize: 11, color: _pdfInk),
                   ),
                 ),
             ],
