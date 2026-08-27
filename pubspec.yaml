@@ -90,6 +90,17 @@ flutter:
   # For details regarding adding assets from package dependencies, see
   # https://flutter.dev/to/asset-from-package
 
+  # Статичні (не variable) збірки Inter/Lora — виключно для PDF-звіту місяця
+  # (lib/month_report.dart). Пакет `pdf` має власний спрощений TTF-парсер,
+  # який падає (RangeError у ttf_parser.dart) на variable-font файлах нижче —
+  # звичайний рендер тексту на екрані з тим самим файлом працює нормально
+  # (Skia сам вміє variable fonts), тож для UI лишаються variable-версії,
+  # а ці два файли не декларуються під `fonts:`, бо потрібні лише для
+  # rootBundle.load() сирих байтів, не для системи текстових стилів Flutter.
+  assets:
+    - assets/fonts/Inter-Static-Regular.ttf
+    - assets/fonts/Lora-Static-Bold.ttf
+
   # Lora вшита локально (не через google_fonts) саме для appSerif() —
   # мережеве довантаження при першому запуску викликало видиму зміну
   # розміру тексту на екрані, щойно шрифт довантажувався й застосунок

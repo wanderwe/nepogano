@@ -37,8 +37,12 @@ Future<void> shareMonthReport({
   final locale = Localizations.localeOf(context);
   final moodLabels = {for (final m in MoodLevel.values) m: m.label(context)};
 
-  final interData = await rootBundle.load('assets/fonts/Inter-Variable.ttf');
-  final loraData = await rootBundle.load('assets/fonts/Lora-Variable.ttf');
+  // Статичні (не variable) збірки — пакет `pdf` не вміє парсити variable
+  // TTF-файли, якими користується решта застосунку (див. коментар у pubspec.yaml).
+  final interData = await rootBundle.load(
+    'assets/fonts/Inter-Static-Regular.ttf',
+  );
+  final loraData = await rootBundle.load('assets/fonts/Lora-Static-Bold.ttf');
   final baseFont = pw.Font.ttf(interData);
   final headingFont = pw.Font.ttf(loraData);
 
