@@ -35,6 +35,22 @@ class _PhotoRepositionScreenState extends State<PhotoRepositionScreen> {
   late double _scale = widget.initialScale;
   double _gestureStartScale = 1;
 
+  // Палець ніколи не рухається ідеально по прямій — з двома вільними
+  // осями одразу найменше "гуляння" вбік під час вертикального
+  // перетягування (чи навпаки) видно як небажаний зайвий зсув. Як
+  // тільки однопальцевий дотик визначив переважний напрям (перший
+  // помітний рух), решта ЦЬОГО дотику рухає лише його — дрібний шум по
+  // іншій осі просто ігнорується, аж до відпускання пальця. Null між
+  // дотиками й під час пінчу (там обидві осі свідомо вільні одразу —
+  // це вже комбінований жест зум+пан, не потребує захисту від "гуляння").
+  Axis? _panAxisLock;
+
+  // Перший кадр жесту завжди має дрібний, майже нульовий delta (палець
+  // щойно торкнувся) — замикати вісь одразу на ньому означало б замикати
+  // навмання на шумі. Чекаємо, поки рух хоч по одній осі перевищить цей
+  // поріг, і лише тоді визначаємо домінантну.
+  static const _panAxisLockThreshold = 3.0;
+
   ImageStream? _imageStream;
   late final ImageStreamListener _imageStreamListener;
   Size? _naturalSize;
@@ -135,7 +151,10 @@ class _PhotoRepositionScreenState extends State<PhotoRepositionScreen> {
                     return ClipRRect(
                       borderRadius: BorderRadius.circular(20),
                       child: GestureDetector(
-                        onScaleStart: (_) => _gestureStartScale = _scale,
+                        onScaleStart: (_) {
+                          _gestureStartScale = _scale;
+                          _panAxisLock = null;
+                        },
                         onScaleUpdate: (details) {
                           setState(() {
                             _scale = (_gestureStartScale * details.scale).clamp(
@@ -161,43 +180,68 @@ class _PhotoRepositionScreenState extends State<PhotoRepositionScreen> {
                             // вертикалі) — формула тримає 1px пальця ≈ 1px
                             // видимого зсуву завжди, незалежно від фото чи
                             // поточного зуму.
+                            //
+                            // Однопальцевий дотик визначає переважну вісь
+                            // ОДИН РАЗ, щойно рух перевищив дрібний шум
+                            // (_panAxisLockThreshold), і тримає її до
+                            // відпускання пальця — без цього найменше
+                            // "гуляння" по діагоналі (палець ніколи не
+                            // рухається ідеально по прямій) видно як
+                            // небажаний зсув по обох осях одразу. Пінч
+                            // (2+ пальці) навмисно НЕ замикає вісь — це вже
+                            // свідомо комбінований жест зум+пан.
+                            if (details.pointerCount == 1 &&
+                                _panAxisLock == null) {
+                              final dx = details.focalPointDelta.dx.abs();
+                              final dy = details.focalPointDelta.dy.abs();
+                              if (dx > _panAxisLockThreshold ||
+                                  dy > _panAxisLockThreshold) {
+                                _panAxisLock = dx > dy
+                                    ? Axis.horizontal
+                                    : Axis.vertical;
+                              }
+                            }
+
                             final coverScale = _coverScale(
                               constraints.maxWidth,
                               constraints.maxHeight,
                             );
                             if (coverScale != null) {
-                              final vOverflow = _overflow(
-                                boxSize: constraints.maxHeight,
-                                naturalDimension: _naturalSize!.height,
-                                coverScale: coverScale,
-                              );
-                              if (vOverflow != null) {
-                                _alignY =
-                                    (_alignY -
-                                            details.focalPointDelta.dy *
-                                                2 /
-                                                vOverflow)
-                                        .clamp(-1.0, 1.0);
+                              final verticalAllowed =
+                                  details.pointerCount != 1 ||
+                                  _panAxisLock != Axis.horizontal;
+                              if (verticalAllowed) {
+                                final vOverflow = _overflow(
+                                  boxSize: constraints.maxHeight,
+                                  naturalDimension: _naturalSize!.height,
+                                  coverScale: coverScale,
+                                );
+                                if (vOverflow != null) {
+                                  _alignY =
+                                      (_alignY -
+                                              details.focalPointDelta.dy *
+                                                  2 /
+                                                  vOverflow)
+                                          .clamp(-1.0, 1.0);
+                                }
                               }
-                              final hOverflow = _overflow(
-                                boxSize: constraints.maxWidth,
-                                naturalDimension: _naturalSize!.width,
-                                coverScale: coverScale,
-                              );
-                              debugPrint(
-                                'reposition dx=${details.focalPointDelta.dx} '
-                                'scale=$_scale coverScale=$coverScale '
-                                'naturalW=${_naturalSize!.width} '
-                                'boxW=${constraints.maxWidth} '
-                                'hOverflow=$hOverflow alignX(before)=$_alignX',
-                              );
-                              if (hOverflow != null) {
-                                _alignX =
-                                    (_alignX -
-                                            details.focalPointDelta.dx *
-                                                2 /
-                                                hOverflow)
-                                        .clamp(-1.0, 1.0);
+                              final horizontalAllowed =
+                                  details.pointerCount != 1 ||
+                                  _panAxisLock != Axis.vertical;
+                              if (horizontalAllowed) {
+                                final hOverflow = _overflow(
+                                  boxSize: constraints.maxWidth,
+                                  naturalDimension: _naturalSize!.width,
+                                  coverScale: coverScale,
+                                );
+                                if (hOverflow != null) {
+                                  _alignX =
+                                      (_alignX -
+                                              details.focalPointDelta.dx *
+                                                  2 /
+                                                  hOverflow)
+                                          .clamp(-1.0, 1.0);
+                                }
                               }
                             }
                           });
