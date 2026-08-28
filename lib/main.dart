@@ -1982,6 +1982,7 @@ class _CheckInScreenState extends State<CheckInScreen>
       return _PhotoPreview(
         image: ScaledPhoto(
           scale: _photoScale,
+          alignX: _photoAlignX,
           child: Image(
             image: image,
             fit: BoxFit.cover,
@@ -2019,6 +2020,7 @@ class _CheckInScreenState extends State<CheckInScreen>
           return _PhotoPreview(
             image: ScaledPhoto(
               scale: _photoScale,
+              alignX: _photoAlignX,
               child: Image(
                 image: image,
                 fit: BoxFit.cover,
@@ -2232,6 +2234,7 @@ class _CheckInScreenState extends State<CheckInScreen>
                       aspectRatio: kCompactPhotoAspectRatio,
                       child: ScaledPhoto(
                         scale: _photoScale,
+                        alignX: _photoAlignX,
                         child: Image.memory(
                           snapshot.data!,
                           fit: BoxFit.cover,

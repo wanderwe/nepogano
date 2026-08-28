@@ -167,19 +167,20 @@ class _PhotoRepositionScreenState extends State<PhotoRepositionScreen> {
                             // з'їжджає під пальцем, відкриваючи те, що було
                             // приховано за краєм.
                             //
-                            // Ділимо на РЕАЛЬНИЙ overflow конкретного фото
-                            // (не на розмір рамки) — інакше швидкість
-                            // перетягування "стрибала" б між фото різних
-                            // пропорцій (майже квадратне фото мало куди
-                            // панорамувати — те саме перетягування пальцем
-                            // відчувалось би як "повільно" проти
-                            // витягнутого портрета). `_overflow` вже сам
-                            // враховує поточний `_scale` всередині формули,
-                            // тож тут його вдруге множити НЕ треба (на
-                            // відміну від старої версії саме для
-                            // вертикалі) — формула тримає 1px пальця ≈ 1px
-                            // видимого зсуву завжди, незалежно від фото чи
-                            // поточного зуму.
+                            // Вертикаль (нижче) ділить на РЕАЛЬНИЙ overflow
+                            // конкретного фото (не на розмір рамки) —
+                            // інакше швидкість перетягування "стрибала" б
+                            // між фото різних пропорцій (майже квадратне
+                            // фото мало куди панорамувати — те саме
+                            // перетягування пальцем відчувалось би як
+                            // "повільно" проти витягнутого портрета).
+                            // `_overflow` вже сам враховує поточний
+                            // `_scale` всередині формули, тож тут його
+                            // вдруге множити НЕ треба — формула тримає 1px
+                            // пальця ≈ 1px видимого зсуву завжди, незалежно
+                            // від фото чи поточного зуму. Горизонталь має
+                            // ІНШУ формулу — див. коментар нижче біля
+                            // `hOverflow`.
                             //
                             // Однопальцевий дотик визначає переважну вісь
                             // ОДИН РАЗ, щойно рух перевищив дрібний шум
@@ -229,22 +230,21 @@ class _PhotoRepositionScreenState extends State<PhotoRepositionScreen> {
                                   details.pointerCount != 1 ||
                                   _panAxisLock != Axis.vertical;
                               if (horizontalAllowed) {
-                                final hOverflow = _overflow(
-                                  boxSize: constraints.maxWidth,
-                                  naturalDimension: _naturalSize!.width,
-                                  coverScale: coverScale,
-                                );
-                                debugPrint(
-                                  'reposition dx=${details.focalPointDelta.dx} '
-                                  'dy=${details.focalPointDelta.dy} '
-                                  'pointers=${details.pointerCount} '
-                                  'lock=$_panAxisLock scale=$_scale '
-                                  'naturalW=${_naturalSize!.width} '
-                                  'naturalH=${_naturalSize!.height} '
-                                  'boxW=${constraints.maxWidth} '
-                                  'hOverflow=$hOverflow alignX=$_alignX',
-                                );
-                                if (hOverflow != null) {
+                                // На відміну від вертикалі, тут НЕ рахуємо
+                                // запас від натуральних пікселів фото —
+                                // `ScaledPhoto` (яка й реально показує
+                                // фото скрізь у застосунку) реалізує
+                                // горизонтальний пан не через
+                                // BoxFit.cover-кадрування, а окремим
+                                // `Transform.translate` поверх
+                                // center-anchored зуму, і рахує доступний
+                                // запас так само суто від розміру РАМКИ
+                                // (`boxWidth * (scale - 1)`). Якщо тут
+                                // порахувати інакше — прев'ю в редакторі
+                                // й реальний рендер розійдуться.
+                                final hOverflow =
+                                    constraints.maxWidth * (_scale - 1);
+                                if (hOverflow > 0) {
                                   _alignX =
                                       (_alignX -
                                               details.focalPointDelta.dx *
@@ -261,6 +261,7 @@ class _PhotoRepositionScreenState extends State<PhotoRepositionScreen> {
                           children: [
                             ScaledPhoto(
                               scale: _scale,
+                              alignX: _alignX,
                               child: Image(
                                 image: widget.image,
                                 fit: BoxFit.cover,

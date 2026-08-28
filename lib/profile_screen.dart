@@ -499,6 +499,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               child: _avatarBytes != null
                   ? ScaledPhoto(
                       scale: _avatarScale,
+                      alignX: _avatarAlignX,
                       child: Image.memory(
                         _avatarBytes!,
                         fit: BoxFit.cover,

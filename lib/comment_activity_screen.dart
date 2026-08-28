@@ -563,6 +563,7 @@ class _SingleEntryScreenState extends State<SingleEntryScreen> {
                     aspectRatio: kCompactPhotoAspectRatio,
                     child: ScaledPhoto(
                       scale: entry.photoScale,
+                      alignX: entry.photoAlignX,
                       child: Image.memory(
                         snapshot.data!,
                         fit: BoxFit.cover,

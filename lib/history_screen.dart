@@ -668,6 +668,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                               aspectRatio: kCompactPhotoAspectRatio,
                               child: ScaledPhoto(
                                 scale: entry.photoScale,
+                                alignX: entry.photoAlignX,
                                 child: Image.memory(
                                   snapshot.data!,
                                   fit: BoxFit.cover,

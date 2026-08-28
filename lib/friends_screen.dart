@@ -1470,6 +1470,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
         child: bytes != null
             ? ScaledPhoto(
                 scale: friend.avatarScale,
+                alignX: friend.avatarAlignX,
                 child: Image.memory(
                   bytes,
                   fit: BoxFit.cover,
@@ -2116,6 +2117,7 @@ class _PersonDetailScreenState extends State<PersonDetailScreen> {
                       aspectRatio: kCompactPhotoAspectRatio,
                       child: ScaledPhoto(
                         scale: entry.photoScale,
+                        alignX: entry.photoAlignX,
                         child: Image.memory(
                           snapshot.data!,
                           fit: BoxFit.cover,

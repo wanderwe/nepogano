@@ -82,18 +82,54 @@ const kGuessWindowDays = 7;
 /// точка, де застосовується масштаб, щоб він не розійшовся між формою
 /// вводу, підсумком дня, історією, друзями й карткою дня так само, як
 /// щойно розійшлась пропорція рамки. `scale <= 1` — no-op (найчастіший
-/// випадок, без зайвого ClipRect у дереві).
+/// випадок, без зайвого layout-дерева).
+///
+/// [alignX] існує окремо від вертикального `alignment` на самому [child]
+/// (`Image(..., alignment: Alignment(alignX, alignY))`) навмисно: сам по
+/// собі `Transform.scale` навколо вже cover-fit'нутого [child] НІКОЛИ не
+/// міг рухати горизонталь, хоч би яким було значення alignment.x
+/// усередині [child] — BoxFit.cover для типового портретного фото в
+/// квадратній рамці впритул підганяє ШИРИНУ без жодного запасу ще ДО
+/// трансформації (запас лишається лише по вертикалі), тож масштабування
+/// вже зафіксованого кадру просто збільшує ту саму, наглухо
+/// відцентровану, ширину — 100% байдуже до alignment.x.
+///
+/// Тому тут [alignX] рухає кадр ОКРЕМИМ `Transform.translate` ЗОВНІ вже
+/// готового center-anchored `Transform.scale` — а не переробляє сам зум.
+/// Це свідомо залишає стару (вертикальну) частину поведінки взагалі не
+/// зачепленою (нуль ризику регресії там, де вже працювало), і рахує
+/// доступний горизонтальний запас суто від розміру РАМКИ
+/// (`boxWidth * (scale - 1)`), без потреби знати натуральні пікселі
+/// фото — на відміну від [PhotoRepositionScreen], який знає натуральний
+/// розмір і тому окремо рахує вертикальний запас точніше; горизонтальний
+/// же запас тут і там навмисно порахований однією формулою, щоб те, що
+/// юзер бачить у редакторі положення фото, збігалось з тим, що потім
+/// показується всюди інде.
 class ScaledPhoto extends StatelessWidget {
   final double scale;
+  final double alignX;
   final Widget child;
 
-  const ScaledPhoto({super.key, required this.scale, required this.child});
+  const ScaledPhoto({
+    super.key,
+    required this.scale,
+    this.alignX = 0,
+    required this.child,
+  });
 
   @override
   Widget build(BuildContext context) {
     if (scale <= 1.0) return child;
-    return ClipRect(
-      child: Transform.scale(scale: scale, child: child),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final horizontalSlack = constraints.maxWidth * (scale - 1);
+        return ClipRect(
+          child: Transform.translate(
+            offset: Offset(-alignX * horizontalSlack / 2, 0),
+            child: Transform.scale(scale: scale, child: child),
+          ),
+        );
+      },
     );
   }
 }

@@ -464,6 +464,7 @@ class _DayCard extends StatelessWidget {
                     // показує щось інше, ніж юзер підбирав.
                     ScaledPhoto(
                       scale: entry.photoScale,
+                      alignX: entry.photoAlignX,
                       child: Image.memory(
                         photoBytes!,
                         fit: BoxFit.cover,
