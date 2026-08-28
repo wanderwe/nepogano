@@ -8,6 +8,12 @@ import 'style.dart';
 
 const _bodyMaxLength = 5000;
 
+/// Той самий розмір сторінки, що й стрічка "Коментарі"
+/// (`kCommentActivityPageSize`, `comment_activity.dart`) — список раніше
+/// вантажив УСІ листи одним запитом без жодного ліміту, незалежно від
+/// того, чи їх 4, чи 400.
+const _lettersPageSize = 20;
+
 enum _LetterState { locked, unlockedUnread, opened }
 
 class _FriendOption {
@@ -55,6 +61,7 @@ class _Letter {
   final String id;
   final String authorId;
   final String? recipientId;
+  final DateTime createdAt;
   final DateTime unlockAt;
   // Окремо для автора й отримувача — інакше автор, зазирнувши у власний
   // надісланий лист, помилково позначав би його "прочитаним" і для
@@ -81,6 +88,7 @@ class _Letter {
     required this.id,
     required this.authorId,
     this.recipientId,
+    required this.createdAt,
     required this.unlockAt,
     this.authorOpenedAt,
     this.recipientOpenedAt,
@@ -134,6 +142,8 @@ class _TimeCapsulesScreenState extends State<TimeCapsulesScreen> {
   final _supabase = Supabase.instance.client;
   List<_Letter> _letters = [];
   bool _loading = true;
+  bool _loadingMore = false;
+  bool _hasMore = false;
   // Знімок "щойно отримано, ще не бачив" на момент відкриття списку — щоб
   // рядок ще підсвічувався крапкою під час цього перегляду, навіть якщо
   // recipient_seen_at уже проставився фоновим запитом нижче.
@@ -151,114 +161,156 @@ class _TimeCapsulesScreenState extends State<TimeCapsulesScreen> {
     _load();
   }
 
+  /// Одна сторінка листів, найновіші спершу. [before] — курсор
+  /// (`created_at` останнього вже завантаженого листа), null для першої
+  /// сторінки. `hasMore` — та сама евристика, що й `comment_activity.dart`:
+  /// якщо сторінка прийшла повною ([_lettersPageSize] рядків), вважаємо,
+  /// що далі, ймовірно, є ще, без окремого зонд-запиту.
+  Future<(List<_Letter>, bool)> _fetchLettersPage({DateTime? before}) async {
+    final myId = _supabase.auth.currentUser!.id;
+    // "Видалено для мене" фільтрується тут, не в RLS SELECT-політиці —
+    // якщо RLS сама звіряє author_deleted_at/recipient_deleted_at, Postgres
+    // починає відхиляти сам UPDATE, що ставить цю позначку (WITH CHECK
+    // нового рядка перестає проходити ту саму SELECT-політику).
+    var query = _supabase
+        .from('future_letters')
+        .select(
+          'id, author_id, recipient_id, recipient_account_deleted, created_at, unlock_at, author_opened_at, recipient_opened_at, recipient_seen_at, future_letter_bodies(body)',
+        )
+        .or(
+          'and(author_id.eq.$myId,author_deleted_at.is.null),'
+          'and(recipient_id.eq.$myId,recipient_deleted_at.is.null)',
+        );
+    if (before != null) {
+      query = query.lt('created_at', before.toUtc().toIso8601String());
+    }
+    final rows = await query
+        .order('created_at', ascending: false)
+        .limit(_lettersPageSize);
+
+    final otherPartyIds = <String>{};
+    for (final row in rows as List) {
+      final authorId = row['author_id'] as String;
+      final recipientId = row['recipient_id'] as String?;
+      final otherId = authorId == myId ? recipientId : authorId;
+      if (otherId != null) otherPartyIds.add(otherId);
+    }
+    final nameById = <String, String>{};
+    if (otherPartyIds.isNotEmpty) {
+      final profileRows = await _supabase
+          .from('profiles')
+          .select('user_id, display_name')
+          .inFilter('user_id', otherPartyIds.toList());
+      for (final row in profileRows as List) {
+        nameById[row['user_id'] as String] =
+            (row['display_name'] as String?) ?? '';
+      }
+    }
+
+    final letters = rows.map((row) {
+      // letter_id — PK у future_letter_bodies, тобто зв'язок "один до
+      // одного" з погляду future_letters, тож PostgREST embed'ить це як
+      // об'єкт (Map), а не масив (List), як для звичайних to-many
+      // зв'язків. Раніше тут стояв `as List?`, і поки лист був закритий
+      // (RLS повертав null), каст мовчки проходив — а щойно RLS почав
+      // реально повертати рядок, `null as List?` замінився на Map, каст
+      // впав з рантайм-помилкою, яку ковтав catch навколо всього _load(),
+      // і список тихо ставав порожнім.
+      final bodyRow = row['future_letter_bodies'] as Map<String, dynamic>?;
+      final authorOpenedAtRaw = row['author_opened_at'] as String?;
+      final recipientOpenedAtRaw = row['recipient_opened_at'] as String?;
+      final recipientSeenAtRaw = row['recipient_seen_at'] as String?;
+      final authorId = row['author_id'] as String;
+      final recipientId = row['recipient_id'] as String?;
+      final otherId = authorId == myId ? recipientId : authorId;
+      return _Letter(
+        id: row['id'] as String,
+        authorId: authorId,
+        recipientId: recipientId,
+        createdAt: DateTime.parse(row['created_at'] as String).toLocal(),
+        unlockAt: DateTime.parse(row['unlock_at'] as String).toLocal(),
+        authorOpenedAt: authorOpenedAtRaw != null
+            ? DateTime.parse(authorOpenedAtRaw).toLocal()
+            : null,
+        recipientOpenedAt: recipientOpenedAtRaw != null
+            ? DateTime.parse(recipientOpenedAtRaw).toLocal()
+            : null,
+        recipientSeenAt: recipientSeenAtRaw != null
+            ? DateTime.parse(recipientSeenAtRaw).toLocal()
+            : null,
+        recipientAccountDeleted:
+            row['recipient_account_deleted'] as bool? ?? false,
+        body: bodyRow?['body'] as String?,
+        otherPartyName: otherId != null ? nameById[otherId] : null,
+      );
+    }).toList();
+
+    return (letters, letters.length >= _lettersPageSize);
+  }
+
+  /// Той самий "ознайомлення" ефект, що раніше йшов прямо в [_load] —
+  /// сам факт побачити запечатаний лист друга у щойно завантаженій
+  /// сторінці вже знімає індикатор, навіть якщо unlock_at ще далеко в
+  /// майбутньому.
+  Future<void> _markSeen(List<_Letter> letters) async {
+    final myId = _supabase.auth.currentUser!.id;
+    final unseenIds = letters
+        .where((l) => l.recipientId == myId && l.recipientSeenAt == null)
+        .map((l) => l.id)
+        .toList();
+    if (mounted) {
+      setState(() => _newlyReceivedIds = {..._newlyReceivedIds, ...unseenIds});
+    }
+    if (unseenIds.isEmpty) return;
+    // Зберігаємо посилання на Future — PopScope в build() чекає саме на
+    // нього перед фактичним виходом з екрана (див. коментар біля поля
+    // _markSeenFuture).
+    _markSeenFuture = _supabase
+        .from('future_letters')
+        .update({'recipient_seen_at': DateTime.now().toUtc().toIso8601String()})
+        .inFilter('id', unseenIds);
+    await _markSeenFuture;
+  }
+
   Future<void> _load() async {
     setState(() => _loading = true);
     try {
-      final myId = _supabase.auth.currentUser!.id;
-      // "Видалено для мене" фільтрується тут, не в RLS SELECT-політиці —
-      // якщо RLS сама звіряє author_deleted_at/recipient_deleted_at, Postgres
-      // починає відхиляти сам UPDATE, що ставить цю позначку (WITH CHECK
-      // нового рядка перестає проходити ту саму SELECT-політику).
-      final rows = await _supabase
-          .from('future_letters')
-          .select(
-            'id, author_id, recipient_id, recipient_account_deleted, unlock_at, author_opened_at, recipient_opened_at, recipient_seen_at, future_letter_bodies(body)',
-          )
-          .or(
-            'and(author_id.eq.$myId,author_deleted_at.is.null),'
-            'and(recipient_id.eq.$myId,recipient_deleted_at.is.null)',
-          )
-          .order('created_at', ascending: false);
-
-      final otherPartyIds = <String>{};
-      for (final row in rows as List) {
-        final authorId = row['author_id'] as String;
-        final recipientId = row['recipient_id'] as String?;
-        final otherId = authorId == myId ? recipientId : authorId;
-        if (otherId != null) otherPartyIds.add(otherId);
-      }
-      final nameById = <String, String>{};
-      if (otherPartyIds.isNotEmpty) {
-        final profileRows = await _supabase
-            .from('profiles')
-            .select('user_id, display_name')
-            .inFilter('user_id', otherPartyIds.toList());
-        for (final row in profileRows as List) {
-          nameById[row['user_id'] as String] =
-              (row['display_name'] as String?) ?? '';
-        }
-      }
-
-      final letters = rows.map((row) {
-        // letter_id — PK у future_letter_bodies, тобто зв'язок "один до
-        // одного" з погляду future_letters, тож PostgREST embed'ить це як
-        // об'єкт (Map), а не масив (List), як для звичайних to-many
-        // зв'язків. Раніше тут стояв `as List?`, і поки лист був закритий
-        // (RLS повертав null), каст мовчки проходив — а щойно RLS почав
-        // реально повертати рядок, `null as List?` замінився на Map, каст
-        // впав з рантайм-помилкою, яку ковтав catch навколо всього _load(),
-        // і список тихо ставав порожнім.
-        final bodyRow = row['future_letter_bodies'] as Map<String, dynamic>?;
-        final authorOpenedAtRaw = row['author_opened_at'] as String?;
-        final recipientOpenedAtRaw = row['recipient_opened_at'] as String?;
-        final recipientSeenAtRaw = row['recipient_seen_at'] as String?;
-        final authorId = row['author_id'] as String;
-        final recipientId = row['recipient_id'] as String?;
-        final otherId = authorId == myId ? recipientId : authorId;
-        return _Letter(
-          id: row['id'] as String,
-          authorId: authorId,
-          recipientId: recipientId,
-          unlockAt: DateTime.parse(row['unlock_at'] as String).toLocal(),
-          authorOpenedAt: authorOpenedAtRaw != null
-              ? DateTime.parse(authorOpenedAtRaw).toLocal()
-              : null,
-          recipientOpenedAt: recipientOpenedAtRaw != null
-              ? DateTime.parse(recipientOpenedAtRaw).toLocal()
-              : null,
-          recipientSeenAt: recipientSeenAtRaw != null
-              ? DateTime.parse(recipientSeenAtRaw).toLocal()
-              : null,
-          recipientAccountDeleted:
-              row['recipient_account_deleted'] as bool? ?? false,
-          body: bodyRow?['body'] as String?,
-          otherPartyName: otherId != null ? nameById[otherId] : null,
-        );
-      }).toList();
-
-      final unseenIds = letters
-          .where((l) => l.recipientId == myId && l.recipientSeenAt == null)
-          .map((l) => l.id)
-          .toList();
+      final (letters, hasMore) = await _fetchLettersPage();
       if (mounted) {
         setState(() {
           _letters = letters;
-          _newlyReceivedIds = unseenIds.toSet();
+          _hasMore = hasMore;
         });
       }
-
-      // Сам факт побачити запечатаний лист друга у списку — вже
-      // "ознайомлення", тому знімає індикатор, навіть якщо unlock_at ще
-      // далеко в майбутньому. _newlyReceivedIds вище лишається знімком для
-      // підсвітки в цьому перегляді.
-      if (unseenIds.isNotEmpty) {
-        // Зберігаємо посилання на Future — PopScope в build() чекає саме
-        // на нього перед фактичним виходом з екрана (див. коментар біля
-        // поля _markSeenFuture).
-        _markSeenFuture = _supabase
-            .from('future_letters')
-            .update({
-              'recipient_seen_at': DateTime.now().toUtc().toIso8601String(),
-            })
-            .inFilter('id', unseenIds);
-        await _markSeenFuture;
-      }
+      await _markSeen(letters);
     } catch (_) {
       // Список просто лишається таким, яким був — немає окремого
       // "щось пішло не так" стану для цього екрана, спробує ще раз при
       // наступному відкритті.
     } finally {
       if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  Future<void> _loadMore() async {
+    if (_letters.isEmpty || _loadingMore) return;
+    setState(() => _loadingMore = true);
+    try {
+      final (letters, hasMore) = await _fetchLettersPage(
+        before: _letters.last.createdAt,
+      );
+      if (mounted) {
+        setState(() {
+          _letters = [..._letters, ...letters];
+          _hasMore = hasMore;
+        });
+      }
+      await _markSeen(letters);
+    } catch (_) {
+      // Та сама тиха відмова, що й _load — спробує ще раз, якщо юзер
+      // натисне "Показати ще" повторно.
+    } finally {
+      if (mounted) setState(() => _loadingMore = false);
     }
   }
 
@@ -451,31 +503,47 @@ class _TimeCapsulesScreenState extends State<TimeCapsulesScreen> {
   }
 
   Widget _buildLetterList(AppLocalizations l10n) {
-    return ListView.builder(
+    final myId = _supabase.auth.currentUser!.id;
+    return ListView(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
-      itemCount: _letters.length,
-      itemBuilder: (context, index) {
-        final letter = _letters[index];
-        final myId = _supabase.auth.currentUser!.id;
-        final myState = letter.stateFor(myId);
-        // Автор може передумати будь-коли; отримувач — лише
-        // прочитавши, щоб не стерти чужу працю навіть не глянувши.
-        final canDelete =
-            letter.authorId == myId || myState == _LetterState.opened;
-        return _LetterRow(
-          letter: letter,
-          myId: myId,
-          onTap: () => _openLetter(letter),
-          onDelete: canDelete ? () => _confirmDelete(letter) : null,
-          // "Новий" для щойно розкритого — той самий виняток, що й
-          // бейдж на меню: не для автора, що просто не перечитує
-          // вже надісланий другові лист (не потребує його уваги).
-          showNewDot:
-              _newlyReceivedIds.contains(letter.id) ||
-              (myState == _LetterState.unlockedUnread &&
-                  (letter.recipientId == null || letter.authorId != myId)),
-        );
-      },
+      children: [
+        for (final letter in _letters)
+          _LetterRow(
+            letter: letter,
+            myId: myId,
+            onTap: () => _openLetter(letter),
+            // Автор може передумати будь-коли; отримувач — лише
+            // прочитавши, щоб не стерти чужу працю навіть не глянувши.
+            onDelete:
+                letter.authorId == myId ||
+                    letter.stateFor(myId) == _LetterState.opened
+                ? () => _confirmDelete(letter)
+                : null,
+            // "Новий" для щойно розкритого — той самий виняток, що й
+            // бейдж на меню: не для автора, що просто не перечитує вже
+            // надісланий другові лист (не потребує його уваги).
+            showNewDot:
+                _newlyReceivedIds.contains(letter.id) ||
+                (letter.stateFor(myId) == _LetterState.unlockedUnread &&
+                    (letter.recipientId == null || letter.authorId != myId)),
+          ),
+        if (_hasMore)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            child: Center(
+              child: _loadingMore
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : TextButton(
+                      onPressed: _loadMore,
+                      child: Text(l10n.showMore),
+                    ),
+            ),
+          ),
+      ],
     );
   }
 }
