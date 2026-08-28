@@ -184,6 +184,13 @@ class _PhotoRepositionScreenState extends State<PhotoRepositionScreen> {
                                 naturalDimension: _naturalSize!.width,
                                 coverScale: coverScale,
                               );
+                              debugPrint(
+                                'reposition dx=${details.focalPointDelta.dx} '
+                                'scale=$_scale coverScale=$coverScale '
+                                'naturalW=${_naturalSize!.width} '
+                                'boxW=${constraints.maxWidth} '
+                                'hOverflow=$hOverflow alignX(before)=$_alignX',
+                              );
                               if (hOverflow != null) {
                                 _alignX =
                                     (_alignX -
