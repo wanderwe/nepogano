@@ -320,6 +320,12 @@ abstract class AppLocalizations {
   /// **'Перетягни фото вгору чи вниз або зведи пальці, щоб наблизити'**
   String get repositionPhotoHint;
 
+  /// No description provided for @repositionFeedCropHint.
+  ///
+  /// In uk, this message translates to:
+  /// **'Затемнене видно лише в картці дня — у стрічці й у друзів показується середина'**
+  String get repositionFeedCropHint;
+
   /// No description provided for @repositionPhotoTooltip.
   ///
   /// In uk, this message translates to:

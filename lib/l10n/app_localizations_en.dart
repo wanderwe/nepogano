@@ -125,6 +125,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'Drag the photo up or down, or pinch to zoom in';
 
   @override
+  String get repositionFeedCropHint =>
+      'The dimmed part only shows on the day card — the feed and friends\' guesses show the middle';
+
+  @override
   String get repositionPhotoTooltip => 'Reposition photo';
 
   @override

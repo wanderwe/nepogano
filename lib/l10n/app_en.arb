@@ -41,6 +41,7 @@
   "removePhotoTooltip": "Remove photo",
   "repositionPhoto": "Reposition photo",
   "repositionPhotoHint": "Drag the photo up or down, or pinch to zoom in",
+  "repositionFeedCropHint": "The dimmed part only shows on the day card — the feed and friends' guesses show the middle",
   "repositionPhotoTooltip": "Reposition photo",
 
   "history": "History",

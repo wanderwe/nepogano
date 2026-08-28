@@ -108,6 +108,12 @@ class _PhotoRepositionScreenState extends State<PhotoRepositionScreen> {
                 textAlign: TextAlign.center,
                 style: const TextStyle(fontSize: 13, color: AppColors.inkMuted),
               ),
+              const SizedBox(height: 4),
+              Text(
+                l10n.repositionFeedCropHint,
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontSize: 12, color: AppColors.inkMuted),
+              ),
               const SizedBox(height: 24),
               AspectRatio(
                 aspectRatio: kPhotoAspectRatio,
@@ -154,13 +160,21 @@ class _PhotoRepositionScreenState extends State<PhotoRepositionScreen> {
                             }
                           });
                         },
-                        child: ScaledPhoto(
-                          scale: _scale,
-                          child: Image(
-                            image: widget.image,
-                            fit: BoxFit.cover,
-                            alignment: Alignment(0, _alignY),
-                          ),
+                        child: Stack(
+                          fit: StackFit.expand,
+                          children: [
+                            ScaledPhoto(
+                              scale: _scale,
+                              child: Image(
+                                image: widget.image,
+                                fit: BoxFit.cover,
+                                alignment: Alignment(0, _alignY),
+                              ),
+                            ),
+                            IgnorePointer(
+                              child: _FeedCropOverlay(alignY: _alignY),
+                            ),
+                          ],
                         ),
                       ),
                     );
@@ -180,6 +194,61 @@ class _PhotoRepositionScreenState extends State<PhotoRepositionScreen> {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// Затемнює зверху й знизу квадратної рамки позиціювання ту частину, яку
+/// показує ЛИШЕ картка дня (`kPhotoAspectRatio` — квадрат) — стрічка,
+/// друзі й учасники кола бачать вужчу [kCompactPhotoAspectRatio] (4:3),
+/// тому та сама позиція/зум може виглядати добре в картці дня, але
+/// зрізати важливе (наприклад, голову) у компактному перегляді. Юзер
+/// раніше дізнавався про це лише постфактум, побачивши обрізаний
+/// прев'ю в Історії чи в друга.
+///
+/// Формула виведена геометрично, не виміряна на пікселях фото: обидві
+/// рамки рендерять те саме фото на ту саму ширину через `BoxFit.cover`,
+/// тож натуральний розмір фото скорочується з формули — лишається
+/// тільки співвідношення висот рамок. Похибка можлива тільки для дуже
+/// вузьких/панорамних фото, де ширина насправді НЕ є "зв'язуючим"
+/// виміром для одного з двох `BoxFit.cover` — прийнятний компроміс для
+/// візуальної підказки, не для точного розрахунку.
+class _FeedCropOverlay extends StatelessWidget {
+  final double alignY;
+
+  const _FeedCropOverlay({required this.alignY});
+
+  @override
+  Widget build(BuildContext context) {
+    final compactHeightFraction = kPhotoAspectRatio / kCompactPhotoAspectRatio;
+    final topFraction = (1 - compactHeightFraction) * (alignY + 1) / 2;
+    final bottomFraction = topFraction + compactHeightFraction;
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final topHeight = constraints.maxHeight * topFraction;
+        final bottomHeight = constraints.maxHeight * (1 - bottomFraction);
+        const dim = Color(0x99000000);
+        const lineColor = AppColors.accent;
+
+        return Column(
+          children: [
+            SizedBox(
+              height: topHeight,
+              width: double.infinity,
+              child: const ColoredBox(color: dim),
+            ),
+            Container(height: 1.5, color: lineColor),
+            SizedBox(height: constraints.maxHeight - topHeight - bottomHeight),
+            Container(height: 1.5, color: lineColor),
+            SizedBox(
+              height: bottomHeight,
+              width: double.infinity,
+              child: const ColoredBox(color: dim),
+            ),
+          ],
+        );
+      },
     );
   }
 }
