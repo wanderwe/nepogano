@@ -241,7 +241,7 @@ Future<Uint8List> _buildReportBytes(_ReportData data) async {
         ),
         pw.SizedBox(height: 24),
         if (data.sortedAsc.isNotEmpty)
-          _buildNotesSection(data, headingFont, contentWidth),
+          ..._buildNotesSection(data, headingFont, contentWidth),
       ],
     ),
   );
@@ -420,35 +420,40 @@ pw.Widget _buildMoodDistribution(
 // тільки цифри/логіка, без `AppLocalizations`.
 
 // Повна ширина сторінки на телефоні читалась як суцільна нескінченна
-// стрічка (рядки завдовжки на весь екран) — звужуємо праву частину кожного
-// запису через фіксований відступ. Раніше цей відступ рахувався через
-// `LayoutBuilder` навколо КОЖНОГО запису окремо — виглядало логічно (один
-// запис, одна ширина), але `LayoutBuilder` не є `SpanningWidget` (на
-// відміну від `Column`, яка ним є), тож обгорнутий запис ставав АТОМАРНИМ
-// блоком: якщо не влазив цілком у залишок сторінки, MultiPage кидав його
-// ЦІЛИКОМ на наступну — порожня половина сторінки з одним довгим записом,
-// точнісінько як з `Partitions` раніше. Рішення те саме за духом: рахувати
-// ширину контенту заздалегідь, з відомих `PdfPageFormat`/полів (`_buildReportBytes`),
-// а не через LayoutBuilder — тоді кожен запис лишається звичайним
-// вкладеним `Padding`/`Column`, і сторінки розбиваються між записами, а не
-// довкола випадкового LayoutBuilder-блока.
-pw.Widget _buildNotesSection(
+// стрічка — звужуємо праву частину через фіксований відступ.
+//
+// Дві окремі речі довелось виправляти, обидві виявились не тим, що
+// здавалось спочатку:
+// (1) `pw.Text` НЕ спанситься між сторінками за замовчуванням —
+//     `overflow` за замовчуванням `TextOverflow.visible`, а `canSpan`
+//     дослівно перевіряє `overflow == TextOverflow.span`. Без явного
+//     `overflow: pw.TextOverflow.span` довгий текст завжди трактується
+//     як нероздільний блок, хай як його не обгортай.
+// (2) Навіть зі `span`, текст мусить бути ПРЯМИМ елементом списку, який
+//     обробляє сам `MultiPage` (`build:` нижче) — не вкладеним у
+//     `Column`. `Column.layout()` міряє кожну дитину на її ПОВНУ
+//     природну висоту (жодного обмеження по висоті на дочірні елементи
+//     під час звичайного проходу) і просто вирішує, скільки цілих
+//     дочірніх елементів влізло — вона не вміє "заглянути всередину"
+//     однієї дитини й розбити САМЕ її. Розбиття всередині одного
+//     елемента вміє лише `MultiPage.generate()` для СВОЇХ прямих дітей.
+//     Тому кожен запис (рядок дати + нотатка) — окремі елементи
+//     плоского списку, не згруповані в один `Column` на запис.
+List<pw.Widget> _buildNotesSection(
   _ReportData data,
   pw.Font headingFont,
   double contentWidth,
 ) {
-  return pw.Column(
-    crossAxisAlignment: pw.CrossAxisAlignment.start,
-    children: [
-      pw.Text(
-        data.notesSectionLabel,
-        style: pw.TextStyle(font: headingFont, fontSize: 15, color: _pdfInk),
-      ),
-      pw.SizedBox(height: 10),
-      for (final entry in data.sortedAsc)
-        _buildNoteEntry(entry, contentWidth * 0.5),
-    ],
-  );
+  final rightGap = contentWidth * 0.5;
+  return [
+    pw.Text(
+      data.notesSectionLabel,
+      style: pw.TextStyle(font: headingFont, fontSize: 15, color: _pdfInk),
+    ),
+    pw.SizedBox(height: 10),
+    for (final entry in data.sortedAsc)
+      ..._buildNoteEntryWidgets(entry, rightGap),
+  ];
 }
 
 // Фото навмисно НЕ вбудовуються (пробували — і мініатюру під текстом, і
@@ -456,38 +461,40 @@ pw.Widget _buildNotesSection(
 // невдало: під текстом розтягувало кожен запис і ламало ритм читання
 // списку, поруч — не завжди вдало компонувалось з дуже різною довжиною
 // нотаток). Лишили голий текст, найчитабельніший варіант із перевірених.
-pw.Widget _buildNoteEntry(CheckinEntry entry, double rightGap) {
-  return pw.Padding(
-    padding: pw.EdgeInsets.only(bottom: 10, right: rightGap),
-    child: pw.Column(
-      crossAxisAlignment: pw.CrossAxisAlignment.start,
-      children: [
-        pw.Row(
-          children: [
-            pw.Container(
-              width: 7,
-              height: 7,
-              margin: const pw.EdgeInsets.only(right: 6),
-              decoration: pw.BoxDecoration(
-                color: _toPdfColor(entry.mood.color),
-                shape: pw.BoxShape.circle,
-              ),
-            ),
-            pw.Text(
-              '${entry.createdAt.day}.${entry.createdAt.month}.${entry.createdAt.year}',
-              style: pw.TextStyle(fontSize: 10, color: _pdfInkMuted),
-            ),
-          ],
-        ),
-        if (entry.note != null && entry.note!.trim().isNotEmpty)
-          pw.Padding(
-            padding: const pw.EdgeInsets.only(top: 3, left: 13),
-            child: pw.Text(
-              entry.note!.trim(),
-              style: pw.TextStyle(fontSize: 11, color: _pdfInk),
+List<pw.Widget> _buildNoteEntryWidgets(CheckinEntry entry, double rightGap) {
+  final hasNote = entry.note != null && entry.note!.trim().isNotEmpty;
+  return [
+    pw.Padding(
+      padding: pw.EdgeInsets.only(right: rightGap, bottom: hasNote ? 3 : 10),
+      child: pw.Row(
+        children: [
+          pw.Container(
+            width: 7,
+            height: 7,
+            margin: const pw.EdgeInsets.only(right: 6),
+            decoration: pw.BoxDecoration(
+              color: _toPdfColor(entry.mood.color),
+              shape: pw.BoxShape.circle,
             ),
           ),
-      ],
+          pw.Text(
+            '${entry.createdAt.day}.${entry.createdAt.month}.${entry.createdAt.year}',
+            style: pw.TextStyle(fontSize: 10, color: _pdfInkMuted),
+          ),
+        ],
+      ),
     ),
-  );
+    if (hasNote)
+      pw.Padding(
+        padding: pw.EdgeInsets.only(left: 13, right: rightGap, bottom: 10),
+        child: pw.Text(
+          entry.note!.trim(),
+          // span — інакше цей запис (як і будь-який довгий) завжди
+          // трактується як нероздільний блок і цілком стрибає на
+          // наступну сторінку, лишаючи порожній залишок попередньої.
+          overflow: pw.TextOverflow.span,
+          style: pw.TextStyle(fontSize: 11, color: _pdfInk),
+        ),
+      ),
+  ];
 }
