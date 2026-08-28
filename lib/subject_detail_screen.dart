@@ -29,6 +29,7 @@ class _SubjectDayEntry {
   final MoodLevel mood;
   final String? note;
   final String? photoPath;
+  final double photoAlignX;
   final double photoAlignY;
   final double photoScale;
   final DateTime date;
@@ -38,6 +39,7 @@ class _SubjectDayEntry {
     required this.mood,
     required this.note,
     required this.photoPath,
+    required this.photoAlignX,
     required this.photoAlignY,
     required this.photoScale,
     required this.date,
@@ -131,7 +133,7 @@ class _SubjectDetailScreenState extends State<SubjectDetailScreen> {
     final checkinRows = await _supabase
         .from('subject_checkins')
         .select(
-          'id, mood, note, photo_path, photo_align_y, photo_scale, created_at',
+          'id, mood, note, photo_path, photo_align_x, photo_align_y, photo_scale, created_at',
         )
         .eq('subject_id', widget.subjectId)
         .gte('created_at', sinceUtc)
@@ -149,6 +151,7 @@ class _SubjectDetailScreenState extends State<SubjectDetailScreen> {
           mood: moodFromDbValue(row['mood'] as String),
           note: row['note'] as String?,
           photoPath: row['photo_path'] as String?,
+          photoAlignX: (row['photo_align_x'] as num?)?.toDouble() ?? 0,
           photoAlignY: (row['photo_align_y'] as num?)?.toDouble() ?? 0,
           photoScale: (row['photo_scale'] as num?)?.toDouble() ?? 1,
           date: date,
@@ -416,7 +419,10 @@ class _SubjectDetailScreenState extends State<SubjectDetailScreen> {
                         child: Image.memory(
                           snapshot.data!,
                           fit: BoxFit.cover,
-                          alignment: Alignment(0, entry.photoAlignY),
+                          alignment: Alignment(
+                            entry.photoAlignX,
+                            entry.photoAlignY,
+                          ),
                         ),
                       ),
                     ),

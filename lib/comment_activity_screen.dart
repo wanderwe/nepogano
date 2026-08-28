@@ -380,7 +380,7 @@ class _SingleEntryScreenState extends State<SingleEntryScreen> {
     try {
       final myId = _supabase.auth.currentUser!.id;
       final columns =
-          'id, mood, note, created_at, photo_path, photo_align_y, photo_scale, update_count'
+          'id, mood, note, created_at, photo_path, photo_align_x, photo_align_y, photo_scale, update_count'
           '${widget.isSubject ? ', author_id' : ', user_id'}';
       final row = await _supabase
           .from(_table)
@@ -421,6 +421,7 @@ class _SingleEntryScreenState extends State<SingleEntryScreen> {
           mood: moodFromDbValue(row['mood'] as String),
           note: row['note'] as String?,
           photoPath: row['photo_path'] as String?,
+          photoAlignX: (row['photo_align_x'] as num?)?.toDouble() ?? 0,
           photoAlignY: (row['photo_align_y'] as num?)?.toDouble() ?? 0,
           photoScale: (row['photo_scale'] as num?)?.toDouble() ?? 1,
           updateCount: (row['update_count'] as num?)?.toInt() ?? 0,
@@ -565,7 +566,10 @@ class _SingleEntryScreenState extends State<SingleEntryScreen> {
                       child: Image.memory(
                         snapshot.data!,
                         fit: BoxFit.cover,
-                        alignment: Alignment(0, entry.photoAlignY),
+                        alignment: Alignment(
+                          entry.photoAlignX,
+                          entry.photoAlignY,
+                        ),
                       ),
                     ),
                   ),

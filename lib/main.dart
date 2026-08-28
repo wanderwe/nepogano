@@ -764,6 +764,7 @@ class _CheckInScreenState extends State<CheckInScreen>
   String? _existingPhotoPath;
   File? _pickedPhotoFile;
   bool _removePhoto = false;
+  double _photoAlignX = 0;
   double _photoAlignY = 0;
   double _photoScale = 1;
 
@@ -1053,6 +1054,7 @@ class _CheckInScreenState extends State<CheckInScreen>
       _existingPhotoPath = null;
       _pickedPhotoFile = null;
       _removePhoto = false;
+      _photoAlignX = 0;
       _photoAlignY = 0;
       _photoScale = 1;
       _updateCount = 0;
@@ -1721,7 +1723,7 @@ class _CheckInScreenState extends State<CheckInScreen>
 
     try {
       final columns =
-          'id, mood, note, created_at, photo_path, photo_align_y, photo_scale, update_count'
+          'id, mood, note, created_at, photo_path, photo_align_x, photo_align_y, photo_scale, update_count'
           '${_activeSubjectId != null ? ', author_id' : ''}';
       final rows = await _supabase
           .from(_table)
@@ -1759,6 +1761,7 @@ class _CheckInScreenState extends State<CheckInScreen>
           row['created_at'] as String,
         ).toLocal();
         _existingPhotoPath = row['photo_path'] as String?;
+        _photoAlignX = (row['photo_align_x'] as num?)?.toDouble() ?? 0;
         _photoAlignY = (row['photo_align_y'] as num?)?.toDouble() ?? 0;
         _photoScale = (row['photo_scale'] as num?)?.toDouble() ?? 1;
         _updateCount = (row['update_count'] as num?)?.toInt() ?? 0;
@@ -1806,7 +1809,7 @@ class _CheckInScreenState extends State<CheckInScreen>
     if (picked == null || !mounted) return;
 
     final file = File(picked.path);
-    final result = await Navigator.of(context).push<(double, double)>(
+    final result = await Navigator.of(context).push<(double, double, double)>(
       MaterialPageRoute(
         builder: (_) => PhotoRepositionScreen(image: FileImage(file)),
       ),
@@ -1819,17 +1822,19 @@ class _CheckInScreenState extends State<CheckInScreen>
     if (result == null) return;
     setState(() {
       _pickedPhotoFile = file;
-      _photoAlignY = result.$1;
-      _photoScale = result.$2;
+      _photoAlignX = result.$1;
+      _photoAlignY = result.$2;
+      _photoScale = result.$3;
       _removePhoto = false;
     });
   }
 
   Future<void> _repositionPhoto(ImageProvider image) async {
-    final result = await Navigator.of(context).push<(double, double)>(
+    final result = await Navigator.of(context).push<(double, double, double)>(
       MaterialPageRoute(
         builder: (_) => PhotoRepositionScreen(
           image: image,
+          initialAlignX: _photoAlignX,
           initialAlignY: _photoAlignY,
           initialScale: _photoScale,
         ),
@@ -1837,8 +1842,9 @@ class _CheckInScreenState extends State<CheckInScreen>
     );
     if (result != null && mounted) {
       setState(() {
-        _photoAlignY = result.$1;
-        _photoScale = result.$2;
+        _photoAlignX = result.$1;
+        _photoAlignY = result.$2;
+        _photoScale = result.$3;
       });
     }
   }
@@ -1875,6 +1881,7 @@ class _CheckInScreenState extends State<CheckInScreen>
     setState(() {
       _pickedPhotoFile = null;
       _removePhoto = _existingPhotoPath != null;
+      _photoAlignX = 0;
       _photoAlignY = 0;
       _photoScale = 1;
     });
@@ -1889,7 +1896,7 @@ class _CheckInScreenState extends State<CheckInScreen>
           child: Image(
             image: image,
             fit: BoxFit.cover,
-            alignment: Alignment(0, _photoAlignY),
+            alignment: Alignment(_photoAlignX, _photoAlignY),
           ),
         ),
         onRemove: _clearPhoto,
@@ -1926,7 +1933,7 @@ class _CheckInScreenState extends State<CheckInScreen>
               child: Image(
                 image: image,
                 fit: BoxFit.cover,
-                alignment: Alignment(0, _photoAlignY),
+                alignment: Alignment(_photoAlignX, _photoAlignY),
               ),
             ),
             onRemove: _clearPhoto,
@@ -1970,6 +1977,7 @@ class _CheckInScreenState extends State<CheckInScreen>
             ? null
             : _noteController.text.trim(),
         photoPath: _existingPhotoPath,
+        photoAlignX: _photoAlignX,
         photoAlignY: _photoAlignY,
         photoScale: _photoScale,
         updateCount: _updateCount,
@@ -2138,7 +2146,7 @@ class _CheckInScreenState extends State<CheckInScreen>
                         child: Image.memory(
                           snapshot.data!,
                           fit: BoxFit.cover,
-                          alignment: Alignment(0, _photoAlignY),
+                          alignment: Alignment(_photoAlignX, _photoAlignY),
                         ),
                       ),
                     ),
@@ -2268,6 +2276,7 @@ class _CheckInScreenState extends State<CheckInScreen>
             ? null
             : _noteController.text.trim(),
         'photo_path': photoPath,
+        'photo_align_x': photoPath == null ? 0 : _photoAlignX,
         'photo_align_y': photoPath == null ? 0 : _photoAlignY,
         'photo_scale': photoPath == null ? 1 : _photoScale,
         // 'user_id' у checkins має дефолт auth.uid(), тому передавати не

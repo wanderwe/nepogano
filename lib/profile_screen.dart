@@ -36,6 +36,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String? _friendCode;
   String? _avatarPath;
   Uint8List? _avatarBytes;
+  double _avatarAlignX = 0;
   double _avatarAlignY = 0;
   double _avatarScale = 1;
   bool _uploadingAvatar = false;
@@ -50,7 +51,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final row = await _supabase
         .from('profiles')
         .select(
-          'display_name, friend_code, avatar_path, avatar_align_y, avatar_scale',
+          'display_name, friend_code, avatar_path, avatar_align_x, avatar_align_y, avatar_scale',
         )
         .eq('user_id', _supabase.auth.currentUser!.id)
         .maybeSingle();
@@ -59,6 +60,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       _displayName = row?['display_name'] as String?;
       _friendCode = row?['friend_code'] as String?;
       _avatarPath = row?['avatar_path'] as String?;
+      _avatarAlignX = (row?['avatar_align_x'] as num?)?.toDouble() ?? 0;
       _avatarAlignY = (row?['avatar_align_y'] as num?)?.toDouble() ?? 0;
       _avatarScale = (row?['avatar_scale'] as num?)?.toDouble() ?? 1;
       _loading = false;
@@ -131,14 +133,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (picked == null || !mounted) return;
 
     final file = File(picked.path);
-    final result = await Navigator.of(context).push<(double, double)>(
+    final result = await Navigator.of(context).push<(double, double, double)>(
       MaterialPageRoute(
         builder: (_) => PhotoRepositionScreen(image: FileImage(file)),
       ),
     );
     if (result == null || !mounted) return;
-    final alignY = result.$1;
-    final scale = result.$2;
+    final alignX = result.$1;
+    final alignY = result.$2;
+    final scale = result.$3;
 
     setState(() => _uploadingAvatar = true);
     try {
@@ -147,6 +150,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           .from('profiles')
           .update({
             'avatar_path': path,
+            'avatar_align_x': alignX,
             'avatar_align_y': alignY,
             'avatar_scale': scale,
           })
@@ -156,6 +160,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         setState(() {
           _avatarPath = path;
           _avatarBytes = bytes;
+          _avatarAlignX = alignX;
           _avatarAlignY = alignY;
           _avatarScale = scale;
           _uploadingAvatar = false;
@@ -176,10 +181,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Future<void> _repositionExistingAvatar() async {
     final bytes = _avatarBytes;
     if (bytes == null) return;
-    final result = await Navigator.of(context).push<(double, double)>(
+    final result = await Navigator.of(context).push<(double, double, double)>(
       MaterialPageRoute(
         builder: (_) => PhotoRepositionScreen(
           image: MemoryImage(bytes),
+          initialAlignX: _avatarAlignX,
           initialAlignY: _avatarAlignY,
           initialScale: _avatarScale,
         ),
@@ -187,15 +193,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
     if (result == null || !mounted) return;
 
-    final alignY = result.$1;
-    final scale = result.$2;
+    final alignX = result.$1;
+    final alignY = result.$2;
+    final scale = result.$3;
     try {
       await _supabase
           .from('profiles')
-          .update({'avatar_align_y': alignY, 'avatar_scale': scale})
+          .update({
+            'avatar_align_x': alignX,
+            'avatar_align_y': alignY,
+            'avatar_scale': scale,
+          })
           .eq('user_id', _supabase.auth.currentUser!.id);
       if (mounted) {
         setState(() {
+          _avatarAlignX = alignX;
           _avatarAlignY = alignY;
           _avatarScale = scale;
         });
@@ -235,12 +247,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
       await deleteAvatar();
       await _supabase
           .from('profiles')
-          .update({'avatar_path': null, 'avatar_align_y': 0, 'avatar_scale': 1})
+          .update({
+            'avatar_path': null,
+            'avatar_align_x': 0,
+            'avatar_align_y': 0,
+            'avatar_scale': 1,
+          })
           .eq('user_id', _supabase.auth.currentUser!.id);
       if (mounted) {
         setState(() {
           _avatarPath = null;
           _avatarBytes = null;
+          _avatarAlignX = 0;
           _avatarAlignY = 0;
           _avatarScale = 1;
           _uploadingAvatar = false;
@@ -484,7 +502,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       child: Image.memory(
                         _avatarBytes!,
                         fit: BoxFit.cover,
-                        alignment: Alignment(0, _avatarAlignY),
+                        alignment: Alignment(_avatarAlignX, _avatarAlignY),
                       ),
                     )
                   : Center(child: Text(initial, style: appSerif(fontSize: 32))),

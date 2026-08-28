@@ -467,7 +467,10 @@ class _DayCard extends StatelessWidget {
                       child: Image.memory(
                         photoBytes!,
                         fit: BoxFit.cover,
-                        alignment: Alignment(0, entry.photoAlignY),
+                        alignment: Alignment(
+                          entry.photoAlignX,
+                          entry.photoAlignY,
+                        ),
                       ),
                     ),
                     // Знизу — темніший і вищий скрім (там основний текст,

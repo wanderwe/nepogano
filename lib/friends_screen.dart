@@ -47,6 +47,7 @@ class _FriendDayEntry {
   final MoodLevel mood;
   final String? note;
   final String? photoPath;
+  final double photoAlignX;
   final double photoAlignY;
   final double photoScale;
   final DateTime date;
@@ -57,6 +58,7 @@ class _FriendDayEntry {
     required this.mood,
     required this.note,
     required this.photoPath,
+    required this.photoAlignX,
     required this.photoAlignY,
     required this.photoScale,
     required this.date,
@@ -72,6 +74,7 @@ class Friend {
   final String displayEmail;
   final String? displayName;
   final String? avatarPath;
+  final double avatarAlignX;
   final double avatarAlignY;
   final double avatarScale;
   final MoodLevel? latestMood;
@@ -89,6 +92,7 @@ class Friend {
     required this.displayEmail,
     required this.displayName,
     required this.avatarPath,
+    this.avatarAlignX = 0,
     this.avatarAlignY = 0,
     this.avatarScale = 1,
     required this.latestMood,
@@ -630,7 +634,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
         final nameRows = await _supabase
             .from('profiles')
             .select(
-              'user_id, display_name, avatar_path, avatar_align_y, avatar_scale',
+              'user_id, display_name, avatar_path, avatar_align_x, avatar_align_y, avatar_scale',
             )
             .inFilter('user_id', friendIds);
         final displayNameByUser = <String, String?>{
@@ -640,6 +644,11 @@ class _FriendsScreenState extends State<FriendsScreen> {
         final avatarPathByUser = <String, String?>{
           for (final row in nameRows)
             row['user_id'] as String: row['avatar_path'] as String?,
+        };
+        final avatarAlignXByUser = <String, double>{
+          for (final row in nameRows)
+            row['user_id'] as String:
+                (row['avatar_align_x'] as num?)?.toDouble() ?? 0,
         };
         final avatarAlignYByUser = <String, double>{
           for (final row in nameRows)
@@ -693,6 +702,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
               displayEmail: friendBasics[friendUserId] ?? '',
               displayName: displayNameByUser[friendUserId],
               avatarPath: avatarPathByUser[friendUserId],
+              avatarAlignX: avatarAlignXByUser[friendUserId] ?? 0,
               avatarAlignY: avatarAlignYByUser[friendUserId] ?? 0,
               avatarScale: avatarScaleByUser[friendUserId] ?? 1,
               latestMood: latestMoodByUser[friendUserId],
@@ -1463,7 +1473,10 @@ class _FriendsScreenState extends State<FriendsScreen> {
                 child: Image.memory(
                   bytes,
                   fit: BoxFit.cover,
-                  alignment: Alignment(0, friend.avatarAlignY),
+                  alignment: Alignment(
+                    friend.avatarAlignX,
+                    friend.avatarAlignY,
+                  ),
                 ),
               )
             : Center(
@@ -1762,7 +1775,7 @@ class _PersonDetailScreenState extends State<PersonDetailScreen> {
     final checkinRows = await _supabase
         .from('checkins')
         .select(
-          'id, mood, note, photo_path, photo_align_y, photo_scale, created_at',
+          'id, mood, note, photo_path, photo_align_x, photo_align_y, photo_scale, created_at',
         )
         .eq('user_id', widget.userId)
         .gte('created_at', sinceUtc)
@@ -1781,6 +1794,7 @@ class _PersonDetailScreenState extends State<PersonDetailScreen> {
           mood: moodFromDbValue(row['mood'] as String),
           note: row['note'] as String?,
           photoPath: row['photo_path'] as String?,
+          photoAlignX: (row['photo_align_x'] as num?)?.toDouble() ?? 0,
           photoAlignY: (row['photo_align_y'] as num?)?.toDouble() ?? 0,
           photoScale: (row['photo_scale'] as num?)?.toDouble() ?? 1,
           date: date,
@@ -2105,7 +2119,10 @@ class _PersonDetailScreenState extends State<PersonDetailScreen> {
                         child: Image.memory(
                           snapshot.data!,
                           fit: BoxFit.cover,
-                          alignment: Alignment(0, entry.photoAlignY),
+                          alignment: Alignment(
+                            entry.photoAlignX,
+                            entry.photoAlignY,
+                          ),
                         ),
                       ),
                     ),

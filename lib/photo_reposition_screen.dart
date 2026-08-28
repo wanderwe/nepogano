@@ -5,19 +5,22 @@ import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'l10n/app_localizations.dart';
 import 'style.dart';
 
-/// Дає перетягнути фото вертикально й наблизити пінчем у рамці тієї ж
-/// пропорції (`kPhotoAspectRatio`), що й картка дня — щоб підняти/опустити
-/// видиму частину або наблизити, якщо BoxFit.cover десь зрізав важливе
-/// (наприклад, голову). Повертає `(alignY, scale)` через Navigator.pop,
-/// або null якщо закрито без змін.
+/// Дає перетягнути фото вертикально Й ГОРИЗОНТАЛЬНО та наблизити пінчем у
+/// рамці тієї ж пропорції (`kPhotoAspectRatio`), що й картка дня — щоб
+/// підняти/опустити/зсунути видиму частину або наблизити, якщо BoxFit.cover
+/// десь зрізав важливе (наприклад, голову чи когось скраю кадру). Повертає
+/// `(alignX, alignY, scale)` через Navigator.pop, або null якщо закрито
+/// без змін.
 class PhotoRepositionScreen extends StatefulWidget {
   final ImageProvider image;
+  final double initialAlignX;
   final double initialAlignY;
   final double initialScale;
 
   const PhotoRepositionScreen({
     super.key,
     required this.image,
+    this.initialAlignX = 0,
     this.initialAlignY = 0,
     this.initialScale = 1,
   });
@@ -27,6 +30,7 @@ class PhotoRepositionScreen extends StatefulWidget {
 }
 
 class _PhotoRepositionScreenState extends State<PhotoRepositionScreen> {
+  late double _alignX = widget.initialAlignX;
   late double _alignY = widget.initialAlignY;
   late double _scale = widget.initialScale;
   double _gestureStartScale = 1;
@@ -60,18 +64,33 @@ class _PhotoRepositionScreenState extends State<PhotoRepositionScreen> {
     super.dispose();
   }
 
-  /// Скільки пікселів фото (у координатах рамки) звисає зверху й знизу
-  /// разом після BoxFit.cover у квадратну рамку розміром [boxSize] — саме
-  /// цю відстань перетягування має "з'їсти" цілком, від -1 до +1. Null,
-  /// поки реальний розмір фото ще не резолвнувся, або якщо звисати
-  /// нічому (майже квадратне чи ширше за рамку фото — панорамувати
-  /// вертикально просто нема куди).
-  double? _verticalOverflow(double boxSize) {
+  /// Скільки пікселів фото (у координатах рамки) звисає з відповідного боку
+  /// разом після BoxFit.cover+`_scale` у квадратну рамку розміром
+  /// [boxSize] — саме цю відстань перетягування має "з'їсти" цілком, від -1
+  /// до +1. Null, поки реальний розмір фото ще не резолвнувся, або якщо
+  /// звисати нічому (панорамувати в цей бік просто нема куди).
+  ///
+  /// На відміну від "базового" overflow при масштабі 1, тут МНОЖИМО на
+  /// поточний `_scale` ВСЕРЕДИНІ формули (не окремим множником у виклику,
+  /// як було раніше лише для вертикалі) — бо для "тісного" виміру фото
+  /// (типово ширина в портретному фото) базовий overflow точно 0, і
+  /// множення нуля на будь-який `_scale` так і лишилось би нулем. Реальний
+  /// horizontal overflow з'являється лише ПІСЛЯ наближення пінчем
+  /// (`Transform.scale` в `ScaledPhoto` розтягує вже "щільно" підігнаний
+  /// вимір за межі рамки) — формула нижче це враховує з самого початку.
+  double? _overflow({
+    required double boxSize,
+    required double naturalDimension,
+    required double coverScale,
+  }) {
+    final overflow = naturalDimension * coverScale * _scale - boxSize;
+    return overflow > 0 ? overflow : null;
+  }
+
+  double? _coverScale(double boxWidth, double boxHeight) {
     final size = _naturalSize;
     if (size == null || size.width <= 0 || size.height <= 0) return null;
-    final coverScale = math.max(boxSize / size.width, boxSize / size.height);
-    final overflow = size.height * coverScale - boxSize;
-    return overflow > 0 ? overflow : null;
+    return math.max(boxWidth / size.width, boxHeight / size.height);
   }
 
   @override
@@ -125,32 +144,54 @@ class _PhotoRepositionScreenState extends State<PhotoRepositionScreen> {
                             );
                             // Мінус, не плюс: фото має "триматись" пальця,
                             // як у стандартних фоторедакторах (Instagram,
-                            // Google Photos) — тягнеш вниз, і сама картинка
-                            // з'їжджає вниз під пальцем, відкриваючи те, що
-                            // було зверху.
+                            // Google Photos) — тягнеш, і сама картинка
+                            // з'їжджає під пальцем, відкриваючи те, що було
+                            // приховано за краєм.
                             //
                             // Ділимо на РЕАЛЬНИЙ overflow конкретного фото
-                            // (не на висоту рамки) і додатково на _scale —
-                            // інакше швидкість перетягування "стрибала" між
-                            // фото різних пропорцій (майже квадратне фото
-                            // майже нема куди панорамувати — те саме
-                            // перетягування пальцем відчувалось як "повільно"
-                            // проти витягнутого портрета), і додатково
-                            // "прискорювалась" саму собою, щойно
-                            // наближуєш пінчем (Transform.scale в
-                            // ScaledPhoto множить видимий зсув). Формула
-                            // нижче тримає 1px пальця ≈ 1px видимого зсуву
-                            // завжди, незалежно від фото й поточного зуму.
-                            final overflow = _verticalOverflow(
+                            // (не на розмір рамки) — інакше швидкість
+                            // перетягування "стрибала" б між фото різних
+                            // пропорцій (майже квадратне фото мало куди
+                            // панорамувати — те саме перетягування пальцем
+                            // відчувалось би як "повільно" проти
+                            // витягнутого портрета). `_overflow` вже сам
+                            // враховує поточний `_scale` всередині формули,
+                            // тож тут його вдруге множити НЕ треба (на
+                            // відміну від старої версії саме для
+                            // вертикалі) — формула тримає 1px пальця ≈ 1px
+                            // видимого зсуву завжди, незалежно від фото чи
+                            // поточного зуму.
+                            final coverScale = _coverScale(
+                              constraints.maxWidth,
                               constraints.maxHeight,
                             );
-                            if (overflow != null) {
-                              _alignY =
-                                  (_alignY -
-                                          details.focalPointDelta.dy *
-                                              2 /
-                                              (overflow * _scale))
-                                      .clamp(-1.0, 1.0);
+                            if (coverScale != null) {
+                              final vOverflow = _overflow(
+                                boxSize: constraints.maxHeight,
+                                naturalDimension: _naturalSize!.height,
+                                coverScale: coverScale,
+                              );
+                              if (vOverflow != null) {
+                                _alignY =
+                                    (_alignY -
+                                            details.focalPointDelta.dy *
+                                                2 /
+                                                vOverflow)
+                                        .clamp(-1.0, 1.0);
+                              }
+                              final hOverflow = _overflow(
+                                boxSize: constraints.maxWidth,
+                                naturalDimension: _naturalSize!.width,
+                                coverScale: coverScale,
+                              );
+                              if (hOverflow != null) {
+                                _alignX =
+                                    (_alignX -
+                                            details.focalPointDelta.dx *
+                                                2 /
+                                                hOverflow)
+                                        .clamp(-1.0, 1.0);
+                              }
                             }
                           });
                         },
@@ -162,7 +203,7 @@ class _PhotoRepositionScreenState extends State<PhotoRepositionScreen> {
                               child: Image(
                                 image: widget.image,
                                 fit: BoxFit.cover,
-                                alignment: Alignment(0, _alignY),
+                                alignment: Alignment(_alignX, _alignY),
                               ),
                             ),
                             IgnorePointer(
@@ -179,7 +220,8 @@ class _PhotoRepositionScreenState extends State<PhotoRepositionScreen> {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: () => Navigator.of(context).pop((_alignY, _scale)),
+                  onPressed: () =>
+                      Navigator.of(context).pop((_alignX, _alignY, _scale)),
                   child: Text(l10n.done),
                 ),
               ),
