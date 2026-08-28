@@ -162,6 +162,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get howAreThingsToday => 'How\'s it going today?';
 
   @override
+  String get howAreThingsYesterday => 'How was yesterday?';
+
+  @override
+  String get backToToday => 'Back to today';
+
+  @override
+  String get yesterdayIntroTitle => 'Yesterday\'s entry';
+
+  @override
+  String get yesterdayIntroBody =>
+      'Missed yesterday? You can still create or fix yesterday\'s entry until noon today. After that it\'s closed for good.';
+
+  @override
   String get dailyReminderTitle => 'Nepogano';
 
   @override

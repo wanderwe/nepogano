@@ -310,6 +310,7 @@ const _onboardingSeenKey = 'onboarding_seen';
 const _installReferrerCheckedKey = 'install_referrer_checked';
 const _dailyReminderScheduledDateKey = 'daily_reminder_scheduled_date';
 const _subjectIntroSeenKey = 'subject_intro_seen';
+const _yesterdayIntroSeenKey = 'yesterday_intro_seen';
 
 class _AuthGateState extends State<AuthGate> {
   late final Stream<AuthState> _authStateStream;
@@ -740,6 +741,12 @@ class _CheckInScreenState extends State<CheckInScreen>
   bool _noteExpanded = false;
   Object? _todayEntryId;
   DateTime? _todayEntrySavedAt;
+  // null — звичайний режим "сьогодні". Інакше редагуємо конкретний
+  // минулий день (наразі єдиний випадок — вчора, у вікні до полудня, див.
+  // [_editableYesterday]). Уся "сьогоднішня" логіка (завантаження, save,
+  // заголовок) насправді працює через [_effectiveDate], не напряму через
+  // DateTime.now().
+  DateTime? _editingDate;
   List<CheckinEntry> _weekEntries = [];
   bool _hasCircleActivity = false;
   // Наскрізний сигнал — новий коментар на будь-якому МОЄМУ дні АБО
@@ -792,6 +799,18 @@ class _CheckInScreenState extends State<CheckInScreen>
   // очевидно, що це я).
   String? _authorName;
 
+  DateTime get _effectiveDate => _editingDate ?? DateTime.now();
+
+  /// Вчорашня дата, якщо зараз до полудня (локально) — інакше null, вікно
+  /// закрито. Один прозорий вираз замість дублювання цієї перевірки в
+  /// кожному місці, де вирішуємо, чи показувати підказку/дозволяти тап.
+  DateTime? get _editableYesterday {
+    final now = DateTime.now();
+    if (now.hour >= 12) return null;
+    final today = DateTime(now.year, now.month, now.day);
+    return today.subtract(const Duration(days: 1));
+  }
+
   // Сутності (дитина/улюбленець/інше) — той самий екран/ритуал, просто
   // перемкнутий на іншого адресата. null = веду власний чек-ін.
   List<Subject> _subjects = [];
@@ -817,7 +836,7 @@ class _CheckInScreenState extends State<CheckInScreen>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _visibleWeekStart = _mondayOf(DateTime.now());
-    _loadTodayEntry();
+    _loadEntryForEffectiveDate();
     _loadWeek();
     _checkAllActivityOnLoad();
     _loadSubjects();
@@ -1046,26 +1065,79 @@ class _CheckInScreenState extends State<CheckInScreen>
   void _switchSubject(String? id) {
     setState(() {
       _activeSubjectId = id;
-      _selected = null;
-      _noteController.text = '';
-      _noteExpanded = false;
-      _todayEntryId = null;
-      _todayEntrySavedAt = null;
-      _existingPhotoPath = null;
-      _pickedPhotoFile = null;
-      _removePhoto = false;
-      _photoAlignX = 0;
-      _photoAlignY = 0;
-      _photoScale = 1;
-      _updateCount = 0;
-      _authorName = null;
-      _editing = false;
+      _resetEntryFormState();
     });
-    _loadTodayEntry();
+    _loadEntryForEffectiveDate();
     _loadWeek();
     if (id != null) {
       markSubjectTabViewed(id).then((_) => _refreshSubjectUnseenUpdates());
     }
+  }
+
+  /// Той самий скид локального стану форми, що [_switchSubject], але для
+  /// переходу між "сьогодні" й "вчора" одного й того самого адресата
+  /// (_activeSubjectId не змінюється).
+  void _resetEntryFormState() {
+    _selected = null;
+    _noteController.text = '';
+    _noteExpanded = false;
+    _todayEntryId = null;
+    _todayEntrySavedAt = null;
+    _existingPhotoPath = null;
+    _pickedPhotoFile = null;
+    _removePhoto = false;
+    _photoAlignX = 0;
+    _photoAlignY = 0;
+    _photoScale = 1;
+    _updateCount = 0;
+    _authorName = null;
+    _editing = false;
+  }
+
+  /// Перше натискання на вчорашню крапку в тижневій стрічці — те саме
+  /// одноразове пояснення, що й для нових щоденників/капсул часу, тільки
+  /// про вікно редагування вчорашнього дня (до полудня, [_editableYesterday]).
+  Future<void> _onYesterdayDotTap() async {
+    final yesterday = _editableYesterday;
+    if (yesterday == null) return; // вікно вже закрилось між кадром і тапом
+    final prefs = await SharedPreferences.getInstance();
+    final seen = prefs.getBool(_yesterdayIntroSeenKey) ?? false;
+    if (!seen) {
+      if (!mounted) return;
+      final l10n = AppLocalizations.of(context);
+      final proceed = await showDialog<bool>(
+        context: context,
+        builder: (context) => AppDialog(
+          title: l10n.yesterdayIntroTitle,
+          content: Text(
+            l10n.yesterdayIntroBody,
+            style: const TextStyle(color: AppColors.inkMuted, height: 1.4),
+          ),
+          primaryLabel: l10n.gotIt,
+          onPrimary: () => Navigator.of(context).pop(true),
+          secondaryLabel: l10n.cancel,
+          onSecondary: () => Navigator.of(context).pop(false),
+        ),
+      );
+      // Той самий принцип, що й для щоденників сутностей — прапорець
+      // ставимо лише при реальному "Зрозуміло", не при "Скасувати".
+      if (proceed != true) return;
+      await prefs.setBool(_yesterdayIntroSeenKey, true);
+    }
+    if (!mounted) return;
+    setState(() {
+      _editingDate = yesterday;
+      _resetEntryFormState();
+    });
+    _loadEntryForEffectiveDate();
+  }
+
+  void _exitYesterdayEditMode() {
+    setState(() {
+      _editingDate = null;
+      _resetEntryFormState();
+    });
+    _loadEntryForEffectiveDate();
   }
 
   /// Перше натискання "+" за весь час на цьому пристрої — одноразово
@@ -1692,7 +1764,7 @@ class _CheckInScreenState extends State<CheckInScreen>
         ),
         const SizedBox(height: 12),
         TextButton(
-          onPressed: _loadTodayEntry,
+          onPressed: _loadEntryForEffectiveDate,
           // Акцентний колір замість приглушеного дефолту теми — це єдиний
           // спосіб вийти з цього стану, той самий принцип, що й "Показати
           // старіші": критична дія має читатись як дія, а не зливатись з
@@ -1704,33 +1776,50 @@ class _CheckInScreenState extends State<CheckInScreen>
     );
   }
 
-  (String, String) _todayRangeUtc() {
-    final now = DateTime.now();
-    final startOfDay = DateTime(now.year, now.month, now.day);
-    final startOfNextDay = DateTime(now.year, now.month, now.day + 1);
+  /// Межі КАЛЕНДАРНОГО дня [date] в локальному часі, конвертовані в UTC для
+  /// запиту — рахуємо локальну північ ПЕРШОЮ і лише тоді переводимо в UTC,
+  /// а не порівнюємо `created_at::date` на сервері (та сама помилка, яку
+  /// вже виправляли для коментарів: `created_at::date` кастується в
+  /// таймзоні СЕСІЇ Postgres, типово UTC, не локальній даті юзера).
+  (String, String) _dayRangeUtc(DateTime date) {
+    final startOfDay = DateTime(date.year, date.month, date.day);
+    final startOfNextDay = DateTime(date.year, date.month, date.day + 1);
     return (
       startOfDay.toUtc().toIso8601String(),
       startOfNextDay.toUtc().toIso8601String(),
     );
   }
 
-  Future<void> _loadTodayEntry() async {
+  Future<void> _loadEntryForEffectiveDate() async {
     setState(() {
       _loadingToday = true;
       _todayLoadFailed = false;
     });
-    final (startOfDay, startOfNextDay) = _todayRangeUtc();
+    final (startOfDay, startOfNextDay) = _dayRangeUtc(_effectiveDate);
+    final targetLocalDate = DateTime(
+      _effectiveDate.year,
+      _effectiveDate.month,
+      _effectiveDate.day,
+    ).toIso8601String().split('T').first;
 
     try {
       final columns =
           'id, mood, note, created_at, photo_path, photo_align_x, photo_align_y, photo_scale, update_count'
           '${_activeSubjectId != null ? ', author_id' : ''}';
+      // local_date, не created_at-діапазон — інакше запис "за вчора",
+      // створений СЬОГОДНІ (вікно редагування вчорашнього дня), другий раз
+      // не знайшовся б: його РЕАЛЬНИЙ created_at — сьогоднішній момент, а
+      // не вчорашній, тільки local_date каже "це вчора". Той самий
+      // coalesce-принцип, що вже в can_comment_on_checkin — для старих
+      // рядків без local_date (легасі) fallback на діапазон created_at.
       final rows = await _supabase
           .from(_table)
           .select(columns)
           .eq(_idColumn, _idValue)
-          .gte('created_at', startOfDay)
-          .lt('created_at', startOfNextDay)
+          .or(
+            'local_date.eq.$targetLocalDate,'
+            'and(local_date.is.null,created_at.gte.$startOfDay,created_at.lt.$startOfNextDay)',
+          )
           .order('created_at', ascending: false)
           .limit(1);
 
@@ -1797,7 +1886,7 @@ class _CheckInScreenState extends State<CheckInScreen>
       _pickedPhotoFile = null;
       _removePhoto = false;
     });
-    _loadTodayEntry();
+    _loadEntryForEffectiveDate();
   }
 
   Future<void> _pickPhoto(ImageSource source) async {
@@ -2214,16 +2303,28 @@ class _CheckInScreenState extends State<CheckInScreen>
   }
 
   Future<void> _loadWeek() async {
-    final start = _visibleWeekStart.toUtc().toIso8601String();
-    final end = _visibleWeekStart
-        .add(const Duration(days: 7))
+    // На день ширше з обох боків, ніж сам видимий тиждень — і фільтруємо,
+    // і групуємо по крапках нижче за ЕФЕКТИВНОЮ (local_date) датою, не
+    // сирим created_at. Без цього запис "за вчора", створений СЬОГОДНІ
+    // (та сама фіча вікна редагування), або (а) показувався б крапкою на
+    // СЬОГОДНІШНЬОМУ дні замість вчорашнього в межах того самого тижня,
+    // або (б), якщо вчора був останнім днем ПОПЕРЕДНЬОГО тижня, взагалі
+    // не потрапляв би в запит для того тижня (реальний created_at — уже
+    // сьогоднішній, поза межами старого тижневого вікна).
+    final start = _visibleWeekStart
+        .subtract(const Duration(days: 1))
         .toUtc()
         .toIso8601String();
+    final end = _visibleWeekStart
+        .add(const Duration(days: 8))
+        .toUtc()
+        .toIso8601String();
+    final weekEnd = _visibleWeekStart.add(const Duration(days: 7));
 
     try {
       final rows = await _supabase
           .from(_table)
-          .select('mood, note, created_at')
+          .select('mood, note, created_at, local_date')
           .eq(_idColumn, _idValue)
           .gte('created_at', start)
           .lt('created_at', end)
@@ -2232,16 +2333,30 @@ class _CheckInScreenState extends State<CheckInScreen>
       if (!mounted) return;
 
       setState(() {
-        _weekEntries = (rows as List).map((row) {
-          return CheckinEntry(
-            // Лише для крапок тижневої стрічки — id тут ніде не читається
-            // (CommentsSection на цей список не підключений).
-            id: '',
-            createdAt: DateTime.parse(row['created_at'] as String).toLocal(),
-            mood: moodFromDbValue(row['mood'] as String),
-            note: row['note'] as String?,
-          );
-        }).toList();
+        _weekEntries = (rows as List)
+            .map((row) {
+              final localDateStr = row['local_date'] as String?;
+              final effectiveDate = localDateStr != null
+                  ? DateTime.parse(localDateStr)
+                  : DateTime.parse(row['created_at'] as String).toLocal();
+              return CheckinEntry(
+                // Лише для крапок тижневої стрічки — id тут ніде не
+                // читається (CommentsSection на цей список не підключений).
+                // createdAt тут = ЕФЕКТИВНА дата (не реальний момент
+                // створення) — усе, що читає цей список нижче, дивиться
+                // лише на y/m/d, час доби не має значення.
+                id: '',
+                createdAt: effectiveDate,
+                mood: moodFromDbValue(row['mood'] as String),
+                note: row['note'] as String?,
+              );
+            })
+            .where(
+              (e) =>
+                  !e.createdAt.isBefore(_visibleWeekStart) &&
+                  e.createdAt.isBefore(weekEnd),
+            )
+            .toList();
       });
     } catch (_) {
       // Тиждень — лише декоративна стрічка на головному екрані, не
@@ -2306,17 +2421,18 @@ class _CheckInScreenState extends State<CheckInScreen>
         _updateCount++;
       } else {
         // local_date — лише при СТВОРЕННІ, і лише тут (не в спільному
-        // payload вище, щоб UPDATE його ніколи не чіпав). Локальна
-        // календарна дата пристрою на момент створення, тим самим
-        // способом, що вже рахує target_date для вгадувань — інакше
+        // payload вище, щоб UPDATE його ніколи не чіпав). [_effectiveDate]
+        // замість голого DateTime.now() — інакше запис "за вчора"
+        // (_editingDate != null) отримав би сьогоднішню local_date, і вся
+        // затія з вікном редагування вчора втратила б сенс. Той самий
+        // спосіб, що вже рахує target_date для вгадувань — інакше
         // can_comment_on_checkin звіряв би вгадування з created_at::date
         // (UTC), що для чек-інів, зроблених вночі, могло розходитись з
         // локальною датою на цілий день (checkin-local-date-timezone-fix-migration.sql).
-        final now = DateTime.now();
         final localDate = DateTime(
-          now.year,
-          now.month,
-          now.day,
+          _effectiveDate.year,
+          _effectiveDate.month,
+          _effectiveDate.day,
         ).toIso8601String().split('T').first;
         final inserted = await _supabase
             .from(_table)
@@ -2800,10 +2916,24 @@ class _CheckInScreenState extends State<CheckInScreen>
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
                               Text(
-                                l10n.howAreThingsToday,
+                                _editingDate != null
+                                    ? l10n.howAreThingsYesterday
+                                    : l10n.howAreThingsToday,
                                 textAlign: TextAlign.center,
                                 style: appSerif(fontSize: 28),
                               ),
+                              if (_editingDate != null) ...[
+                                const SizedBox(height: 4),
+                                Center(
+                                  child: TextButton(
+                                    onPressed: _exitYesterdayEditMode,
+                                    style: TextButton.styleFrom(
+                                      foregroundColor: AppColors.accent,
+                                    ),
+                                    child: Text(l10n.backToToday),
+                                  ),
+                                ),
+                              ],
                               if (_todayEntrySavedAt != null) ...[
                                 const SizedBox(height: 6),
                                 Text(
@@ -2929,22 +3059,38 @@ class _CheckInScreenState extends State<CheckInScreen>
                   d.year == today.year &&
                   d.month == today.month &&
                   d.day == today.day;
+              final eligibleYesterday = _editableYesterday;
+              final isEligibleYesterday =
+                  eligibleYesterday != null &&
+                  d.year == eligibleYesterday.year &&
+                  d.month == eligibleYesterday.month &&
+                  d.day == eligibleYesterday.day;
+
+              final dot = Container(
+                width: 14,
+                height: 14,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: mood?.color ?? Colors.transparent,
+                  border: isEligibleYesterday
+                      ? Border.all(color: AppColors.accent, width: 1.5)
+                      : mood == null
+                      ? Border.all(color: AppColors.surfaceRaised, width: 1.5)
+                      : (isToday
+                            ? Border.all(color: AppColors.ink, width: 1.5)
+                            : null),
+                ),
+              );
 
               return Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 7),
-                child: Container(
-                  width: 14,
-                  height: 14,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: mood?.color ?? Colors.transparent,
-                    border: mood == null
-                        ? Border.all(color: AppColors.surfaceRaised, width: 1.5)
-                        : (isToday
-                              ? Border.all(color: AppColors.ink, width: 1.5)
-                              : null),
-                  ),
-                ),
+                // Тапабельна лише вчорашня крапка в межах вікна редагування
+                // (до полудня) — решта днів лишаються суто інформаційними,
+                // як і раніше, щоб не створювати враження, що будь-який
+                // минулий день можна відредагувати.
+                child: isEligibleYesterday
+                    ? GestureDetector(onTap: _onYesterdayDotTap, child: dot)
+                    : dot,
               );
             }).toList(),
           ),

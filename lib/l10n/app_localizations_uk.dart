@@ -163,6 +163,19 @@ class AppLocalizationsUk extends AppLocalizations {
   String get howAreThingsToday => 'Як справи сьогодні?';
 
   @override
+  String get howAreThingsYesterday => 'Як минув вчорашній день?';
+
+  @override
+  String get backToToday => 'До сьогодні';
+
+  @override
+  String get yesterdayIntroTitle => 'Вчорашній запис';
+
+  @override
+  String get yesterdayIntroBody =>
+      'Не встиг учора? До полудня сьогодні ще можна створити чи виправити вчорашній день. Далі він закривається остаточно.';
+
+  @override
   String get dailyReminderTitle => 'Nepogano';
 
   @override

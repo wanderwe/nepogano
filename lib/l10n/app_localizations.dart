@@ -392,6 +392,30 @@ abstract class AppLocalizations {
   /// **'Як справи сьогодні?'**
   String get howAreThingsToday;
 
+  /// No description provided for @howAreThingsYesterday.
+  ///
+  /// In uk, this message translates to:
+  /// **'Як минув вчорашній день?'**
+  String get howAreThingsYesterday;
+
+  /// No description provided for @backToToday.
+  ///
+  /// In uk, this message translates to:
+  /// **'До сьогодні'**
+  String get backToToday;
+
+  /// No description provided for @yesterdayIntroTitle.
+  ///
+  /// In uk, this message translates to:
+  /// **'Вчорашній запис'**
+  String get yesterdayIntroTitle;
+
+  /// No description provided for @yesterdayIntroBody.
+  ///
+  /// In uk, this message translates to:
+  /// **'Не встиг учора? До полудня сьогодні ще можна створити чи виправити вчорашній день. Далі він закривається остаточно.'**
+  String get yesterdayIntroBody;
+
   /// No description provided for @dailyReminderTitle.
   ///
   /// In uk, this message translates to:
