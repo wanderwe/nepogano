@@ -27,6 +27,7 @@ import 'photo_reposition_screen.dart';
 import 'photo_storage.dart';
 import 'profile_screen.dart';
 import 'style.dart';
+import 'subject_diary_views.dart';
 import 'time_capsules_screen.dart';
 
 // TODO: встав сюди свій Project URL і anon key з Supabase (Settings → API)
@@ -669,6 +670,7 @@ class _SubjectChip extends StatelessWidget {
   final VoidCallback onTap;
   final VoidCallback? onLongPress;
   final IconData? leadingIcon;
+  final bool showUnseenDot;
 
   const _SubjectChip({
     required this.label,
@@ -676,6 +678,7 @@ class _SubjectChip extends StatelessWidget {
     required this.onTap,
     this.onLongPress,
     this.leadingIcon,
+    this.showUnseenDot = false,
   });
 
   @override
@@ -688,6 +691,7 @@ class _SubjectChip extends StatelessWidget {
         onTap: onTap,
         onLongPress: onLongPress,
         leadingIcon: leadingIcon,
+        showUnseenDot: showUnseenDot,
       ),
     );
   }
@@ -786,6 +790,9 @@ class _CheckInScreenState extends State<CheckInScreen>
   // перемкнутий на іншого адресата. null = веду власний чек-ін.
   List<Subject> _subjects = [];
   String? _activeSubjectId;
+  // Сутності, де є запис ЧУЖОГО авторства, ще не бачений мною — крапка на
+  // чіпі перемикача. `subject_diary_views.dart`.
+  Set<String> _subjectsWithUnseenUpdates = {};
 
   String get _table =>
       _activeSubjectId == null ? 'checkins' : 'subject_checkins';
@@ -989,6 +996,13 @@ class _CheckInScreenState extends State<CheckInScreen>
       );
       _subjects = [...own, ...coauthored];
     });
+    _refreshSubjectUnseenUpdates();
+  }
+
+  Future<void> _refreshSubjectUnseenUpdates() async {
+    final ids = _subjects.map((s) => s.id).toList();
+    final result = await subjectsWithUnseenUpdates(ids);
+    if (mounted) setState(() => _subjectsWithUnseenUpdates = result);
   }
 
   Future<void> _checkCircleActivity() async {
@@ -1042,6 +1056,9 @@ class _CheckInScreenState extends State<CheckInScreen>
     });
     _loadTodayEntry();
     _loadWeek();
+    if (id != null) {
+      markSubjectTabViewed(id).then((_) => _refreshSubjectUnseenUpdates());
+    }
   }
 
   /// Перше натискання "+" за весь час на цьому пристрої — одноразово
@@ -1637,6 +1654,7 @@ class _CheckInScreenState extends State<CheckInScreen>
     if (state == AppLifecycleState.resumed) {
       _checkAllActivityOnLoad();
       _loadPendingUnlockedLetters();
+      _refreshSubjectUnseenUpdates();
     }
   }
 
@@ -2724,6 +2742,8 @@ class _CheckInScreenState extends State<CheckInScreen>
                               leadingIcon: s.isOwner
                                   ? null
                                   : PhosphorIconsLight.usersThree,
+                              showUnseenDot: _subjectsWithUnseenUpdates
+                                  .contains(s.id),
                             ),
                           ),
                         ],

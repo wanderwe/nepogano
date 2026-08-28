@@ -208,6 +208,9 @@ class AppChip extends StatelessWidget {
   // спільний з кимось" на чіпі перемикача сутностей, ще до того, як юзер
   // тапне й побачить деталі. Коли чіп вибраний, галочка важливіша.
   final IconData? leadingIcon;
+  // "Є запис чужого авторства, ще не бачений мною" на чіпі щоденника
+  // сутності — щоб не треба було заходити всередину, аби дізнатись.
+  final bool showUnseenDot;
 
   const AppChip({
     super.key,
@@ -216,6 +219,7 @@ class AppChip extends StatelessWidget {
     required this.onTap,
     this.onLongPress,
     this.leadingIcon,
+    this.showUnseenDot = false,
   });
 
   @override
@@ -257,6 +261,16 @@ class AppChip extends StatelessWidget {
                 color: selected ? AppColors.ink : AppColors.inkMuted,
               ),
             ),
+            if (showUnseenDot) ...[
+              const SizedBox(width: 6),
+              const DecoratedBox(
+                decoration: BoxDecoration(
+                  color: AppColors.notification,
+                  shape: BoxShape.circle,
+                ),
+                child: SizedBox(width: 6, height: 6),
+              ),
+            ],
           ],
         ),
       ),

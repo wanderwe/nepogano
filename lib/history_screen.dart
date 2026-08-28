@@ -11,6 +11,7 @@ import 'main.dart';
 import 'month_report.dart';
 import 'photo_storage.dart';
 import 'style.dart';
+import 'subject_diary_views.dart';
 
 class CheckinEntry {
   final String id;
@@ -168,6 +169,9 @@ class _HistoryScreenState extends State<HistoryScreen> {
           _entries = entries;
           _loading = false;
         });
+      }
+      if (widget.subjectId != null) {
+        markSubjectHistoryViewed(widget.subjectId!);
       }
     } catch (e) {
       if (mounted) {
