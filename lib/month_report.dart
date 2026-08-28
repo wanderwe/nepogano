@@ -8,6 +8,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:share_plus/share_plus.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'date_labels.dart';
 import 'history_screen.dart';
@@ -17,6 +18,37 @@ import 'share_utils.dart';
 import 'style.dart';
 
 PdfColor _toPdfColor(Color color) => PdfColor.fromInt(color.toARGB32());
+
+Future<String?> _myDisplayNameForFilename() async {
+  final supabase = Supabase.instance.client;
+  final userId = supabase.auth.currentUser?.id;
+  if (userId == null) return null;
+  final row = await supabase
+      .from('profiles')
+      .select('display_name')
+      .eq('user_id', userId)
+      .maybeSingle();
+  final displayName = row?['display_name'] as String?;
+  if (displayName != null && displayName.trim().isNotEmpty) return displayName;
+  return supabase.auth.currentUser?.email?.split('@').first;
+}
+
+/// Нікнейм не має обмежень ні на довжину, ні на символи (емодзі, слеші,
+/// що завгодно) — тут перетворюємо будь-який на безпечний і компактний
+/// шматок імені файлу: лишаємо тільки літери (включно з кирилицею)/цифри,
+/// пробіли й дефіси стають одним "_", решта прибирається, обрізаємо до
+/// 24 символів. Якщо після цього нічого не лишилось (наприклад, нік був
+/// суцільними емодзі) — файл лишається без імені, як і раніше, а не з
+/// порожнім "_" на кінці.
+String? _slugifyForFilename(String? name) {
+  if (name == null) return null;
+  final ascii = name
+      .trim()
+      .replaceAll(RegExp(r'\s+'), '_')
+      .replaceAll(RegExp(r'[^\p{L}\p{N}_-]', unicode: true), '');
+  final trimmed = ascii.length > 24 ? ascii.substring(0, 24) : ascii;
+  return trimmed.isEmpty ? null : trimmed;
+}
 
 // Темна тема звіту — той самий AppColors, що й сам застосунок, а не
 // "офісний" білий папір. PDF як архів все одно рідко друкують, а
@@ -118,9 +150,22 @@ Future<void> shareMonthReport({
   // потік, головний ізолят лишається вільним малювати кадри.
   final bytes = await Isolate.run(() => _buildReportBytes(data));
 
+  // Хто саме — інакше файл завжди "nepogano_2026-08.pdf" незалежно від
+  // юзера, і якщо друг, який теж користується застосунком, скине свій
+  // такого ж місяця, файли візуально не розрізнити в списку завантажень.
+  // Для власного щоденника беремо display_name (той самий фолбек на
+  // e-mail, що й запрошення друга у `friends_screen.dart`, бо
+  // display_name теоретично може бути NULL у зовсім старих акаунтів);
+  // для щоденника сутності — subjectName вже переданий викликом.
+  final nameForFile = subjectName ?? await _myDisplayNameForFilename();
+  final nameSlug = _slugifyForFilename(nameForFile);
+
   final dir = await getTemporaryDirectory();
   final monthSlug = '${month.year}-${month.month.toString().padLeft(2, '0')}';
-  final file = File('${dir.path}/nepogano_$monthSlug.pdf');
+  final fileName = nameSlug == null
+      ? 'nepogano_$monthSlug.pdf'
+      : 'nepogano_${monthSlug}_$nameSlug.pdf';
+  final file = File('${dir.path}/$fileName');
   await file.writeAsBytes(bytes, flush: true);
 
   if (!context.mounted) return;
