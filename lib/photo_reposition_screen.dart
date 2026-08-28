@@ -108,12 +108,6 @@ class _PhotoRepositionScreenState extends State<PhotoRepositionScreen> {
                 textAlign: TextAlign.center,
                 style: const TextStyle(fontSize: 13, color: AppColors.inkMuted),
               ),
-              const SizedBox(height: 4),
-              Text(
-                l10n.repositionFeedCropHint,
-                textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 12, color: AppColors.inkMuted),
-              ),
               const SizedBox(height: 24),
               AspectRatio(
                 aspectRatio: kPhotoAspectRatio,

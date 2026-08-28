@@ -126,10 +126,6 @@ class AppLocalizationsUk extends AppLocalizations {
       'Перетягни фото вгору чи вниз або зведи пальці, щоб наблизити';
 
   @override
-  String get repositionFeedCropHint =>
-      'Затемнене видно лише в картці дня — у стрічці й у друзів показується середина';
-
-  @override
   String get repositionPhotoTooltip => 'Змінити розташування фото';
 
   @override
