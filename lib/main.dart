@@ -39,6 +39,11 @@ const supabaseAnonKey = 'sb_publishable_H5DIUfH_i4_Mm5VKSoAoNA__tT60BUI';
 /// швидкий щоденний ритуал, не лист і не есе.
 const _noteMaxLength = 2500;
 
+/// Назва сутності (дитина/улюбленець/інше) — той самий ліміт, що
+/// `_displayNameMaxLength` у `profile_screen.dart`, з тієї самої причини:
+/// показується в чіпах перемикача, підписах авторства тощо.
+const _subjectNameMaxLength = 30;
+
 /// Показує SnackBar незалежно від того, який екран зараз активний —
 /// потрібно, щоб підтвердити додавання в друзі за диплінком.
 final scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
@@ -1118,6 +1123,14 @@ class _CheckInScreenState extends State<CheckInScreen>
                 TextField(
                   controller: controller,
                   autofocus: true,
+                  maxLength: _subjectNameMaxLength,
+                  buildCounter:
+                      (
+                        context, {
+                        required currentLength,
+                        required isFocused,
+                        maxLength,
+                      }) => null,
                   decoration: appFieldDecoration(l10n.subjectNameHint),
                   onChanged: (_) => setState(() {}),
                 ),
@@ -1367,6 +1380,14 @@ class _CheckInScreenState extends State<CheckInScreen>
           content: TextField(
             controller: controller,
             autofocus: true,
+            maxLength: _subjectNameMaxLength,
+            buildCounter:
+                (
+                  context, {
+                  required currentLength,
+                  required isFocused,
+                  maxLength,
+                }) => null,
             decoration: appFieldDecoration(l10n.subjectNameHint),
             onChanged: (_) => setState(() {}),
           ),

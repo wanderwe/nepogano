@@ -34,6 +34,11 @@ String _formatGuessCount(int n) {
   return '${isWhole ? thousands.toStringAsFixed(0) : thousands.toStringAsFixed(1)}k';
 }
 
+/// Назва кола — той самий ліміт, що `_displayNameMaxLength`/
+/// `_subjectNameMaxLength` (`profile_screen.dart`/`main.dart`), з тієї
+/// самої причини: показується в чіпах.
+const _folderNameMaxLength = 30;
+
 /// Один чек-ін конкретного друга за конкретний день у вікні "нещодавно" —
 /// дозволяє бачити й вгадувати кожен день окремо, а не тільки останній.
 class _FriendDayEntry {
@@ -975,6 +980,14 @@ class _FriendsScreenState extends State<FriendsScreen> {
           content: TextField(
             controller: controller,
             autofocus: true,
+            maxLength: _folderNameMaxLength,
+            buildCounter:
+                (
+                  context, {
+                  required currentLength,
+                  required isFocused,
+                  maxLength,
+                }) => null,
             decoration: appFieldDecoration(l10n.folderNameHint),
             onChanged: (_) => setState(() {}),
           ),
@@ -1053,6 +1066,14 @@ class _FriendsScreenState extends State<FriendsScreen> {
           content: TextField(
             controller: controller,
             autofocus: true,
+            maxLength: _folderNameMaxLength,
+            buildCounter:
+                (
+                  context, {
+                  required currentLength,
+                  required isFocused,
+                  maxLength,
+                }) => null,
             decoration: appFieldDecoration(l10n.folderNameHint),
             onChanged: (_) => setState(() {}),
           ),

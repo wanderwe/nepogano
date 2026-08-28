@@ -269,6 +269,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
             controller: controller,
             autofocus: true,
             maxLength: _displayNameMaxLength,
+            buildCounter:
+                (
+                  context, {
+                  required currentLength,
+                  required isFocused,
+                  maxLength,
+                }) => null,
             decoration: appFieldDecoration(l10n.displayNameHint),
             onChanged: (_) => setState(() {}),
           ),
