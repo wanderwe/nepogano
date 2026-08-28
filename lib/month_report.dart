@@ -422,7 +422,7 @@ pw.Widget _buildMoodDistribution(
 // Повна ширина сторінки на телефоні читалась як суцільна нескінченна
 // стрічка — звужуємо праву частину через фіксований відступ.
 //
-// Дві окремі речі довелось виправляти, обидві виявились не тим, що
+// Три окремі речі довелось виправляти по черзі, жодна не була тим, що
 // здавалось спочатку:
 // (1) `pw.Text` НЕ спанситься між сторінками за замовчуванням —
 //     `overflow` за замовчуванням `TextOverflow.visible`, а `canSpan`
@@ -435,10 +435,16 @@ pw.Widget _buildMoodDistribution(
 //     природну висоту (жодного обмеження по висоті на дочірні елементи
 //     під час звичайного проходу) і просто вирішує, скільки цілих
 //     дочірніх елементів влізло — вона не вміє "заглянути всередину"
-//     однієї дитини й розбити САМЕ її. Розбиття всередині одного
-//     елемента вміє лише `MultiPage.generate()` для СВОЇХ прямих дітей.
-//     Тому кожен запис (рядок дати + нотатка) — окремі елементи
-//     плоского списку, не згруповані в один `Column` на запис.
+//     однієї дитини й розбити САМЕ її.
+// (3) Але якщо дата й нотатка — ДВА окремих прямих елементи (як було
+//     після (2)), сторінка може розірватись МІЖ ними: дата лишається на
+//     попередній сторінці, нотатка починається на наступній без жодного
+//     контексту, до якого дня вона взагалі. Рішення — дата+крапка+нотатка
+//     ОДНИМ `RichText` (кілька `TextSpan` різного стилю всередині одного
+//     спансityого віджета) замість трьох окремих елементів: розбити текст
+//     усередині них MultiPage і далі може (для дуже довгих нотаток), але
+//     розірвати дату й початок нотатки в різні боки більше не може — вони
+//     тепер один нероздільний потік тексту.
 List<pw.Widget> _buildNotesSection(
   _ReportData data,
   pw.Font headingFont,
@@ -451,8 +457,7 @@ List<pw.Widget> _buildNotesSection(
       style: pw.TextStyle(font: headingFont, fontSize: 15, color: _pdfInk),
     ),
     pw.SizedBox(height: 10),
-    for (final entry in data.sortedAsc)
-      ..._buildNoteEntryWidgets(entry, rightGap),
+    for (final entry in data.sortedAsc) _buildNoteEntry(entry, rightGap),
   ];
 }
 
@@ -461,40 +466,41 @@ List<pw.Widget> _buildNotesSection(
 // невдало: під текстом розтягувало кожен запис і ламало ритм читання
 // списку, поруч — не завжди вдало компонувалось з дуже різною довжиною
 // нотаток). Лишили голий текст, найчитабельніший варіант із перевірених.
-List<pw.Widget> _buildNoteEntryWidgets(CheckinEntry entry, double rightGap) {
+pw.Widget _buildNoteEntry(CheckinEntry entry, double rightGap) {
   final hasNote = entry.note != null && entry.note!.trim().isNotEmpty;
-  return [
-    pw.Padding(
-      padding: pw.EdgeInsets.only(right: rightGap, bottom: hasNote ? 3 : 10),
-      child: pw.Row(
+  final dateStr =
+      '${entry.createdAt.day}.${entry.createdAt.month}.${entry.createdAt.year}';
+  return pw.Padding(
+    padding: pw.EdgeInsets.only(right: rightGap, bottom: 10),
+    child: pw.RichText(
+      // span — інакше цей запис (як і будь-який довгий) завжди
+      // трактується як нероздільний блок і цілком стрибає на наступну
+      // сторінку, лишаючи порожній залишок попередньої.
+      overflow: pw.TextOverflow.span,
+      text: pw.TextSpan(
         children: [
-          pw.Container(
-            width: 7,
-            height: 7,
-            margin: const pw.EdgeInsets.only(right: 6),
-            decoration: pw.BoxDecoration(
+          // Кольорова крапка настрою — символ "●" зі стилем кольору
+          // замість окремого `Container`-кружечка: те, що це просто
+          // текстовий символ у тому самому `TextSpan`-потоці, і тримає
+          // крапку+дату+нотатку одним нероздільним цілим.
+          pw.TextSpan(
+            text: '● ',
+            style: pw.TextStyle(
+              fontSize: 8,
               color: _toPdfColor(entry.mood.color),
-              shape: pw.BoxShape.circle,
             ),
           ),
-          pw.Text(
-            '${entry.createdAt.day}.${entry.createdAt.month}.${entry.createdAt.year}',
+          pw.TextSpan(
+            text: hasNote ? '$dateStr\n' : dateStr,
             style: pw.TextStyle(fontSize: 10, color: _pdfInkMuted),
           ),
+          if (hasNote)
+            pw.TextSpan(
+              text: entry.note!.trim(),
+              style: pw.TextStyle(fontSize: 11, color: _pdfInk),
+            ),
         ],
       ),
     ),
-    if (hasNote)
-      pw.Padding(
-        padding: pw.EdgeInsets.only(left: 13, right: rightGap, bottom: 10),
-        child: pw.Text(
-          entry.note!.trim(),
-          // span — інакше цей запис (як і будь-який довгий) завжди
-          // трактується як нероздільний блок і цілком стрибає на
-          // наступну сторінку, лишаючи порожній залишок попередньої.
-          overflow: pw.TextOverflow.span,
-          style: pw.TextStyle(fontSize: 11, color: _pdfInk),
-        ),
-      ),
-  ];
+  );
 }
