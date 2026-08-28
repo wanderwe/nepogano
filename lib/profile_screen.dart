@@ -11,6 +11,13 @@ import 'l10n/app_localizations.dart';
 import 'photo_reposition_screen.dart';
 import 'style.dart';
 
+/// Раніше нік не мав жодного обмеження — ні тут, ні в БД (`profiles.
+/// display_name` — звичайний `text`). Ім'я показується в багатьох місцях
+/// (чіпи друзів, підписи авторів у щоденниках сутностей, текст запрошення)
+/// — 30 символів вистачає на повне ім'я в будь-якій формі, але не дає
+/// перетворити нік на речення чи спам-рядок, який ламав би ці елементи.
+const _displayNameMaxLength = 30;
+
 /// Особистий профіль — ім'я, яке бачать друзі, і код для додавання в друзі.
 /// Живе в головному меню (не на екрані Друзі) — це налаштування себе, не
 /// частина списку інших людей. Сам завантажує свої дані, не залежить від
@@ -261,6 +268,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           content: TextField(
             controller: controller,
             autofocus: true,
+            maxLength: _displayNameMaxLength,
             decoration: appFieldDecoration(l10n.displayNameHint),
             onChanged: (_) => setState(() {}),
           ),
