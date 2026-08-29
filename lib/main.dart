@@ -3076,7 +3076,7 @@ class _CheckInScreenState extends State<CheckInScreen>
                   shape: BoxShape.circle,
                   color: mood?.color ?? Colors.transparent,
                   border: isEligibleYesterday
-                      ? Border.all(color: AppColors.accent, width: 2.5)
+                      ? Border.all(color: AppColors.accent, width: 1.5)
                       : mood == null
                       ? Border.all(color: AppColors.surfaceRaised, width: 1.5)
                       : (isToday
