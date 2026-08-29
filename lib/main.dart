@@ -3143,30 +3143,37 @@ class _PulsingHaloState extends State<_PulsingHalo>
       animation: _controller,
       builder: (context, child) {
         final t = _controller.value;
-        // Фіксований SizedBox навколо Stack — інакше Stack сам щокадру
-        // репортує НОВИЙ розмір (за колом, що росте), і ця зміна
-        // піднімається вгору по дереву аж до всього ряду крапок і напису
-        // "Цей тиждень" над ним, змушуючи все це "стрибати" разом із
-        // пульсацією. Коло як і раніше вільно малюється ЗА межі цього
-        // боксу (`clipBehavior: Clip.none`) — це суто питання layout, не
-        // відображення.
+        // SizedBox зверху фіксує, який розмір БАЧИТЬ батько (ряд крапок) —
+        // інакше сам ріст кола щокадру піднімався б угору по дереву й
+        // смикав увесь ряд і напис "Цей тиждень" над ним. Але просто
+        // загорнути Stack у SizedBox НЕДОСТАТНЬО: Stack передає свої
+        // (тепер тісні, 14x14) constraints як верхню межу для дітей, тож
+        // коло фізично не змогло б вирости — саме це сталось у першій
+        // версії фіксу, коло тихо перестало рухатись, лишаючись під
+        // непрозорою крапкою. OverflowBox якраз розділяє ці дві речі:
+        // сам він репортує фіксовані 14x14 назовні, а ВСЕРЕДИНІ дає
+        // Stack вільно рости хоч до 22x22 — коло росте й малюється поза
+        // межами боксу, layout вище про це не знає.
         return SizedBox(
           width: 14,
           height: 14,
-          child: Stack(
-            alignment: Alignment.center,
-            clipBehavior: Clip.none,
-            children: [
-              Container(
-                width: 14 + 8 * t,
-                height: 14 + 8 * t,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: AppColors.accent.withValues(alpha: (1 - t) * 0.35),
+          child: OverflowBox(
+            maxWidth: 22,
+            maxHeight: 22,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                Container(
+                  width: 14 + 8 * t,
+                  height: 14 + 8 * t,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: AppColors.accent.withValues(alpha: (1 - t) * 0.35),
+                  ),
                 ),
-              ),
-              child!,
-            ],
+                child!,
+              ],
+            ),
           ),
         );
       },
