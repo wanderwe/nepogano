@@ -76,6 +76,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get todayWasPrefix => 'Today was';
 
   @override
+  String get yesterdayWasPrefix => 'Yesterday was';
+
+  @override
   String get skip => 'Skip';
 
   @override
@@ -163,9 +166,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get howAreThingsYesterday => 'How was yesterday?';
-
-  @override
-  String get backToToday => 'Back to today';
 
   @override
   String get yesterdayIntroTitle => 'Yesterday\'s entry';

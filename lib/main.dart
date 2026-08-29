@@ -2063,6 +2063,7 @@ class _CheckInScreenState extends State<CheckInScreen>
               ?.name;
     return DayCardScreen(
       subjectName: subjectName,
+      isYesterday: _editingDate != null,
       entry: CheckinEntry(
         // Картка дня — статичне зображення для шеру, коментарі туди не
         // рендеряться, тож id не потрібен.
@@ -2192,7 +2193,10 @@ class _CheckInScreenState extends State<CheckInScreen>
                   color: AppColors.ink,
                 ),
                 children: [
-                  TextSpan(text: '${l10n.todayWasPrefix} '),
+                  TextSpan(
+                    text:
+                        '${_editingDate != null ? l10n.yesterdayWasPrefix : l10n.todayWasPrefix} ',
+                  ),
                   TextSpan(
                     text: _selected!.label(context).toLowerCase(),
                     style: TextStyle(color: _selected!.color),
@@ -2953,23 +2957,6 @@ class _CheckInScreenState extends State<CheckInScreen>
                                   ),
                                 ),
                               ],
-                              // Кнопка виходу з режиму "вчора" йде ПІСЛЯ
-                              // питання й статусу збереження — обидва
-                              // стосуються самого вчорашнього дня і мають
-                              // йти суцільним блоком, кнопка переходу вже
-                              // на інший день лише завершує цей блок.
-                              if (_editingDate != null) ...[
-                                const SizedBox(height: 4),
-                                Center(
-                                  child: TextButton(
-                                    onPressed: _exitYesterdayEditMode,
-                                    style: TextButton.styleFrom(
-                                      foregroundColor: AppColors.accent,
-                                    ),
-                                    child: Text(l10n.backToToday),
-                                  ),
-                                ),
-                              ],
                               const SizedBox(height: 32),
                               if (_showForm)
                                 ..._buildFormContent(l10n)
@@ -3085,21 +3072,33 @@ class _CheckInScreenState extends State<CheckInScreen>
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: mood?.color ?? Colors.transparent,
+                  // Сьогоднішня крапка завжди має білу обводку, навіть
+                  // якщо за сьогодні ще немає запису — інакше вона
+                  // виглядала б інакше залежно від того, чи вже
+                  // збережено, і не читалась би як стабільна ціль для
+                  // повернення з режиму "вчора".
                   border: isEligibleYesterday
                       ? Border.all(color: AppColors.accent, width: 1.5)
+                      : isToday
+                      ? Border.all(color: AppColors.ink, width: 1.5)
                       : mood == null
                       ? Border.all(color: AppColors.surfaceRaised, width: 1.5)
-                      : (isToday
-                            ? Border.all(color: AppColors.ink, width: 1.5)
-                            : null),
+                      : null,
                 ),
               );
 
+              // Повернення в сьогодні тапом на саму сьогоднішню крапку —
+              // дзеркалить вхід у "вчора" тим самим жестом, замість
+              // окремої кнопки "Назад до сьогодні" десь у контенті нижче
+              // (та й не мала сенсу, коли ми вже й так на сьогодні).
+              final isReturnToToday = isToday && _editingDate != null;
+
               return Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 7),
-                // Тапабельна лише вчорашня крапка в межах вікна редагування
-                // (до полудня) — решта днів лишаються суто інформаційними,
-                // як і раніше, щоб не створювати враження, що будь-який
+                // Тапабельні лише вчорашня крапка (в межах вікна
+                // редагування до полудня) і сьогоднішня (лише поки ми в
+                // режимі "вчора") — решта днів лишаються суто
+                // інформаційними, щоб не створювати враження, що будь-який
                 // минулий день можна відредагувати.
                 child: isEligibleYesterday
                     ? _PulsingHalo(
@@ -3108,6 +3107,8 @@ class _CheckInScreenState extends State<CheckInScreen>
                           child: dot,
                         ),
                       )
+                    : isReturnToToday
+                    ? GestureDetector(onTap: _exitYesterdayEditMode, child: dot)
                     : dot,
               );
             }).toList(),

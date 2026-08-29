@@ -22,8 +22,22 @@ class DayCardScreen extends StatefulWidget {
   // Якщо картка належить щоденнику сутності (дитина/улюбленець), а не
   // власному чек-іну — підписуємо шер її іменем, а не "Мій день".
   final String? subjectName;
+  // Заголовок картки завжди каже "Сьогодні було ..." — правильно для
+  // виклику з головного екрана в звичайному режимі, але щойно з'явилось
+  // вікно редагування вчорашнього дня (`CheckInScreen._editingDate`),
+  // той самий заголовок для вчорашнього запису став би прямо неправдивим.
+  // Виклик з Історії (будь-який минулий день) досі має ту саму
+  // застарілу ваду — навмисно НЕ виправляю тут заразом, бо це вимагає
+  // окремого рішення "як підписувати довільний минулий день", не просто
+  // сьогодні/вчора.
+  final bool isYesterday;
 
-  const DayCardScreen({super.key, required this.entry, this.subjectName});
+  const DayCardScreen({
+    super.key,
+    required this.entry,
+    this.subjectName,
+    this.isYesterday = false,
+  });
 
   @override
   State<DayCardScreen> createState() => _DayCardScreenState();
@@ -161,6 +175,7 @@ class _DayCardScreenState extends State<DayCardScreen> {
                             child: _DayCard(
                               entry: widget.entry,
                               photoBytes: _photoBytes,
+                              isYesterday: widget.isYesterday,
                             ),
                           ),
                   ),
@@ -392,8 +407,13 @@ const _cardHeight = _cardWidth * 16 / 9;
 class _DayCard extends StatelessWidget {
   final CheckinEntry entry;
   final Uint8List? photoBytes;
+  final bool isYesterday;
 
-  const _DayCard({required this.entry, this.photoBytes});
+  const _DayCard({
+    required this.entry,
+    this.photoBytes,
+    this.isYesterday = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -423,7 +443,10 @@ class _DayCard extends StatelessWidget {
           height: 1.2,
         ).copyWith(shadows: hasPhoto ? photoTextShadow : null),
         children: [
-          TextSpan(text: '${l10n.todayWasPrefix} '),
+          TextSpan(
+            text:
+                '${isYesterday ? l10n.yesterdayWasPrefix : l10n.todayWasPrefix} ',
+          ),
           TextSpan(
             text: entry.mood.label(context).toLowerCase(),
             style: TextStyle(color: entry.mood.color),

@@ -24,6 +24,7 @@
   "moodNepogano": "Непогано",
   "moodZbs": "Чудово",
   "todayWasPrefix": "Сьогодні було",
+  "yesterdayWasPrefix": "Вчора було",
 
   "skip": "Пропустити",
   "next": "Далі",
@@ -55,7 +56,6 @@
   "yesDelete": "Так, видалити",
   "howAreThingsToday": "Як справи сьогодні?",
   "howAreThingsYesterday": "Як тобі вчора?",
-  "backToToday": "Назад до сьогодні",
   "yesterdayIntroTitle": "Вчорашній запис",
   "yesterdayIntroBody": "Не встиг учора? До полудня сьогодні ще можна створити чи виправити вчорашній день. Далі він закривається остаточно.",
   "dailyReminderTitle": "Nepogano",

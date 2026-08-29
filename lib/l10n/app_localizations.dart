@@ -230,6 +230,12 @@ abstract class AppLocalizations {
   /// **'Сьогодні було'**
   String get todayWasPrefix;
 
+  /// No description provided for @yesterdayWasPrefix.
+  ///
+  /// In uk, this message translates to:
+  /// **'Вчора було'**
+  String get yesterdayWasPrefix;
+
   /// No description provided for @skip.
   ///
   /// In uk, this message translates to:
@@ -397,12 +403,6 @@ abstract class AppLocalizations {
   /// In uk, this message translates to:
   /// **'Як тобі вчора?'**
   String get howAreThingsYesterday;
-
-  /// No description provided for @backToToday.
-  ///
-  /// In uk, this message translates to:
-  /// **'Назад до сьогодні'**
-  String get backToToday;
 
   /// No description provided for @yesterdayIntroTitle.
   ///

@@ -77,6 +77,9 @@ class AppLocalizationsUk extends AppLocalizations {
   String get todayWasPrefix => 'Сьогодні було';
 
   @override
+  String get yesterdayWasPrefix => 'Вчора було';
+
+  @override
   String get skip => 'Пропустити';
 
   @override
@@ -164,9 +167,6 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get howAreThingsYesterday => 'Як тобі вчора?';
-
-  @override
-  String get backToToday => 'Назад до сьогодні';
 
   @override
   String get yesterdayIntroTitle => 'Вчорашній запис';
