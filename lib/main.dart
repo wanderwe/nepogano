@@ -816,6 +816,25 @@ class _CheckInScreenState extends State<CheckInScreen>
     return today.subtract(const Duration(days: 1));
   }
 
+  // Це геттер, порахований на льоту при кожному build — сам по собі він
+  // не змушує екран перебудуватись РІВНО опівдні. Якщо застосунок просто
+  // лежить відкритим на цьому екрані (не згорнутим, без інших дій, що й
+  // так тригерять setState), крапка "вчора" й пульсуючий ореол лишились
+  // би активними й ПІСЛЯ полудня — аж до першої випадкової перебудови.
+  // Таймер нижче — єдина мета: гарантовано перебудувати екран рівно в
+  // момент переходу, а не покладатись на випадкові setState збоку.
+  Timer? _yesterdayWindowTimer;
+
+  void _scheduleYesterdayWindowClose() {
+    _yesterdayWindowTimer?.cancel();
+    final now = DateTime.now();
+    if (now.hour >= 12) return;
+    final noon = DateTime(now.year, now.month, now.day, 12);
+    _yesterdayWindowTimer = Timer(noon.difference(now), () {
+      if (mounted) setState(() {});
+    });
+  }
+
   // Сутності (дитина/улюбленець/інше) — той самий екран/ритуал, просто
   // перемкнутий на іншого адресата. null = веду власний чек-ін.
   List<Subject> _subjects = [];
@@ -847,6 +866,7 @@ class _CheckInScreenState extends State<CheckInScreen>
     _loadSubjects();
     _loadPendingNudges();
     _loadPendingUnlockedLetters();
+    _scheduleYesterdayWindowClose();
   }
 
   Future<void> _loadPendingNudges() async {
@@ -1741,6 +1761,7 @@ class _CheckInScreenState extends State<CheckInScreen>
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _yesterdayWindowTimer?.cancel();
     _noteController.dispose();
     super.dispose();
   }
@@ -1755,6 +1776,11 @@ class _CheckInScreenState extends State<CheckInScreen>
       _checkAllActivityOnLoad();
       _loadPendingUnlockedLetters();
       _refreshSubjectUnseenUpdates();
+      // Таймер з `initState` — одноразовий, на полудень ТОГО дня, коли
+      // екран уперше створився. Якщо застосунок просто лежить у фоні
+      // (не вбитий) через ніч, наступного дня нового таймера вже нема —
+      // перепланування тут покриває саме цей випадок.
+      _scheduleYesterdayWindowClose();
     }
   }
 

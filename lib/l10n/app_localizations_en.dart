@@ -172,7 +172,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get yesterdayIntroBody =>
-      'Missed yesterday? You can still create or fix yesterday\'s entry until noon today. After that it\'s closed for good.';
+      'Missed yesterday? You can still create or fix yesterday\'s entry until noon. Tap today\'s dot to go back.';
 
   @override
   String get dailyReminderTitle => 'Nepogano';

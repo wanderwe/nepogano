@@ -173,7 +173,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get yesterdayIntroBody =>
-      'Не встиг учора? До полудня сьогодні ще можна створити чи виправити вчорашній день. Далі він закривається остаточно.';
+      'Не встиг учора? До полудня ще можна створити чи виправити вчорашній день. Щоб повернутись, тапни сьогоднішню крапку.';
 
   @override
   String get dailyReminderTitle => 'Nepogano';

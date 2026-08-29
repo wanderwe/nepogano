@@ -57,7 +57,7 @@
   "howAreThingsToday": "Як справи сьогодні?",
   "howAreThingsYesterday": "Як тобі вчора?",
   "yesterdayIntroTitle": "Вчорашній запис",
-  "yesterdayIntroBody": "Не встиг учора? До полудня сьогодні ще можна створити чи виправити вчорашній день. Далі він закривається остаточно.",
+  "yesterdayIntroBody": "Не встиг учора? До полудня ще можна створити чи виправити вчорашній день. Щоб повернутись, тапни сьогоднішню крапку.",
   "dailyReminderTitle": "Nepogano",
   "dailyReminderBody": "Як пройшов день? Занотуй, поки не забув.",
   "alreadySavedToday": "Вже збережено о {time}",

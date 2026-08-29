@@ -413,7 +413,7 @@ abstract class AppLocalizations {
   /// No description provided for @yesterdayIntroBody.
   ///
   /// In uk, this message translates to:
-  /// **'Не встиг учора? До полудня сьогодні ще можна створити чи виправити вчорашній день. Далі він закривається остаточно.'**
+  /// **'Не встиг учора? До полудня ще можна створити чи виправити вчорашній день. Щоб повернутись, тапни сьогоднішню крапку.'**
   String get yesterdayIntroBody;
 
   /// No description provided for @dailyReminderTitle.
