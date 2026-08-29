@@ -34,10 +34,15 @@ import 'time_capsules_screen.dart';
 const supabaseUrl = 'https://wxxvqscmalcuurhvzufl.supabase.co';
 const supabaseAnonKey = 'sb_publishable_H5DIUfH_i4_Mm5VKSoAoNA__tT60BUI';
 
-/// Нотатка чек-іну — рівно вдвічі менше за ліміт капсули часу
-/// (`_bodyMaxLength` = 5000 у `time_capsules_screen.dart`): чек-ін це
-/// швидкий щоденний ритуал, не лист і не есе.
-const _noteMaxLength = 2500;
+/// Нотатка чек-іну — значно менше за ліміт капсули часу (`_bodyMaxLength`
+/// = 5000 у `time_capsules_screen.dart`): чек-ін це швидкий щоденний
+/// ритуал, не лист і не есе. Знижено з 2500 до 1500 не лише з цієї
+/// причини — при 2500 символах нотатка теоретично могла наблизитись до
+/// висоти цілої сторінки експорту місяця (`month_report.dart`), де кожен
+/// запис навмисно НЕ розбивається між сторінками (`_buildNoteEntryWidgets`)
+/// заради простоти й передбачуваності: занадто довгий запис там впав би з
+/// винятком замість негарного вигляду. 1500 лишає для цього надійний запас.
+const _noteMaxLength = 1500;
 
 /// Назва сутності (дитина/улюбленець/інше) — той самий ліміт, що
 /// `_displayNameMaxLength` у `profile_screen.dart`, з тієї самої причини:
