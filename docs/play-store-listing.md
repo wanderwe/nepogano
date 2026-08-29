@@ -150,6 +150,25 @@ Nepogano ("застосунок", "ми") поважає вашу приватн
 
 Накопичувати тут кожен реліз — щоб було видно, що вже казали користувачам, і не повторюватись/не губити тон між версіями.
 
+## 1.6.0+19 (29.08.2026)
+
+```
+<uk>
+Місячний звіт тепер можна експортувати в PDF просто з екрана "Історія".
+Вчорашній день суттєво доопрацьовано: простіше зрозуміти й дозаповнити, поки не пізно.
+Позиціювання фото та аватарки тепер працює і по горизонталі, не тільки по вертикалі.
+Позначка нових оновлень зʼявляється на спільних щоденниках, які веде хтось інший.
+Дрібні виправлення й покращення інтерфейсу.
+</uk>
+<en-US>
+Export your month as a PDF right from the History screen.
+Yesterday's entry got a significant refresh: easier to understand and finish before it's too late.
+Photo and avatar positioning now works horizontally too, not just vertically.
+A new-update indicator now appears on shared diaries someone else maintains.
+Small fixes and interface improvements.
+</en-US>
+```
+
 ## 1.5.0+18 (19.08.2026)
 
 ```

@@ -46,6 +46,13 @@ mood,diary,journal,honest,checkin,reflection,friends,calendar,mood tracker,time 
 
 ### What's New — version log (найновіша зверху, копіювати верхню в App Store Connect)
 
+#### 1.6.0 (2026-08-29)
+Export your month as a PDF right from the History screen.
+Yesterday's entry got a significant refresh: easier to understand and finish before it's too late.
+Photo and avatar positioning now works horizontally too, not just vertically.
+A new-update indicator now appears on shared diaries someone else maintains.
+Small fixes and interface improvements.
+
 #### 1.5.0 (2026-08-19)
 Time Capsules can now be sent to friends, not just yourself.
 Added comments on days, both your own and friends'.
@@ -81,6 +88,13 @@ Nepogano будується поступово: спершу особистий 
 настрій,щоденник,чесність,чекін,рефлексія,друзі,календар,трекер настрою,капсула часу *(84 символи)*
 
 ### What's New — журнал версій (найновіша зверху, копіювати верхню в App Store Connect)
+
+#### 1.6.0 (2026-08-29)
+Місячний звіт тепер можна експортувати в PDF просто з екрана "Історія".
+Вчорашній день суттєво доопрацьовано: простіше зрозуміти й дозаповнити, поки не пізно.
+Позиціювання фото та аватарки тепер працює і по горизонталі, не тільки по вертикалі.
+Позначка нових оновлень зʼявляється на спільних щоденниках, які веде хтось інший.
+Дрібні виправлення й покращення інтерфейсу.
 
 #### 1.5.0 (2026-08-19)
 Капсули часу тепер можна надсилати й друзям, не тільки собі.
