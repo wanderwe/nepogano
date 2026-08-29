@@ -2918,15 +2918,13 @@ class _CheckInScreenState extends State<CheckInScreen>
                             mainAxisSize: MainAxisSize.min,
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
-                              Text(
-                                _editingDate != null
-                                    ? l10n.howAreThingsYesterday
-                                    : l10n.howAreThingsToday,
-                                textAlign: TextAlign.center,
-                                style: appSerif(fontSize: 28),
-                              ),
+                              // Кнопка виходу з режиму "вчора" йде ПЕРЕД
+                              // питанням, а не між питанням і рядком
+                              // "Вже збережено" — інакше вона розриває
+                              // те, що логічно одне ціле: питання про
+                              // конкретний день і статус збереження саме
+                              // ЦЬОГО дня.
                               if (_editingDate != null) ...[
-                                const SizedBox(height: 4),
                                 Center(
                                   child: TextButton(
                                     onPressed: _exitYesterdayEditMode,
@@ -2936,7 +2934,15 @@ class _CheckInScreenState extends State<CheckInScreen>
                                     child: Text(l10n.backToToday),
                                   ),
                                 ),
+                                const SizedBox(height: 4),
                               ],
+                              Text(
+                                _editingDate != null
+                                    ? l10n.howAreThingsYesterday
+                                    : l10n.howAreThingsToday,
+                                textAlign: TextAlign.center,
+                                style: appSerif(fontSize: 28),
+                              ),
                               if (_todayEntrySavedAt != null) ...[
                                 const SizedBox(height: 6),
                                 Text(
