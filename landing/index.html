@@ -3,6 +3,15 @@
 <head>
 <script>
 (function() {
+  var params = new URLSearchParams(location.search);
+  var chosen = params.get('lang');
+  if (chosen === 'en') {
+    try { localStorage.setItem('nepogano_lang', 'en'); } catch (e) {}
+    return;
+  }
+  try {
+    if (localStorage.getItem('nepogano_lang') === 'en') return;
+  } catch (e) {}
   var lang = ((navigator.language || navigator.userLanguage || '') + '').toLowerCase();
   if (lang.indexOf('uk') === 0 || lang.indexOf('ru') === 0) {
     location.replace('/uk/');
@@ -13,6 +22,21 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Nepogano · an honest daily mood check-in</title>
 <meta name="description" content="Meh. Fine. Awesome. Three honest ratings for your day, no filters, no hype.">
+<link rel="canonical" href="https://www.nepogano.app/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Nepogano">
+<meta property="og:url" content="https://www.nepogano.app/">
+<meta property="og:title" content="Nepogano · an honest daily mood check-in">
+<meta property="og:description" content="Meh. Fine. Awesome. Three honest ratings for your day, no filters, no hype.">
+<meta property="og:image" content="https://www.nepogano.app/assets/icon.png">
+<meta property="og:image:width" content="512">
+<meta property="og:image:height" content="512">
+<meta property="og:locale" content="en_US">
+<meta property="og:locale:alternate" content="uk_UA">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Nepogano · an honest daily mood check-in">
+<meta name="twitter:description" content="Meh. Fine. Awesome. Three honest ratings for your day, no filters, no hype.">
+<meta name="twitter:image" content="https://www.nepogano.app/assets/icon.png">
 <link rel="icon" href="/assets/icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Lora:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
@@ -106,6 +130,7 @@
 
 <footer class="footer">
   <div class="wrap footer-inner">
+    <a href="/support.html">Support</a>
     <a href="https://github.com/wanderwe/nepogano/wiki/Privacy-Policy">Privacy Policy</a>
     <a href="mailto:review.nepogano@gmail.com">review.nepogano@gmail.com</a>
   </div>
