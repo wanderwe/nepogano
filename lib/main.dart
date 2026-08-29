@@ -3076,7 +3076,7 @@ class _CheckInScreenState extends State<CheckInScreen>
                   shape: BoxShape.circle,
                   color: mood?.color ?? Colors.transparent,
                   border: isEligibleYesterday
-                      ? Border.all(color: AppColors.accent, width: 1.5)
+                      ? Border.all(color: AppColors.accent, width: 2.5)
                       : mood == null
                       ? Border.all(color: AppColors.surfaceRaised, width: 1.5)
                       : (isToday
@@ -3158,17 +3158,17 @@ class _PulsingHaloState extends State<_PulsingHalo>
           width: 14,
           height: 14,
           child: OverflowBox(
-            maxWidth: 22,
-            maxHeight: 22,
+            maxWidth: 30,
+            maxHeight: 30,
             child: Stack(
               alignment: Alignment.center,
               children: [
                 Container(
-                  width: 14 + 8 * t,
-                  height: 14 + 8 * t,
+                  width: 14 + 16 * t,
+                  height: 14 + 16 * t,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: AppColors.accent.withValues(alpha: (1 - t) * 0.35),
+                    color: AppColors.accent.withValues(alpha: (1 - t) * 0.5),
                   ),
                 ),
                 child!,
