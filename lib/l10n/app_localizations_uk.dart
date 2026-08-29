@@ -163,10 +163,10 @@ class AppLocalizationsUk extends AppLocalizations {
   String get howAreThingsToday => 'Як справи сьогодні?';
 
   @override
-  String get howAreThingsYesterday => 'Як минув вчорашній день?';
+  String get howAreThingsYesterday => 'Як тобі вчора?';
 
   @override
-  String get backToToday => 'До сьогодні';
+  String get backToToday => 'Назад до сьогодні';
 
   @override
   String get yesterdayIntroTitle => 'Вчорашній запис';

@@ -395,13 +395,13 @@ abstract class AppLocalizations {
   /// No description provided for @howAreThingsYesterday.
   ///
   /// In uk, this message translates to:
-  /// **'Як минув вчорашній день?'**
+  /// **'Як тобі вчора?'**
   String get howAreThingsYesterday;
 
   /// No description provided for @backToToday.
   ///
   /// In uk, this message translates to:
-  /// **'До сьогодні'**
+  /// **'Назад до сьогодні'**
   String get backToToday;
 
   /// No description provided for @yesterdayIntroTitle.
