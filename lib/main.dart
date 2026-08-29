@@ -2918,24 +2918,6 @@ class _CheckInScreenState extends State<CheckInScreen>
                             mainAxisSize: MainAxisSize.min,
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
-                              // Кнопка виходу з режиму "вчора" йде ПЕРЕД
-                              // питанням, а не між питанням і рядком
-                              // "Вже збережено" — інакше вона розриває
-                              // те, що логічно одне ціле: питання про
-                              // конкретний день і статус збереження саме
-                              // ЦЬОГО дня.
-                              if (_editingDate != null) ...[
-                                Center(
-                                  child: TextButton(
-                                    onPressed: _exitYesterdayEditMode,
-                                    style: TextButton.styleFrom(
-                                      foregroundColor: AppColors.accent,
-                                    ),
-                                    child: Text(l10n.backToToday),
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                              ],
                               Text(
                                 _editingDate != null
                                     ? l10n.howAreThingsYesterday
@@ -2963,6 +2945,23 @@ class _CheckInScreenState extends State<CheckInScreen>
                                   style: const TextStyle(
                                     fontSize: 13,
                                     color: AppColors.inkMuted,
+                                  ),
+                                ),
+                              ],
+                              // Кнопка виходу з режиму "вчора" йде ПІСЛЯ
+                              // питання й статусу збереження — обидва
+                              // стосуються самого вчорашнього дня і мають
+                              // йти суцільним блоком, кнопка переходу вже
+                              // на інший день лише завершує цей блок.
+                              if (_editingDate != null) ...[
+                                const SizedBox(height: 4),
+                                Center(
+                                  child: TextButton(
+                                    onPressed: _exitYesterdayEditMode,
+                                    style: TextButton.styleFrom(
+                                      foregroundColor: AppColors.accent,
+                                    ),
+                                    child: Text(l10n.backToToday),
                                   ),
                                 ),
                               ],
