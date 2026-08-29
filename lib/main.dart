@@ -3143,20 +3143,31 @@ class _PulsingHaloState extends State<_PulsingHalo>
       animation: _controller,
       builder: (context, child) {
         final t = _controller.value;
-        return Stack(
-          alignment: Alignment.center,
-          clipBehavior: Clip.none,
-          children: [
-            Container(
-              width: 14 + 8 * t,
-              height: 14 + 8 * t,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: AppColors.accent.withValues(alpha: (1 - t) * 0.35),
+        // Фіксований SizedBox навколо Stack — інакше Stack сам щокадру
+        // репортує НОВИЙ розмір (за колом, що росте), і ця зміна
+        // піднімається вгору по дереву аж до всього ряду крапок і напису
+        // "Цей тиждень" над ним, змушуючи все це "стрибати" разом із
+        // пульсацією. Коло як і раніше вільно малюється ЗА межі цього
+        // боксу (`clipBehavior: Clip.none`) — це суто питання layout, не
+        // відображення.
+        return SizedBox(
+          width: 14,
+          height: 14,
+          child: Stack(
+            alignment: Alignment.center,
+            clipBehavior: Clip.none,
+            children: [
+              Container(
+                width: 14 + 8 * t,
+                height: 14 + 8 * t,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: AppColors.accent.withValues(alpha: (1 - t) * 0.35),
+                ),
               ),
-            ),
-            child!,
-          ],
+              child!,
+            ],
+          ),
         );
       },
       child: widget.child,
