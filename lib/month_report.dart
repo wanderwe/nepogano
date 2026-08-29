@@ -422,7 +422,7 @@ pw.Widget _buildMoodDistribution(
 // Повна ширина сторінки на телефоні читалась як суцільна нескінченна
 // стрічка — звужуємо праву частину через фіксований відступ.
 //
-// Три окремі речі довелось виправляти по черзі, жодна не була тим, що
+// Чотири окремі речі довелось виправляти по черзі, жодна не була тим, що
 // здавалось спочатку:
 // (1) `pw.Text` НЕ спанситься між сторінками за замовчуванням —
 //     `overflow` за замовчуванням `TextOverflow.visible`, а `canSpan`
@@ -439,12 +439,21 @@ pw.Widget _buildMoodDistribution(
 // (3) Але якщо дата й нотатка — ДВА окремих прямих елементи (як було
 //     після (2)), сторінка може розірватись МІЖ ними: дата лишається на
 //     попередній сторінці, нотатка починається на наступній без жодного
-//     контексту, до якого дня вона взагалі. Рішення — дата+крапка+нотатка
-//     ОДНИМ `RichText` (кілька `TextSpan` різного стилю всередині одного
-//     спансityого віджета) замість трьох окремих елементів: розбити текст
-//     усередині них MultiPage і далі може (для дуже довгих нотаток), але
-//     розірвати дату й початок нотатки в різні боки більше не може — вони
-//     тепер один нероздільний потік тексту.
+//     контексту, до якого дня вона взагалі. Об'єднання дати+крапки+нотатки
+//     в ОДИН `RichText` (кілька `TextSpan` різного стилю) прибрало розрив
+//     МІЖ окремими віджетами.
+// (4) Але розбиття ВСЕРЕДИНІ одного spanning `RichText` іде рядок за
+//     рядком, без жодного мінімуму — цілком можливо, що на сторінці
+//     лишається місця рівно на рядок дати, і жодного рядка нотатки за
+//     ним, той самий візуальний симптом (гола дата), просто інша
+//     причина. Рішення — розбити САМІ дані на "голову" (крапка + дата +
+//     перші ~80 символів нотатки, ОДНИМ нероздільним `RichText` без
+//     `span` — якщо голова не влазить цілком, вона стрибає на наступну
+//     сторінку ЦІЛКОМ, дата ніколи не лишається сама) і, якщо нотатка
+//     довша, окремий "хвіст" (звичайний spanning `pw.Text` одразу за
+//     головою) — для справді довгих нотаток розбиття всередині хвоста
+//     й далі можливе й бажане (старий тест з 1000-символьним записом
+//     лишається робочим), просто вже не впритул до дати.
 List<pw.Widget> _buildNotesSection(
   _ReportData data,
   pw.Font headingFont,
@@ -457,50 +466,88 @@ List<pw.Widget> _buildNotesSection(
       style: pw.TextStyle(font: headingFont, fontSize: 15, color: _pdfInk),
     ),
     pw.SizedBox(height: 10),
-    for (final entry in data.sortedAsc) _buildNoteEntry(entry, rightGap),
+    for (final entry in data.sortedAsc)
+      ..._buildNoteEntryWidgets(entry, rightGap),
   ];
 }
+
+// Скільки символів нотатки гарантовано лишаються НЕ spanning разом із
+// датою (див. пункт (4) вище) — досить, щоб дата ніколи не виглядала
+// самотньою, замало, щоб помітно "з'їдати" бюджет розбиття для справді
+// довгих нотаток.
+const _noteHeadMinChars = 80;
 
 // Фото навмисно НЕ вбудовуються (пробували — і мініатюру під текстом, і
 // поруч із текстом, обидва варіанти на реальному контенті виглядали
 // невдало: під текстом розтягувало кожен запис і ламало ритм читання
 // списку, поруч — не завжди вдало компонувалось з дуже різною довжиною
 // нотаток). Лишили голий текст, найчитабельніший варіант із перевірених.
-pw.Widget _buildNoteEntry(CheckinEntry entry, double rightGap) {
+List<pw.Widget> _buildNoteEntryWidgets(CheckinEntry entry, double rightGap) {
   final hasNote = entry.note != null && entry.note!.trim().isNotEmpty;
   final dateStr =
       '${entry.createdAt.day}.${entry.createdAt.month}.${entry.createdAt.year}';
-  return pw.Padding(
-    padding: pw.EdgeInsets.only(right: rightGap, bottom: 10),
-    child: pw.RichText(
-      // span — інакше цей запис (як і будь-який довгий) завжди
-      // трактується як нероздільний блок і цілком стрибає на наступну
-      // сторінку, лишаючи порожній залишок попередньої.
-      overflow: pw.TextOverflow.span,
-      text: pw.TextSpan(
-        children: [
-          // Кольорова крапка настрою — символ "●" зі стилем кольору
-          // замість окремого `Container`-кружечка: те, що це просто
-          // текстовий символ у тому самому `TextSpan`-потоці, і тримає
-          // крапку+дату+нотатку одним нероздільним цілим.
-          pw.TextSpan(
-            text: '● ',
-            style: pw.TextStyle(
-              fontSize: 8,
-              color: _toPdfColor(entry.mood.color),
-            ),
+  final note = hasNote ? entry.note!.trim() : null;
+
+  String? head = note;
+  String? tail;
+  if (note != null && note.length > _noteHeadMinChars) {
+    var splitAt = note.indexOf(' ', _noteHeadMinChars);
+    if (splitAt == -1) splitAt = note.length;
+    head = note.substring(0, splitAt);
+    final rest = note.substring(splitAt).trimLeft();
+    tail = rest.isEmpty ? null : rest;
+  }
+
+  final headWidget = pw.RichText(
+    // Свідомо БЕЗ overflow: span — це нероздільний блок: якщо "голова"
+    // (крапка+дата+перші ~80 символів нотатки) не влазить цілком на
+    // залишок сторінки, MultiPage переносить її ЦІЛКОМ на наступну,
+    // дата ніколи не лишається сама.
+    text: pw.TextSpan(
+      children: [
+        pw.TextSpan(
+          text: '● ',
+          style: pw.TextStyle(
+            fontSize: 8,
+            color: _toPdfColor(entry.mood.color),
           ),
+        ),
+        pw.TextSpan(
+          text: hasNote ? '$dateStr\n' : dateStr,
+          style: pw.TextStyle(fontSize: 10, color: _pdfInkMuted),
+        ),
+        if (head != null)
           pw.TextSpan(
-            text: hasNote ? '$dateStr\n' : dateStr,
-            style: pw.TextStyle(fontSize: 10, color: _pdfInkMuted),
+            text: head,
+            style: pw.TextStyle(fontSize: 11, color: _pdfInk),
           ),
-          if (hasNote)
-            pw.TextSpan(
-              text: entry.note!.trim(),
-              style: pw.TextStyle(fontSize: 11, color: _pdfInk),
-            ),
-        ],
-      ),
+      ],
     ),
   );
+
+  if (tail == null) {
+    return [
+      pw.Padding(
+        padding: pw.EdgeInsets.only(right: rightGap, bottom: 10),
+        child: headWidget,
+      ),
+    ];
+  }
+
+  return [
+    pw.Padding(
+      padding: pw.EdgeInsets.only(right: rightGap),
+      child: headWidget,
+    ),
+    pw.Padding(
+      padding: pw.EdgeInsets.only(right: rightGap, bottom: 10),
+      // Хвіст і далі spanning — довга нотатка все ще може розбитись на
+      // ще одну сторінку, просто вже не впритул до дати.
+      child: pw.Text(
+        tail,
+        overflow: pw.TextOverflow.span,
+        style: pw.TextStyle(fontSize: 11, color: _pdfInk),
+      ),
+    ),
+  ];
 }
