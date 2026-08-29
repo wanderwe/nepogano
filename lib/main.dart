@@ -3092,13 +3092,74 @@ class _CheckInScreenState extends State<CheckInScreen>
                 // як і раніше, щоб не створювати враження, що будь-який
                 // минулий день можна відредагувати.
                 child: isEligibleYesterday
-                    ? GestureDetector(onTap: _onYesterdayDotTap, child: dot)
+                    ? _PulsingHalo(
+                        child: GestureDetector(
+                          onTap: _onYesterdayDotTap,
+                          child: dot,
+                        ),
+                      )
                     : dot,
               );
             }).toList(),
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Радар-пульс акцентним кольором позаду [child] — сам по собі бордер на
+/// крапці "вчора" губився серед шести інших крапок того самого розміру в
+/// тижневій стрічці (юзер підтвердив на реальному пристрої). Окремий
+/// віджет (не просто `AnimationController` у самому екрані) — контролер
+/// живе й тікає лише поки саме ця крапка існує в дереві, тобто сама
+/// пропадає разом з вікном редагування опівдні, без ручного стеження за
+/// станом ще одного контролера в і без того великому головному екрані.
+class _PulsingHalo extends StatefulWidget {
+  final Widget child;
+
+  const _PulsingHalo({required this.child});
+
+  @override
+  State<_PulsingHalo> createState() => _PulsingHaloState();
+}
+
+class _PulsingHaloState extends State<_PulsingHalo>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 1400),
+  )..repeat(reverse: true);
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        final t = _controller.value;
+        return Stack(
+          alignment: Alignment.center,
+          clipBehavior: Clip.none,
+          children: [
+            Container(
+              width: 14 + 8 * t,
+              height: 14 + 8 * t,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: AppColors.accent.withValues(alpha: (1 - t) * 0.35),
+              ),
+            ),
+            child!,
+          ],
+        );
+      },
+      child: widget.child,
     );
   }
 }
