@@ -2063,7 +2063,6 @@ class _CheckInScreenState extends State<CheckInScreen>
               ?.name;
     return DayCardScreen(
       subjectName: subjectName,
-      isYesterday: _editingDate != null,
       entry: CheckinEntry(
         // Картка дня — статичне зображення для шеру, коментарі туди не
         // рендеряться, тож id не потрібен.
