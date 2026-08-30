@@ -270,6 +270,9 @@ class AppLocalizationsUk extends AppLocalizations {
   String get noEntriesThisMonth => 'У цьому місяці ще немає записів.';
 
   @override
+  String get noEntryForDay => 'За цей день запису немає.';
+
+  @override
   String get shareFailed => 'Не вдалось поділитись. Спробуй ще раз.';
 
   @override

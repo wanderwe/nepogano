@@ -590,6 +590,12 @@ abstract class AppLocalizations {
   /// **'У цьому місяці ще немає записів.'**
   String get noEntriesThisMonth;
 
+  /// No description provided for @noEntryForDay.
+  ///
+  /// In uk, this message translates to:
+  /// **'За цей день запису немає.'**
+  String get noEntryForDay;
+
   /// No description provided for @shareFailed.
   ///
   /// In uk, this message translates to:

@@ -1165,6 +1165,28 @@ class _CheckInScreenState extends State<CheckInScreen>
     _loadEntryForEffectiveDate();
   }
 
+  /// Тап на будь-яку іншу минулу крапку тижневої стрічки з записом — той
+  /// самий пуш, що й кнопка "Історія" в шапці, лише одразу проскролений до
+  /// конкретного дня.
+  Future<void> _openHistoryOnDay(DateTime day) async {
+    final activeName = _activeSubjectId == null
+        ? null
+        : _subjects
+              .cast<Subject?>()
+              .firstWhere((s) => s?.id == _activeSubjectId, orElse: () => null)
+              ?.name;
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => HistoryScreen(
+          subjectId: _activeSubjectId,
+          subjectName: activeName,
+          initialDate: day,
+        ),
+      ),
+    );
+    if (mounted) _checkCommentActivity();
+  }
+
   /// Перше натискання "+" за весь час на цьому пристрої — одноразово
   /// пояснює всю механіку (особистий щоденник видно всім друзям, цей
   /// приватний, коло=перегляд, співавтор=редагування) перед самим
@@ -3118,13 +3140,17 @@ class _CheckInScreenState extends State<CheckInScreen>
               // (та й не мала сенсу, коли ми вже й так на сьогодні).
               final isReturnToToday = isToday && _editingDate != null;
 
+              // Будь-який інший минулий день із записом — не сьогодні (той
+              // завжди лишається на самому головному екрані, вести в
+              // Історію й назад без нової інформації не має сенсу) і не
+              // вчора під вікном редагування (там своя inline-дія вище) —
+              // веде в Історію, одразу проскролену до цього дня. День без
+              // запису лишається суто інформаційним, як і завжди.
+              final isNavigableDay =
+                  !isToday && !isEligibleYesterday && mood != null;
+
               return Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 7),
-                // Тапабельні лише вчорашня крапка (в межах вікна
-                // редагування до полудня) і сьогоднішня (лише поки ми в
-                // режимі "вчора") — решта днів лишаються суто
-                // інформаційними, щоб не створювати враження, що будь-який
-                // минулий день можна відредагувати.
                 child: isEligibleYesterday
                     ? _PulsingHalo(
                         child: GestureDetector(
@@ -3134,6 +3160,28 @@ class _CheckInScreenState extends State<CheckInScreen>
                       )
                     : isReturnToToday
                     ? GestureDetector(onTap: _exitYesterdayEditMode, child: dot)
+                    : isNavigableDay
+                    ? GestureDetector(
+                        onTap: () => _openHistoryOnDay(d),
+                        child: dot,
+                      )
+                    // Порожній минулий день (без запису) — теж реагує на
+                    // тап, просто повідомленням, а не мовчазним ігноруванням:
+                    // крапка виглядає так само клікабельно, як і решта, тож
+                    // тиша на тап — та сама плутанина, яку ця фіча мала
+                    // прибрати, тільки для порожніх днів замість заповнених.
+                    : !isToday
+                    ? GestureDetector(
+                        onTap: () {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(l10n.noEntryForDay),
+                              duration: const Duration(seconds: 2),
+                            ),
+                          );
+                        },
+                        child: dot,
+                      )
                     : dot,
               );
             }).toList(),

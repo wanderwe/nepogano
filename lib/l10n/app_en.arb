@@ -89,6 +89,7 @@
   "couldNotLoadHistory": "Couldn't load history.",
   "couldNotLoadTodayEntry": "Couldn't check today's entry. Try again to avoid creating a duplicate.",
   "noEntriesThisMonth": "No entries yet this month.",
+  "noEntryForDay": "There's no entry for this day.",
 
   "shareFailed": "Couldn't share. Try again.",
   "prepareCardFailed": "Couldn't prepare the card. Try again.",

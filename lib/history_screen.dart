@@ -45,8 +45,17 @@ class CheckinEntry {
 class HistoryScreen extends StatefulWidget {
   final String? subjectId;
   final String? subjectName;
+  // Відкрити екран одразу проскроленим до конкретного дня (тап по крапці
+  // тижневої стрічки на головному екрані) — той самий UX, що тап по дню
+  // прямо в календарі цього екрана, просто ініційований іззовні.
+  final DateTime? initialDate;
 
-  const HistoryScreen({super.key, this.subjectId, this.subjectName});
+  const HistoryScreen({
+    super.key,
+    this.subjectId,
+    this.subjectName,
+    this.initialDate,
+  });
 
   @override
   State<HistoryScreen> createState() => _HistoryScreenState();
@@ -84,8 +93,11 @@ class _HistoryScreenState extends State<HistoryScreen> {
   @override
   void initState() {
     super.initState();
+    final initial = widget.initialDate;
     final now = DateTime.now();
-    _visibleMonth = DateTime(now.year, now.month);
+    _visibleMonth = initial != null
+        ? DateTime(initial.year, initial.month)
+        : DateTime(now.year, now.month);
     _scrollController.addListener(_handleScroll);
     _load();
   }
@@ -118,7 +130,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
 
     try {
       final columns =
-          'id, mood, note, created_at, photo_path, photo_align_x, photo_align_y, photo_scale, update_count'
+          'id, mood, note, created_at, local_date, photo_path, photo_align_x, photo_align_y, photo_scale, update_count'
           '${widget.subjectId != null ? ', author_id' : ''}';
       final rows = await _supabase
           .from(_table)
@@ -151,9 +163,20 @@ class _HistoryScreenState extends State<HistoryScreen> {
 
       final entries = (rows as List).map((row) {
         final authorId = row['author_id'] as String?;
+        // Той самий принцип, що в _loadWeek() на головному екрані:
+        // угруповуємо/показуємо за ЕФЕКТИВНОЮ (local_date) датою, не за
+        // сирим created_at — інакше запис, зроблений близько опівночі,
+        // міг би лягти в календарі не на той день, на який його бачить
+        // тижнева стрічка головного екрана (той самий клас розбіжності,
+        // що вже виправлявся для RLS-перевірки вгадування, правило 26
+        // в ARCHITECTURE.md).
+        final localDateStr = row['local_date'] as String?;
+        final effectiveDate = localDateStr != null
+            ? DateTime.parse(localDateStr)
+            : DateTime.parse(row['created_at'] as String).toLocal();
         return CheckinEntry(
           id: row['id'] as String,
-          createdAt: DateTime.parse(row['created_at'] as String).toLocal(),
+          createdAt: effectiveDate,
           mood: moodFromDbValue(row['mood'] as String),
           note: row['note'] as String?,
           photoPath: row['photo_path'] as String?,
@@ -172,6 +195,25 @@ class _HistoryScreenState extends State<HistoryScreen> {
           _entries = entries;
           _loading = false;
         });
+        if (widget.initialDate != null) {
+          // _entryKeys заповнюється лише під час білда списку записів
+          // (_buildEntryList) — чекаємо, поки цей кадр реально
+          // відрендериться, інакше ключа ще нема і скрол мовчки нічого
+          // не робить.
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) _scrollToDay(widget.initialDate!.day);
+          });
+          // Коригувальний другий прохід: фото вже не зсувають висоту
+          // (AspectRatio-плейсхолдер вище), але коментарі під записом
+          // довантажуються асинхронно й так само можуть трохи "дорости"
+          // вже після першого скролу — тому позиція, порахована в першу
+          // мить після відкриття екрана, ще не так точна, як тап по дню
+          // просто в уже відкритій, давно "усталеній" Історії. Другий
+          // виклик після паузи ловить ці пізні зміни висоти.
+          Future.delayed(const Duration(milliseconds: 500), () {
+            if (mounted) _scrollToDay(widget.initialDate!.day);
+          });
+        }
       }
       if (widget.subjectId != null) {
         markSubjectHistoryViewed(widget.subjectId!);
@@ -230,7 +272,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
       ctx,
       duration: const Duration(milliseconds: 400),
       curve: Curves.easeInOut,
-      alignment: 0.1,
+      alignment: 0.02,
     );
   }
 
@@ -661,7 +703,27 @@ class _HistoryScreenState extends State<HistoryScreen> {
                       FutureBuilder<Uint8List?>(
                         future: downloadCheckinPhoto(entry.photoPath!),
                         builder: (context, snapshot) {
-                          if (!snapshot.hasData) return const SizedBox.shrink();
+                          if (!snapshot.hasData) {
+                            // Не SizedBox.shrink() — той дає нульову висоту,
+                            // тож коли фото таки довантажується, картка
+                            // "виростає" і зсуває все нижче вже ПІСЛЯ того,
+                            // як _scrollToDay порахував позицію для тапу по
+                            // крапці тижневої стрічки, і скрол влучає не
+                            // туди (гірше — чим далі ціль углиб списку).
+                            // AspectRatio одразу резервує фінальну висоту.
+                            return const AspectRatio(
+                              aspectRatio: kCompactPhotoAspectRatio,
+                              child: Center(
+                                child: SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                ),
+                              ),
+                            );
+                          }
                           return ClipRRect(
                             borderRadius: BorderRadius.circular(10),
                             child: AspectRatio(

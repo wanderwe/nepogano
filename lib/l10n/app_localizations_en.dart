@@ -270,6 +270,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get noEntriesThisMonth => 'No entries yet this month.';
 
   @override
+  String get noEntryForDay => 'There\'s no entry for this day.';
+
+  @override
   String get shareFailed => 'Couldn\'t share. Try again.';
 
   @override
