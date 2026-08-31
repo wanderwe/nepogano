@@ -349,6 +349,7 @@
   "exportMonth": "Експортувати місяць",
   "calendarView": "Календар",
   "constellationView": "Сузір'я",
+  "viewEntry": "Переглянути",
   "exportMonthDisabledHint": "У цьому місяці ще немає записів для звіту.",
   "reportMoodDistribution": "Розподіл настроїв",
   "reportDaysFilled": "Заповнено {filled} з {total} днів (пропущено {missed})",

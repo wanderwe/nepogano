@@ -1430,6 +1430,12 @@ abstract class AppLocalizations {
   /// **'Сузір\'я'**
   String get constellationView;
 
+  /// No description provided for @viewEntry.
+  ///
+  /// In uk, this message translates to:
+  /// **'Переглянути'**
+  String get viewEntry;
+
   /// No description provided for @exportMonthDisabledHint.
   ///
   /// In uk, this message translates to:

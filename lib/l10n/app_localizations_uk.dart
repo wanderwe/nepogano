@@ -750,6 +750,9 @@ class AppLocalizationsUk extends AppLocalizations {
   String get constellationView => 'Сузір\'я';
 
   @override
+  String get viewEntry => 'Переглянути';
+
+  @override
   String get exportMonthDisabledHint =>
       'У цьому місяці ще немає записів для звіту.';
 

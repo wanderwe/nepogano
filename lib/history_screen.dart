@@ -585,25 +585,75 @@ class _HistoryScreenState extends State<HistoryScreen> {
     Map<int, CheckinEntry> entriesByDay,
     int daysInMonth,
   ) {
-    if (entriesByDay.isEmpty) {
-      return Padding(
-        padding: const EdgeInsets.symmetric(vertical: 24),
-        child: Text(
-          AppLocalizations.of(context).noEntriesThisMonth,
-          style: const TextStyle(color: AppColors.inkMuted),
-        ),
-      );
-    }
+    // Порожній місяць уже повідомляє про себе один раз нижче, у
+    // _buildEntryList — той самий текст тут дублював би його.
+    if (entriesByDay.isEmpty) return const SizedBox.shrink();
     return AspectRatio(
       aspectRatio: 1,
-      child: CustomPaint(
-        painter: _MonthConstellationPainter(
-          entriesByDay: entriesByDay,
-          daysInMonth: daysInMonth,
-          year: _visibleMonth.year,
-          month: _visibleMonth.month,
-        ),
-        child: const SizedBox.expand(),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final size = constraints.biggest;
+          return GestureDetector(
+            // На відміну від тапу по дню в календарі (де перехід очікуваний
+            // і миттєвий), тут спершу лише легка інфо-підказка — дата й
+            // настрій, без різкого стрибка вниз по екрану серед розглядання
+            // картинки. Перехід до самого запису — окрема, свідома дія
+            // (кнопка в SnackBar), не побічний ефект простого тапу.
+            onTapUp: (details) {
+              final day = _MonthConstellationPainter.dayAt(
+                details.localPosition,
+                size,
+                year: _visibleMonth.year,
+                month: _visibleMonth.month,
+                daysInMonth: daysInMonth,
+              );
+              final entry = day == null ? null : entriesByDay[day];
+              // showSnackBar за замовчуванням СТАВИТЬ У ЧЕРГУ, а не заміняє
+              // — без цього тап по іншій зірці чекав би, поки таймер
+              // попередньої добіжить до кінця, перш ніж показати нову.
+              // Явне очищення тут же дозволяє й тапу по порожньому місцю
+              // прибирати тултіп, не лише появі нового.
+              ScaffoldMessenger.of(context).clearSnackBars();
+              if (day == null || entry == null) return;
+              final locale = Localizations.localeOf(context);
+              final l10n = AppLocalizations.of(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  // Стандартний action: інколи переносить кнопку на окремий
+                  // рядок навіть коли місця вистачає (Material 3) — робимо
+                  // Row самі, щоб висота гарантовано лишалась компактною.
+                  content: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      // Настрій уже видно з кольору самої зірки —
+                      // повторювати його ще й текстом зайве, лише дата.
+                      Text(
+                        '$day ${monthNameGenitive(_visibleMonth.month, locale)}',
+                      ),
+                      TextButton(
+                        onPressed: () => _scrollToDay(day),
+                        style: TextButton.styleFrom(
+                          foregroundColor: AppColors.accent,
+                        ),
+                        child: Text(l10n.viewEntry),
+                      ),
+                    ],
+                  ),
+                  duration: const Duration(seconds: 2),
+                ),
+              );
+            },
+            child: CustomPaint(
+              painter: _MonthConstellationPainter(
+                entriesByDay: entriesByDay,
+                daysInMonth: daysInMonth,
+                year: _visibleMonth.year,
+                month: _visibleMonth.month,
+              ),
+              child: const SizedBox.expand(),
+            ),
+          );
+        },
       ),
     );
   }
@@ -919,9 +969,25 @@ class _MonthConstellationPainter extends CustomPainter {
   });
 
   static const _marginFraction = 0.12;
+  // Фіксований, не прив'язаний до місяця seed — тьмяні "фонові" зірки самі
+  // по собі не дані, лише декорація, що продає ідею нічного неба; мають
+  // лишатись стабільними, не стрибати між місяцями, як справжні дані.
+  static const _backgroundSeed = 42;
+  static const _backgroundStarCount = 40;
+  // Комфортна зона тапу навколо зірки — помітно більша за візуальний
+  // радіус найменшої зірки (3.0), інакше влучити пальцем по маленькій
+  // зірці без нотатки й фото практично неможливо.
+  static const _tapRadius = 22.0;
 
-  @override
-  void paint(Canvas canvas, Size size) {
+  /// Той самий детермінований розрахунок, що й малювання нижче — окремий
+  /// статичний метод, щоб тап-хендлер міг порахувати ті самі координати,
+  /// не дублюючи цикл із paint().
+  static Map<int, Offset> _positionsFor({
+    required int year,
+    required int month,
+    required int daysInMonth,
+    required Size size,
+  }) {
     final random = Random(year * 10000 + month * 100);
     final positions = <int, Offset>{};
     for (var day = 1; day <= daysInMonth; day++) {
@@ -931,6 +997,49 @@ class _MonthConstellationPainter extends CustomPainter {
           _marginFraction + random.nextDouble() * (1 - 2 * _marginFraction);
       positions[day] = Offset(dx * size.width, dy * size.height);
     }
+    return positions;
+  }
+
+  /// День місяця, у зірку якого влучив тап, чи null, якщо тап був повз усі.
+  static int? dayAt(
+    Offset tapPosition,
+    Size size, {
+    required int year,
+    required int month,
+    required int daysInMonth,
+  }) {
+    final positions = _positionsFor(
+      year: year,
+      month: month,
+      daysInMonth: daysInMonth,
+      size: size,
+    );
+    // НАЙБЛИЖЧА зірка в межах радіуса тапу, не перша за хронологією — коли
+    // кілька зірок скупчені поряд (реальний випадок на щільний місяць),
+    // перша-в-порядку завжди "перемагала" незалежно від того, куди саме
+    // влучив палець, і решту поряд неможливо було обрати взагалі.
+    int? closestDay;
+    var closestDistance = double.infinity;
+    for (final entry in positions.entries) {
+      final distance = (entry.value - tapPosition).distance;
+      if (distance <= _tapRadius && distance < closestDistance) {
+        closestDistance = distance;
+        closestDay = entry.key;
+      }
+    }
+    return closestDay;
+  }
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    _drawBackgroundStars(canvas, size);
+
+    final positions = _positionsFor(
+      year: year,
+      month: month,
+      daysInMonth: daysInMonth,
+      size: size,
+    );
 
     final daysWithEntries = entriesByDay.keys.toList()..sort();
 
@@ -950,24 +1059,68 @@ class _MonthConstellationPainter extends CustomPainter {
     }
   }
 
+  /// Тьмяні статичні крапки, розкидані по всій канві незалежно від реальних
+  /// днів — суто атмосфера нічного неба, приглушені настільки, щоб їх не
+  /// можна було сплутати зі справжніми зірками-чек-інами.
+  void _drawBackgroundStars(Canvas canvas, Size size) {
+    final random = Random(_backgroundSeed);
+    final paint = Paint()..color = AppColors.inkMuted.withValues(alpha: 0.4);
+    for (var i = 0; i < _backgroundStarCount; i++) {
+      final point = Offset(
+        random.nextDouble() * size.width,
+        random.nextDouble() * size.height,
+      );
+      canvas.drawCircle(point, 1.0, paint);
+    }
+  }
+
+  /// Шість спроб до цього, усі варіації "коло + якась прикраса поверх"
+  /// (зміщена пляма-хайлайт → більярдна куля; суцільний градієнт → все
+  /// розмите; центрована крапка → просто менша куля; яскравий хрест-спалах
+  /// → ялинкова прикраса; тонший/тьмяніший хрест → те саме, лише слабше;
+  /// діагональний "×" замість "+" → та сама проблема під іншим кутом) — не
+  /// зайшла жодна. Рішення не в тюнінгу прикраси, а в її відсутності:
+  /// просто ореол + чітке коло, без жодного додаткового елемента.
+  /// "Зірковість" — з контексту (лінії-сузір'я, тьмяний зоряний фон, назва
+  /// екрана), не з форми кожної точки окремо, так само, як на реальних
+  /// астрономічних картах (там зірка — просто крапка різної яскравості).
   void _drawStar(Canvas canvas, Offset center, CheckinEntry entry) {
     final radius = _starRadius(entry);
     final color = entry.mood.color;
 
+    // Сьома спроба: замість чіткої лінії-променя (щоразу читалась як
+    // прикраса/іконка) — сильно розмита витягнута пляма, зроблена тим
+    // самим blur, що й ореол, тож зливається в одне ціле, а не читається
+    // окремим елементом. Ближче до дифракційних шпилів на реальних фото
+    // яскравих зірок через телескоп — м'яке видовження світіння, не
+    // окрема чітка риска. Малюється ПІД основним ореолом і ядром.
+    final spikePaint = Paint()
+      ..color = color.withValues(alpha: 0.22)
+      ..maskFilter = MaskFilter.blur(BlurStyle.normal, radius * 0.9);
+    const diagonal = 0.7853981633974483; // pi/4
+    canvas.save();
+    canvas.translate(center.dx, center.dy);
+    for (final angle in [diagonal, -diagonal]) {
+      canvas.save();
+      canvas.rotate(angle);
+      canvas.drawOval(
+        Rect.fromCenter(
+          center: Offset.zero,
+          width: radius * 5.5,
+          height: radius * 0.9,
+        ),
+        spikePaint,
+      );
+      canvas.restore();
+    }
+    canvas.restore();
+
     final glowPaint = Paint()
-      ..color = color.withValues(alpha: 0.35)
-      ..maskFilter = MaskFilter.blur(BlurStyle.normal, radius * 1.6);
-    canvas.drawCircle(center, radius * 1.8, glowPaint);
+      ..color = color.withValues(alpha: 0.4)
+      ..maskFilter = MaskFilter.blur(BlurStyle.normal, radius * 1.2);
+    canvas.drawCircle(center, radius * 2.2, glowPaint);
 
     canvas.drawCircle(center, radius, Paint()..color = color);
-
-    final highlightPaint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.85);
-    canvas.drawCircle(
-      center - Offset(radius * 0.25, radius * 0.25),
-      radius * 0.25,
-      highlightPaint,
-    );
   }
 
   /// Розмір/яскравість зірки кодує "скільки себе вклав цього дня" — база
