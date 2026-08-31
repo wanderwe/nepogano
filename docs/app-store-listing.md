@@ -46,6 +46,11 @@ mood,diary,journal,honest,checkin,reflection,friends,calendar,mood tracker,time 
 
 ### What's New — version log (найновіша зверху, копіювати верхню в App Store Connect)
 
+#### 1.7.0 (2026-08-31)
+The week strip on the home screen is now tappable — jumps straight to that day in History.
+New view for your month in History — Constellation: each day becomes a star, the more you shared, the brighter it glows.
+Fixed: some comments under a friend's day weren't sending.
+
 #### 1.6.0 (2026-08-29)
 Export your month as a PDF right from the History screen.
 Yesterday's entry got a significant refresh: easier to understand and finish before it's too late.
@@ -88,6 +93,11 @@ Nepogano будується поступово: спершу особистий 
 настрій,щоденник,чесність,чекін,рефлексія,друзі,календар,трекер настрою,капсула часу *(84 символи)*
 
 ### What's New — журнал версій (найновіша зверху, копіювати верхню в App Store Connect)
+
+#### 1.7.0 (2026-08-31)
+Тижнева стрічка на головному екрані тепер клікабельна — тап на минулий день відкриває Історію одразу на потрібній даті.
+Новий погляд на місяць в Історії — Сузір'я: кожен день стає зіркою, чим більше поділився — тим яскравіша.
+Виправлено: деякі коментарі під днями друзів не надсилались.
 
 #### 1.6.0 (2026-08-29)
 Місячний звіт тепер можна експортувати в PDF просто з екрана "Історія".
