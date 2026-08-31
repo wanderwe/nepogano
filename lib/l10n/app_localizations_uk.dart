@@ -744,6 +744,12 @@ class AppLocalizationsUk extends AppLocalizations {
   String get exportMonth => 'Експортувати місяць';
 
   @override
+  String get calendarView => 'Календар';
+
+  @override
+  String get constellationView => 'Сузір\'я';
+
+  @override
   String get exportMonthDisabledHint =>
       'У цьому місяці ще немає записів для звіту.';
 

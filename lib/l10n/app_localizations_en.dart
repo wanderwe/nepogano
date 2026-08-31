@@ -742,6 +742,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get exportMonth => 'Export month';
 
   @override
+  String get calendarView => 'Calendar';
+
+  @override
+  String get constellationView => 'Constellation';
+
+  @override
   String get exportMonthDisabledHint =>
       'No entries this month yet to report on.';
 

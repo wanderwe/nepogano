@@ -1418,6 +1418,18 @@ abstract class AppLocalizations {
   /// **'Експортувати місяць'**
   String get exportMonth;
 
+  /// No description provided for @calendarView.
+  ///
+  /// In uk, this message translates to:
+  /// **'Календар'**
+  String get calendarView;
+
+  /// No description provided for @constellationView.
+  ///
+  /// In uk, this message translates to:
+  /// **'Сузір\'я'**
+  String get constellationView;
+
   /// No description provided for @exportMonthDisabledHint.
   ///
   /// In uk, this message translates to:

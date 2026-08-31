@@ -338,6 +338,8 @@
   "thisMonth": "This month",
 
   "exportMonth": "Export month",
+  "calendarView": "Calendar",
+  "constellationView": "Constellation",
   "exportMonthDisabledHint": "No entries this month yet to report on.",
   "reportMoodDistribution": "Mood distribution",
   "reportDaysFilled": "{filled} of {total} days logged ({missed} missed)",

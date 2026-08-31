@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
@@ -83,6 +84,9 @@ class _HistoryScreenState extends State<HistoryScreen> {
   // повертатись нагору гортанням незручно, тож показуємо кнопку швидкого
   // повернення, як тільки прокрутка відходить від самого верху.
   bool _showScrollTop = false;
+  // Перемикач "Календар / Сузір'я" — заміняє лише саму сітку/канву, шапка з
+  // навігацією місяцем і список записів знизу спільні для обох режимів.
+  bool _showConstellation = false;
   bool _exporting = false;
 
   /// Id записів, чия нотатка розгорнута повністю — за замовчуванням довгі
@@ -452,87 +456,155 @@ class _HistoryScreenState extends State<HistoryScreen> {
           ],
         ),
         const SizedBox(height: 8),
-        Row(
-          children: List.generate(7, (i) => i + 1)
-              .map(
-                (weekday) => Expanded(
-                  child: Center(
-                    child: Text(
-                      weekdayLabel(weekday, locale),
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: AppColors.inkMuted,
+        _buildViewToggle(),
+        const SizedBox(height: 12),
+        if (_showConstellation)
+          _buildConstellation(entriesByDay, daysInMonth)
+        else ...[
+          Row(
+            children: List.generate(7, (i) => i + 1)
+                .map(
+                  (weekday) => Expanded(
+                    child: Center(
+                      child: Text(
+                        weekdayLabel(weekday, locale),
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: AppColors.inkMuted,
+                        ),
                       ),
                     ),
                   ),
-                ),
-              )
-              .toList(),
-        ),
-        const SizedBox(height: 8),
-        GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 7,
-            mainAxisSpacing: 6,
-            crossAxisSpacing: 6,
+                )
+                .toList(),
           ),
-          itemCount: leadingBlanks + daysInMonth,
-          itemBuilder: (context, index) {
-            if (index < leadingBlanks) return const SizedBox.shrink();
+          const SizedBox(height: 8),
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 7,
+              mainAxisSpacing: 6,
+              crossAxisSpacing: 6,
+            ),
+            itemCount: leadingBlanks + daysInMonth,
+            itemBuilder: (context, index) {
+              if (index < leadingBlanks) return const SizedBox.shrink();
 
-            final day = index - leadingBlanks + 1;
-            final date = DateTime(_visibleMonth.year, _visibleMonth.month, day);
-            final entry = entriesByDay[day];
-            final isFuture = date.isAfter(
-              DateTime(today.year, today.month, today.day),
-            );
-            final isToday =
-                date.year == today.year &&
-                date.month == today.month &&
-                date.day == today.day;
+              final day = index - leadingBlanks + 1;
+              final date = DateTime(
+                _visibleMonth.year,
+                _visibleMonth.month,
+                day,
+              );
+              final entry = entriesByDay[day];
+              final isFuture = date.isAfter(
+                DateTime(today.year, today.month, today.day),
+              );
+              final isToday =
+                  date.year == today.year &&
+                  date.month == today.month &&
+                  date.day == today.day;
 
-            return AspectRatio(
-              aspectRatio: 1,
-              child: Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  onTap: entry != null ? () => _scrollToDay(day) : null,
-                  borderRadius: BorderRadius.circular(9),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: entry != null
-                          ? entry.mood.color.withValues(alpha: 0.85)
-                          : AppColors.surface,
-                      borderRadius: BorderRadius.circular(9),
-                      border: isToday
-                          ? Border.all(color: AppColors.ink, width: 1.5)
-                          : null,
-                    ),
-                    alignment: Alignment.center,
-                    child: Text(
-                      '$day',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: entry != null
-                            ? FontWeight.w600
-                            : FontWeight.w400,
+              return AspectRatio(
+                aspectRatio: 1,
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: entry != null ? () => _scrollToDay(day) : null,
+                    borderRadius: BorderRadius.circular(9),
+                    child: Container(
+                      decoration: BoxDecoration(
                         color: entry != null
-                            ? Colors.white
-                            : (isFuture ? Colors.white24 : AppColors.inkMuted),
+                            ? entry.mood.color.withValues(alpha: 0.85)
+                            : AppColors.surface,
+                        borderRadius: BorderRadius.circular(9),
+                        border: isToday
+                            ? Border.all(color: AppColors.ink, width: 1.5)
+                            : null,
+                      ),
+                      alignment: Alignment.center,
+                      child: Text(
+                        '$day',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: entry != null
+                              ? FontWeight.w600
+                              : FontWeight.w400,
+                          color: entry != null
+                              ? Colors.white
+                              : (isFuture
+                                    ? Colors.white24
+                                    : AppColors.inkMuted),
+                        ),
                       ),
                     ),
                   ),
                 ),
-              ),
-            );
-          },
-        ),
+              );
+            },
+          ),
+        ],
         const SizedBox(height: 28),
         _buildRetrospective(),
         _buildEntryList(),
       ],
+    );
+  }
+
+  Widget _buildViewToggle() {
+    final l10n = AppLocalizations.of(context);
+    return Container(
+      padding: const EdgeInsets.all(3),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: _ViewToggleSegment(
+              label: l10n.calendarView,
+              selected: !_showConstellation,
+              onTap: () => setState(() => _showConstellation = false),
+            ),
+          ),
+          Expanded(
+            child: _ViewToggleSegment(
+              label: l10n.constellationView,
+              selected: _showConstellation,
+              onTap: () => setState(() => _showConstellation = true),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildConstellation(
+    Map<int, CheckinEntry> entriesByDay,
+    int daysInMonth,
+  ) {
+    if (entriesByDay.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 24),
+        child: Text(
+          AppLocalizations.of(context).noEntriesThisMonth,
+          style: const TextStyle(color: AppColors.inkMuted),
+        ),
+      );
+    }
+    return AspectRatio(
+      aspectRatio: 1,
+      child: CustomPaint(
+        painter: _MonthConstellationPainter(
+          entriesByDay: entriesByDay,
+          daysInMonth: daysInMonth,
+          year: _visibleMonth.year,
+          month: _visibleMonth.month,
+        ),
+        child: const SizedBox.expand(),
+      ),
     );
   }
 
@@ -781,5 +853,140 @@ class _HistoryScreenState extends State<HistoryScreen> {
         );
       }).toList(),
     );
+  }
+}
+
+class _ViewToggleSegment extends StatelessWidget {
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _ViewToggleSegment({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(9),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          decoration: BoxDecoration(
+            color: selected ? AppColors.surfaceRaised : Colors.transparent,
+            borderRadius: BorderRadius.circular(9),
+          ),
+          alignment: Alignment.center,
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
+              color: selected ? AppColors.ink : AppColors.inkMuted,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Емоційний, не аналітичний рендер того самого місяця — кожен чек-ін стає
+/// зіркою (колір = настрій), розкидані псевдовипадково по канві й з'єднані
+/// лінією в хронологічному порядку. Розкладка детермінована (seed від
+/// року+місяця): той самий місяць завжди дає ту саму картинку, а позиція
+/// кожного конкретного дня стабільна незалежно від того, скільки інших днів
+/// цього місяця мають запис (Random витягується для КОЖНОГО дня місяця по
+/// порядку, не лише для днів із записом) — інакше пізніше заповнений заднім
+/// числом день зсунув би розкладку решти. Дні без запису пропускаються:
+/// лінія з'єднує лише реальні чек-іни напряму, тож густота самого сузір'я й
+/// так чесно відображає, скільки днів було зафіксовано, без окремої метрики.
+class _MonthConstellationPainter extends CustomPainter {
+  final Map<int, CheckinEntry> entriesByDay;
+  final int daysInMonth;
+  final int year;
+  final int month;
+
+  _MonthConstellationPainter({
+    required this.entriesByDay,
+    required this.daysInMonth,
+    required this.year,
+    required this.month,
+  });
+
+  static const _marginFraction = 0.12;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final random = Random(year * 10000 + month * 100);
+    final positions = <int, Offset>{};
+    for (var day = 1; day <= daysInMonth; day++) {
+      final dx =
+          _marginFraction + random.nextDouble() * (1 - 2 * _marginFraction);
+      final dy =
+          _marginFraction + random.nextDouble() * (1 - 2 * _marginFraction);
+      positions[day] = Offset(dx * size.width, dy * size.height);
+    }
+
+    final daysWithEntries = entriesByDay.keys.toList()..sort();
+
+    final linePaint = Paint()
+      ..color = AppColors.inkMuted.withValues(alpha: 0.3)
+      ..strokeWidth = 1;
+    for (var i = 0; i < daysWithEntries.length - 1; i++) {
+      canvas.drawLine(
+        positions[daysWithEntries[i]]!,
+        positions[daysWithEntries[i + 1]]!,
+        linePaint,
+      );
+    }
+
+    for (final day in daysWithEntries) {
+      _drawStar(canvas, positions[day]!, entriesByDay[day]!);
+    }
+  }
+
+  void _drawStar(Canvas canvas, Offset center, CheckinEntry entry) {
+    final radius = _starRadius(entry);
+    final color = entry.mood.color;
+
+    final glowPaint = Paint()
+      ..color = color.withValues(alpha: 0.35)
+      ..maskFilter = MaskFilter.blur(BlurStyle.normal, radius * 1.6);
+    canvas.drawCircle(center, radius * 1.8, glowPaint);
+
+    canvas.drawCircle(center, radius, Paint()..color = color);
+
+    final highlightPaint = Paint()
+      ..color = Colors.white.withValues(alpha: 0.85);
+    canvas.drawCircle(
+      center - Offset(radius * 0.25, radius * 0.25),
+      radius * 0.25,
+      highlightPaint,
+    );
+  }
+
+  /// Розмір/яскравість зірки кодує "скільки себе вклав цього дня" — база
+  /// (мінімум навіть без нотатки й фото) + приріст від довжини нотатки з
+  /// капом (щоб один довгий пост не розвалив композицію) + фіксований
+  /// приріст за фото.
+  double _starRadius(CheckinEntry entry) {
+    const base = 3.0;
+    const maxNoteBonus = 4.0;
+    final noteLength = entry.note?.length ?? 0;
+    final noteBonus = (noteLength / 60).clamp(0, maxNoteBonus).toDouble();
+    final photoBonus = entry.photoPath != null ? 3.0 : 0.0;
+    return base + noteBonus + photoBonus;
+  }
+
+  @override
+  bool shouldRepaint(covariant _MonthConstellationPainter oldDelegate) {
+    return oldDelegate.year != year ||
+        oldDelegate.month != month ||
+        oldDelegate.entriesByDay.length != entriesByDay.length;
   }
 }
