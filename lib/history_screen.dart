@@ -1059,17 +1059,31 @@ class _MonthConstellationPainter extends CustomPainter {
     }
   }
 
+  // Чистий випадковий розкид інколи зводить дві крапки впритул одна до
+  // одної (статистично очікувано на 40 точках, але оком читається як
+  // випадкова розмазана пляма, не задум) — мінімальна дистанція нижче це
+  // виключає.
+  static const _backgroundMinDistance = 18.0;
+
   /// Тьмяні статичні крапки, розкидані по всій канві незалежно від реальних
   /// днів — суто атмосфера нічного неба, приглушені настільки, щоб їх не
   /// можна було сплутати зі справжніми зірками-чек-інами.
   void _drawBackgroundStars(Canvas canvas, Size size) {
     final random = Random(_backgroundSeed);
     final paint = Paint()..color = AppColors.inkMuted.withValues(alpha: 0.4);
+    final placed = <Offset>[];
     for (var i = 0; i < _backgroundStarCount; i++) {
-      final point = Offset(
-        random.nextDouble() * size.width,
-        random.nextDouble() * size.height,
-      );
+      Offset point;
+      var attempts = 0;
+      do {
+        point = Offset(
+          random.nextDouble() * size.width,
+          random.nextDouble() * size.height,
+        );
+        attempts++;
+      } while (attempts < 20 &&
+          placed.any((p) => (p - point).distance < _backgroundMinDistance));
+      placed.add(point);
       canvas.drawCircle(point, 1.0, paint);
     }
   }
@@ -1088,15 +1102,15 @@ class _MonthConstellationPainter extends CustomPainter {
     final radius = _starRadius(entry);
     final color = entry.mood.color;
 
-    // Сьома спроба: замість чіткої лінії-променя (щоразу читалась як
-    // прикраса/іконка) — сильно розмита витягнута пляма, зроблена тим
-    // самим blur, що й ореол, тож зливається в одне ціле, а не читається
-    // окремим елементом. Ближче до дифракційних шпилів на реальних фото
-    // яскравих зірок через телескоп — м'яке видовження світіння, не
-    // окрема чітка риска. Малюється ПІД основним ореолом і ядром.
+    // Восьма правка: попередній ореол/спалах розпливались задовго — на
+    // реальному пристрої, особливо коли кілька зірок стоять близько,
+    // розмиті плями зливались в одну туманну масу замість окремих
+    // крапок. Значно звужено радіус розмиття й розмір і ореолу, і
+    // дифракційного спалаху — світіння лишається, але щільніше тримається
+    // біля самого ядра, не "розтікається" по сусідніх зірках.
     final spikePaint = Paint()
       ..color = color.withValues(alpha: 0.22)
-      ..maskFilter = MaskFilter.blur(BlurStyle.normal, radius * 0.9);
+      ..maskFilter = MaskFilter.blur(BlurStyle.normal, radius * 0.5);
     const diagonal = 0.7853981633974483; // pi/4
     canvas.save();
     canvas.translate(center.dx, center.dy);
@@ -1106,8 +1120,8 @@ class _MonthConstellationPainter extends CustomPainter {
       canvas.drawOval(
         Rect.fromCenter(
           center: Offset.zero,
-          width: radius * 5.5,
-          height: radius * 0.9,
+          width: radius * 3.5,
+          height: radius * 0.7,
         ),
         spikePaint,
       );
@@ -1117,8 +1131,8 @@ class _MonthConstellationPainter extends CustomPainter {
 
     final glowPaint = Paint()
       ..color = color.withValues(alpha: 0.4)
-      ..maskFilter = MaskFilter.blur(BlurStyle.normal, radius * 1.2);
-    canvas.drawCircle(center, radius * 2.2, glowPaint);
+      ..maskFilter = MaskFilter.blur(BlurStyle.normal, radius * 0.6);
+    canvas.drawCircle(center, radius * 1.5, glowPaint);
 
     canvas.drawCircle(center, radius, Paint()..color = color);
   }
