@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'checkin_date.dart';
 import 'comments_section.dart';
 import 'l10n/app_localizations.dart';
 import 'main.dart';
@@ -133,7 +134,7 @@ class _SubjectDetailScreenState extends State<SubjectDetailScreen> {
     final checkinRows = await _supabase
         .from('subject_checkins')
         .select(
-          'id, mood, note, photo_path, photo_align_x, photo_align_y, photo_scale, created_at',
+          'id, mood, note, photo_path, photo_align_x, photo_align_y, photo_scale, created_at, local_date',
         )
         .eq('subject_id', widget.subjectId)
         .gte('created_at', sinceUtc)
@@ -142,8 +143,7 @@ class _SubjectDetailScreenState extends State<SubjectDetailScreen> {
     final entries = <_SubjectDayEntry>[];
     final seenDayKeys = <String>{};
     for (final row in checkinRows as List) {
-      final createdAt = DateTime.parse(row['created_at'] as String).toLocal();
-      final date = DateTime(createdAt.year, createdAt.month, createdAt.day);
+      final date = effectiveCheckinDate(row);
       if (!seenDayKeys.add(_dayKey(date))) continue;
       entries.add(
         _SubjectDayEntry(

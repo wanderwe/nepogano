@@ -8,6 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'avatar_storage.dart';
+import 'checkin_date.dart';
 import 'comments_section.dart';
 import 'l10n/app_localizations.dart';
 import 'main.dart';
@@ -172,7 +173,7 @@ Future<bool> hasUnseenFriendActivity(SupabaseClient supabase) async {
 
   final checkinRows = await supabase
       .from('checkins')
-      .select('user_id, created_at')
+      .select('user_id, created_at, local_date')
       .inFilter('user_id', friendIds)
       .gte('created_at', sinceUtc)
       .order('created_at', ascending: false);
@@ -181,7 +182,7 @@ Future<bool> hasUnseenFriendActivity(SupabaseClient supabase) async {
   for (final row in checkinRows as List) {
     final uid = row['user_id'] as String;
     if (latestByUser.containsKey(uid)) continue;
-    latestByUser[uid] = DateTime.parse(row['created_at'] as String).toLocal();
+    latestByUser[uid] = effectiveCheckinDate(row);
   }
   if (latestByUser.isEmpty) return false;
 
@@ -613,17 +614,14 @@ class _FriendsScreenState extends State<FriendsScreen> {
 
         final checkinRows = await _supabase
             .from('checkins')
-            .select('user_id, mood, created_at')
+            .select('user_id, mood, created_at, local_date')
             .inFilter('user_id', friendIds)
             .gte('created_at', sinceUtc)
             .order('created_at', ascending: false);
 
         for (final row in checkinRows as List) {
           final uid = row['user_id'] as String;
-          final createdAt = DateTime.parse(
-            row['created_at'] as String,
-          ).toLocal();
-          final date = DateTime(createdAt.year, createdAt.month, createdAt.day);
+          final date = effectiveCheckinDate(row);
           datesByUser.putIfAbsent(uid, () => []).add(date);
           if (!latestMoodByUser.containsKey(uid)) {
             latestMoodByUser[uid] = moodFromDbValue(row['mood'] as String);
@@ -1776,7 +1774,7 @@ class _PersonDetailScreenState extends State<PersonDetailScreen> {
     final checkinRows = await _supabase
         .from('checkins')
         .select(
-          'id, mood, note, photo_path, photo_align_x, photo_align_y, photo_scale, created_at',
+          'id, mood, note, photo_path, photo_align_x, photo_align_y, photo_scale, created_at, local_date',
         )
         .eq('user_id', widget.userId)
         .gte('created_at', sinceUtc)
@@ -1785,8 +1783,7 @@ class _PersonDetailScreenState extends State<PersonDetailScreen> {
     final entries = <_FriendDayEntry>[];
     final seenDayKeys = <String>{};
     for (final row in checkinRows as List) {
-      final createdAt = DateTime.parse(row['created_at'] as String).toLocal();
-      final date = DateTime(createdAt.year, createdAt.month, createdAt.day);
+      final date = effectiveCheckinDate(row);
       if (!seenDayKeys.add(_entryKey(widget.userId, date))) continue;
       entries.add(
         _FriendDayEntry(
