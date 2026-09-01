@@ -1,8 +1,13 @@
+import 'dart:io';
 import 'dart:math';
 import 'dart:typed_data';
+import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'comments_section.dart';
 import 'date_labels.dart';
@@ -11,8 +16,11 @@ import 'l10n/app_localizations.dart';
 import 'main.dart';
 import 'month_report.dart';
 import 'photo_storage.dart';
+import 'share_utils.dart';
 import 'style.dart';
 import 'subject_diary_views.dart';
+
+const _constellationIntroSeenKey = 'constellation_intro_seen';
 
 class CheckinEntry {
   final String id;
@@ -88,6 +96,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
   // навігацією місяцем і список записів знизу спільні для обох режимів.
   bool _showConstellation = false;
   bool _exporting = false;
+  bool _sharingConstellation = false;
 
   /// Id записів, чия нотатка розгорнута повністю — за замовчуванням довгі
   /// нотатки обрізані (`ExpandableNote`, `style.dart`), інакше один "пост-простирадло"
@@ -252,6 +261,55 @@ class _HistoryScreenState extends State<HistoryScreen> {
       }
     } finally {
       if (mounted) setState(() => _exporting = false);
+    }
+  }
+
+  Future<void> _shareConstellation() async {
+    if (_sharingConstellation || _entriesByDay.isEmpty) return;
+    setState(() => _sharingConstellation = true);
+    try {
+      final l10n = AppLocalizations.of(context);
+      final locale = Localizations.localeOf(context);
+      final daysInMonth = DateTime(
+        _visibleMonth.year,
+        _visibleMonth.month + 1,
+        0,
+      ).day;
+      final bytes = await renderConstellationSharePng(
+        entriesByDay: _entriesByDay,
+        daysInMonth: daysInMonth,
+        year: _visibleMonth.year,
+        month: _visibleMonth.month,
+        monthTitle:
+            '${monthName(_visibleMonth.month, locale)} ${_visibleMonth.year}',
+        titleLabel: l10n.reportConstellationSection,
+      );
+      final dir = await getTemporaryDirectory();
+      final monthSlug =
+          '${_visibleMonth.year}-${_visibleMonth.month.toString().padLeft(2, '0')}';
+      final file = File('${dir.path}/nepogano_constellation_$monthSlug.png');
+      await file.writeAsBytes(bytes, flush: true);
+
+      if (!mounted) return;
+      final shareText = widget.subjectName == null
+          ? l10n.myConstellationInNepogano
+          : l10n.subjectConstellationInNepogano(widget.subjectName!);
+      await SharePlus.instance.share(
+        ShareParams(
+          files: [XFile(file.path)],
+          text: shareText,
+          sharePositionOrigin: shareOriginFrom(context),
+        ),
+      );
+    } catch (e, st) {
+      debugPrint('Share constellation failed: $e\n$st');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(AppLocalizations.of(context).shareFailed)),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _sharingConstellation = false);
     }
   }
 
@@ -573,7 +631,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
             child: _ViewToggleSegment(
               label: l10n.constellationView,
               selected: _showConstellation,
-              onTap: () => setState(() => _showConstellation = true),
+              onTap: _onConstellationViewTap,
             ),
           ),
         ],
@@ -581,16 +639,68 @@ class _HistoryScreenState extends State<HistoryScreen> {
     );
   }
 
+  Future<void> _onConstellationViewTap() async {
+    final prefs = await SharedPreferences.getInstance();
+    final seen = prefs.getBool(_constellationIntroSeenKey) ?? false;
+    if (!seen) {
+      if (!mounted) return;
+      final l10n = AppLocalizations.of(context);
+      final proceed = await showDialog<bool>(
+        context: context,
+        builder: (context) => AppDialog(
+          title: l10n.constellationIntroTitle,
+          content: Text(
+            l10n.constellationIntroBody,
+            style: const TextStyle(color: AppColors.inkMuted, height: 1.4),
+          ),
+          primaryLabel: l10n.gotIt,
+          onPrimary: () => Navigator.of(context).pop(true),
+          secondaryLabel: l10n.cancel,
+          onSecondary: () => Navigator.of(context).pop(false),
+        ),
+      );
+      // Прапорець ставимо лише при реальному "Зрозуміло" — "Скасувати" не
+      // повинно назавжди ховати пояснення, яке юзер фактично не прийняв.
+      if (proceed != true) return;
+      await prefs.setBool(_constellationIntroSeenKey, true);
+    }
+    if (mounted) setState(() => _showConstellation = true);
+  }
+
   Widget _buildConstellation(
     Map<int, CheckinEntry> entriesByDay,
     int daysInMonth,
   ) {
     // Порожній місяць уже повідомляє про себе один раз нижче, у
-    // _buildEntryList — той самий текст тут дублював би його.
-    if (entriesByDay.isEmpty) return const SizedBox.shrink();
+    // _buildEntryList — не дублюємо той текст тут. Але, на відміну від
+    // попередньої версії, полотно все одно малюємо: фонові зірки
+    // (_drawBackgroundStars) не залежать від записів, тож порожній місяць
+    // все одно показує "нічне небо", як порожній календар все одно показує
+    // сітку днів — а не голий текст на чорному тлі.
     return AspectRatio(
       aspectRatio: 1,
-      child: LayoutBuilder(
+      child: Stack(
+        children: [
+          _buildConstellationCanvas(entriesByDay, daysInMonth),
+          if (entriesByDay.isNotEmpty)
+            Positioned(
+              right: 8,
+              top: 8,
+              child: _ConstellationShareButton(
+                sharing: _sharingConstellation,
+                onTap: _shareConstellation,
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildConstellationCanvas(
+    Map<int, CheckinEntry> entriesByDay,
+    int daysInMonth,
+  ) {
+    return LayoutBuilder(
         builder: (context, constraints) {
           final size = constraints.biggest;
           return GestureDetector(
@@ -654,8 +764,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
             ),
           );
         },
-      ),
-    );
+      );
   }
 
   Widget _buildRetrospective() {
@@ -945,6 +1054,46 @@ class _ViewToggleSegment extends StatelessWidget {
   }
 }
 
+/// Оверлей прямо на самому сузір'ї, не в шапці екрана поруч з "Експортувати
+/// місяць" — дія стосується конкретно цього вигляду (і зникає разом з ним
+/// при перемиканні на календар), тож логічно лежить на самій картинці, а не
+/// на рівні всього екрана Історії.
+class _ConstellationShareButton extends StatelessWidget {
+  final bool sharing;
+  final VoidCallback onTap;
+
+  const _ConstellationShareButton({required this.sharing, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    // IconButton, не голий Material+InkWell — так само, як інші круглі
+    // іконки-кнопки в шапках екранів, безкоштовно дає tooltip по довгому
+    // натисканню (вже стилізований через tooltipTheme у main.dart) і
+    // стандартний приглушений колір іконки (AppColors.inkMuted через
+    // iconButtonTheme), той самий тон, що й в іконки "Експортувати місяць"
+    // поруч, а не довільний білий.
+    return IconButton(
+      onPressed: sharing ? null : onTap,
+      tooltip: l10n.share,
+      style: IconButton.styleFrom(
+        backgroundColor: AppColors.surface.withValues(alpha: 0.7),
+        shape: const CircleBorder(),
+      ),
+      icon: sharing
+          ? const SizedBox(
+              width: 18,
+              height: 18,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: AppColors.inkMuted,
+              ),
+            )
+          : const Icon(PhosphorIconsLight.export, size: 18),
+    );
+  }
+}
+
 /// Емоційний, не аналітичний рендер того самого місяця — кожен чек-ін стає
 /// зіркою (колір = настрій), розкидані псевдовипадково по канві й з'єднані
 /// лінією в хронологічному порядку. Розкладка детермінована (seed від
@@ -1156,4 +1305,138 @@ class _MonthConstellationPainter extends CustomPainter {
         oldDelegate.month != month ||
         oldDelegate.entriesByDay.length != entriesByDay.length;
   }
+}
+
+/// Той самий вигляд, що й на екрані Історії, растеризований у PNG — для
+/// вбудовування в PDF-звіт місяця (`month_report.dart`), де малює не
+/// Flutter `Canvas`, а власний `PdfGraphics` пакета `pdf`, що не вміє
+/// прямо виконати цей `CustomPainter`. Мусить викликатись на головному
+/// ізоляті (доступ до рушія рендеру), ДО `Isolate.run`, що будує сам PDF.
+///
+/// `logicalSize` — той самий порядок величини, що й реальна ширина
+/// `AspectRatio`-квадрата на екрані Історії (~320-360лп після відступів
+/// екрана). Радіус зірки й розмиття в `_MonthConstellationPainter`
+/// абсолютні, не пропорційні `Size` полотна — тож якщо тут малювати одразу
+/// у велике полотно (як було: 800), зірки виходять НЕПРОПОРЦІЙНО дрібними
+/// відносно композиції, і при подальшому масштабуванні в PDF/шері це
+/// читається як "розмито", хоч це не блюр, а невідповідний масштаб.
+/// Роздільна здатність виводу натомість регулюється окремо через
+/// `pixelRatio` (той самий підхід, що й `RepaintBoundary.toImage` у
+/// `day_card_screen.dart`) — композиція лишається тією ж, що на екрані,
+/// а растеризується вже у вищу піксельну щільність.
+Future<Uint8List> renderConstellationPng({
+  required Map<int, CheckinEntry> entriesByDay,
+  required int daysInMonth,
+  required int year,
+  required int month,
+  double logicalSize = 340,
+  double pixelRatio = 3.0,
+}) async {
+  final recorder = ui.PictureRecorder();
+  final canvas = Canvas(recorder);
+  canvas.scale(pixelRatio);
+  _MonthConstellationPainter(
+    entriesByDay: entriesByDay,
+    daysInMonth: daysInMonth,
+    year: year,
+    month: month,
+  ).paint(canvas, Size(logicalSize, logicalSize));
+  final picture = recorder.endRecording();
+  final size = (logicalSize * pixelRatio).round();
+  final image = await picture.toImage(size, size);
+  final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+  return byteData!.buffer.asUint8List();
+}
+
+/// Брендована картка для шеру "як пост", портретна 9:16 — той самий формат,
+/// що й Day Card у `day_card_screen.dart`. Зверху один дрібний рядок "місяць
+/// рік · Сузір'я місяця", той самий стиль, що дата в Day Card ("29 August ·
+/// Saturday") — не окремий великий Lora-заголовок (пробували: виглядав
+/// важче за решту картки, а місяць/рік дублювався ще й унизу) і не
+/// емоційний підсумок настрою кольором (пробували й це: середній рівень
+/// шкали настрою, `moodNepogano`, пишеться так само, як назва застосунку —
+/// "Непогано"/"Nepogano" — тож окремим великим словом читався як
+/// бренд-заголовок, а не як індикатор настрою). "Nepogano" тут не пишемо
+/// взагалі — бренд лише внизу як "nepogano.app". Готова одразу до
+/// системного шер-листа, без окремого екрана попереднього перегляду, так
+/// само як "Експортувати місяць" одразу відкриває шер без проміжного кроку.
+Future<Uint8List> renderConstellationSharePng({
+  required Map<int, CheckinEntry> entriesByDay,
+  required int daysInMonth,
+  required int year,
+  required int month,
+  required String monthTitle,
+  required String titleLabel,
+  double pixelRatio = 3.0,
+}) async {
+  const cardWidth = 320.0;
+  const cardHeight = cardWidth * 16 / 9;
+  const padding = 20.0;
+  const mutedWhite = Color(0x99FFFFFF);
+
+  final recorder = ui.PictureRecorder();
+  final canvas = Canvas(recorder);
+  canvas.scale(pixelRatio);
+
+  canvas.drawRect(
+    const Rect.fromLTWH(0, 0, cardWidth, cardHeight),
+    // Той самий колір фону, що й у Day Card — не AppColors.background
+    // (0xFF121212), навмисно трохи інший відтінок картки, а не екрана.
+    Paint()..color = const Color(0xFF141414),
+  );
+
+  // Той самий рядок, що дата в Day Card ("29 August · Saturday") — дрібно,
+  // звичайним шрифтом, крапка-роздільник. Раніше тут був окремий великий
+  // Lora-заголовок, який виглядав важче, ніж усе інше на картці, а сам
+  // місяць/рік дублювався ще й унизу — тепер один рядок замість двох.
+  final header = TextPainter(
+    text: TextSpan(
+      text: '$monthTitle · $titleLabel',
+      style: const TextStyle(fontSize: 12, color: Color(0xD9FFFFFF)),
+    ),
+    textDirection: TextDirection.ltr,
+  )..layout(maxWidth: cardWidth - padding * 2);
+  const headerOffset = Offset(padding, padding);
+  header.paint(canvas, headerOffset);
+
+  final domainLabel = TextPainter(
+    text: const TextSpan(
+      text: 'nepogano.app',
+      style: TextStyle(fontSize: 11, color: mutedWhite),
+    ),
+    textDirection: TextDirection.ltr,
+  )..layout();
+  final footerY = cardHeight - padding - domainLabel.height;
+  domainLabel.paint(
+    canvas,
+    Offset(cardWidth - padding - domainLabel.width, footerY),
+  );
+
+  // Розмір полотна сузір'я = той самий логічний масштаб, що й
+  // [renderConstellationPng] (~330), не довільний — щоб зірки на картці
+  // шеру виглядали так само, як в застосунку й у PDF, а не втретє
+  // по-своєму.
+  final constellationSize = cardWidth - padding * 2;
+  final constellationTop = headerOffset.dy + header.height + 24;
+  final availableHeight = footerY - 20 - constellationTop;
+  final constellationY = availableHeight > constellationSize
+      ? constellationTop + (availableHeight - constellationSize) / 2
+      : constellationTop;
+
+  canvas.save();
+  canvas.translate(padding, constellationY);
+  _MonthConstellationPainter(
+    entriesByDay: entriesByDay,
+    daysInMonth: daysInMonth,
+    year: year,
+    month: month,
+  ).paint(canvas, Size(constellationSize, constellationSize));
+  canvas.restore();
+
+  final picture = recorder.endRecording();
+  final width = (cardWidth * pixelRatio).round();
+  final height = (cardHeight * pixelRatio).round();
+  final image = await picture.toImage(width, height);
+  final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+  return byteData!.buffer.asUint8List();
 }

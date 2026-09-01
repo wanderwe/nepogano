@@ -150,17 +150,17 @@ Nepogano ("застосунок", "ми") поважає вашу приватн
 
 Накопичувати тут кожен реліз — щоб було видно, що вже казали користувачам, і не повторюватись/не губити тон між версіями.
 
-## 1.7.0+20 (31.08.2026)
+## 1.7.0+21 (01.09.2026)
 
 ```
 <uk>
-Тижнева стрічка на головному екрані тепер клікабельна — тап на минулий день відкриває Історію одразу на потрібній даті.
-Новий погляд на місяць в Історії — Сузір'я: кожен день стає зіркою, чим більше поділився — тим яскравіша.
+Тижнева стрічка на головному екрані тепер клікабельна: тап на минулий день відкриває Історію одразу на потрібній даті.
+Новий погляд на місяць в Історії: Сузір'я. Кожен день стає зіркою, чим більше поділився, тим яскравіша, і тепер нею можна поділитись чи додати до PDF-звіту місяця.
 Виправлено: деякі коментарі під днями друзів не надсилались.
 </uk>
 <en-US>
-The week strip on the home screen is now tappable — jumps straight to that day in History.
-New view for your month in History — Constellation: each day becomes a star, the more you shared, the brighter it glows.
+The week strip on the home screen is now tappable: jumps straight to that day in History.
+New view for your month in History: Constellation. Each day becomes a star, the more you shared, the brighter it glows, and now you can share it or add it to the month's PDF report.
 Fixed: some comments under a friend's day weren't sending.
 </en-US>
 ```

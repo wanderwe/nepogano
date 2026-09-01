@@ -366,6 +366,7 @@ class _TimeCapsulesScreenState extends State<TimeCapsulesScreen> {
             content: Text(
               AppLocalizations.of(context).timeCapsulesSealedConfirmation,
             ),
+            duration: const Duration(seconds: 2),
           ),
         );
       }
@@ -383,6 +384,7 @@ class _TimeCapsulesScreenState extends State<TimeCapsulesScreen> {
           content: Text(
             l10n.timeCapsulesStillLocked(_formatDate(letter.unlockAt, context)),
           ),
+          duration: const Duration(seconds: 2),
         ),
       );
       return;

@@ -112,6 +112,11 @@
   "@subjectDayInNepogano": {
     "placeholders": { "name": { "type": "String" } }
   },
+  "myConstellationInNepogano": "Моє сузір'я з Nepogano",
+  "subjectConstellationInNepogano": "Сузір'я {name} з Nepogano",
+  "@subjectConstellationInNepogano": {
+    "placeholders": { "name": { "type": "String" } }
+  },
 
   "friends": "Друзі",
   "profile": "Профіль",
@@ -350,6 +355,8 @@
   "calendarView": "Календар",
   "constellationView": "Сузір'я",
   "viewEntry": "Переглянути",
+  "constellationIntroTitle": "Про сузір'я",
+  "constellationIntroBody": "Кожен день стає зіркою, і щомісяця сузір'я унікальне. Довша нотатка чи фото роблять зірку яскравішою.",
   "exportMonthDisabledHint": "У цьому місяці ще немає записів для звіту.",
   "reportMoodDistribution": "Розподіл настроїв",
   "reportDaysFilled": "Заповнено {filled} з {total} днів (пропущено {missed})",
@@ -365,6 +372,7 @@
     "placeholders": { "weekday": { "type": "String" } }
   },
   "reportNotesSection": "Нотатки місяця",
+  "reportConstellationSection": "Сузір'я місяця",
   "reportNoNote": "Без нотатки",
   "reportFooterBrand": "nepogano.app",
 

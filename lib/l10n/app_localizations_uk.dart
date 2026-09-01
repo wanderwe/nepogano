@@ -306,6 +306,14 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
+  String get myConstellationInNepogano => 'Моє сузір\'я з Nepogano';
+
+  @override
+  String subjectConstellationInNepogano(String name) {
+    return 'Сузір\'я $name з Nepogano';
+  }
+
+  @override
   String get friends => 'Друзі';
 
   @override
@@ -753,6 +761,13 @@ class AppLocalizationsUk extends AppLocalizations {
   String get viewEntry => 'Переглянути';
 
   @override
+  String get constellationIntroTitle => 'Про сузір\'я';
+
+  @override
+  String get constellationIntroBody =>
+      'Кожен день стає зіркою, і щомісяця сузір\'я унікальне. Довша нотатка чи фото роблять зірку яскравішою.';
+
+  @override
   String get exportMonthDisabledHint =>
       'У цьому місяці ще немає записів для звіту.';
 
@@ -771,6 +786,9 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get reportNotesSection => 'Нотатки місяця';
+
+  @override
+  String get reportConstellationSection => 'Сузір\'я місяця';
 
   @override
   String get reportNoNote => 'Без нотатки';

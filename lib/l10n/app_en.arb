@@ -103,6 +103,11 @@
   "@subjectDayInNepogano": {
     "placeholders": { "name": { "type": "String" } }
   },
+  "myConstellationInNepogano": "My constellation with Nepogano",
+  "subjectConstellationInNepogano": "{name}'s constellation with Nepogano",
+  "@subjectConstellationInNepogano": {
+    "placeholders": { "name": { "type": "String" } }
+  },
 
   "friends": "Friends",
   "profile": "Profile",
@@ -341,6 +346,8 @@
   "calendarView": "Calendar",
   "constellationView": "Constellation",
   "viewEntry": "View",
+  "constellationIntroTitle": "About Constellation",
+  "constellationIntroBody": "Each day becomes a star, and every month's constellation is unique. A longer note or photo makes the star brighter.",
   "exportMonthDisabledHint": "No entries this month yet to report on.",
   "reportMoodDistribution": "Mood distribution",
   "reportDaysFilled": "{filled} of {total} days logged ({missed} missed)",
@@ -356,6 +363,7 @@
     "placeholders": { "weekday": { "type": "String" } }
   },
   "reportNotesSection": "Notes this month",
+  "reportConstellationSection": "Month's constellation",
   "reportNoNote": "No note",
   "reportFooterBrand": "nepogano.app",
 

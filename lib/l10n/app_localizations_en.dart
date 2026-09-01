@@ -305,6 +305,14 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get myConstellationInNepogano => 'My constellation with Nepogano';
+
+  @override
+  String subjectConstellationInNepogano(String name) {
+    return '$name\'s constellation with Nepogano';
+  }
+
+  @override
   String get friends => 'Friends';
 
   @override
@@ -751,6 +759,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get viewEntry => 'View';
 
   @override
+  String get constellationIntroTitle => 'About Constellation';
+
+  @override
+  String get constellationIntroBody =>
+      'Each day becomes a star, and every month\'s constellation is unique. A longer note or photo makes the star brighter.';
+
+  @override
   String get exportMonthDisabledHint =>
       'No entries this month yet to report on.';
 
@@ -769,6 +784,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get reportNotesSection => 'Notes this month';
+
+  @override
+  String get reportConstellationSection => 'Month\'s constellation';
 
   @override
   String get reportNoNote => 'No note';

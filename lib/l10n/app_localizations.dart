@@ -650,6 +650,18 @@ abstract class AppLocalizations {
   /// **'{name} у Nepogano'**
   String subjectDayInNepogano(String name);
 
+  /// No description provided for @myConstellationInNepogano.
+  ///
+  /// In uk, this message translates to:
+  /// **'Моє сузір\'я з Nepogano'**
+  String get myConstellationInNepogano;
+
+  /// No description provided for @subjectConstellationInNepogano.
+  ///
+  /// In uk, this message translates to:
+  /// **'Сузір\'я {name} з Nepogano'**
+  String subjectConstellationInNepogano(String name);
+
   /// No description provided for @friends.
   ///
   /// In uk, this message translates to:
@@ -1436,6 +1448,18 @@ abstract class AppLocalizations {
   /// **'Переглянути'**
   String get viewEntry;
 
+  /// No description provided for @constellationIntroTitle.
+  ///
+  /// In uk, this message translates to:
+  /// **'Про сузір\'я'**
+  String get constellationIntroTitle;
+
+  /// No description provided for @constellationIntroBody.
+  ///
+  /// In uk, this message translates to:
+  /// **'Кожен день стає зіркою, і щомісяця сузір\'я унікальне. Довша нотатка чи фото роблять зірку яскравішою.'**
+  String get constellationIntroBody;
+
   /// No description provided for @exportMonthDisabledHint.
   ///
   /// In uk, this message translates to:
@@ -1465,6 +1489,12 @@ abstract class AppLocalizations {
   /// In uk, this message translates to:
   /// **'Нотатки місяця'**
   String get reportNotesSection;
+
+  /// No description provided for @reportConstellationSection.
+  ///
+  /// In uk, this message translates to:
+  /// **'Сузір\'я місяця'**
+  String get reportConstellationSection;
 
   /// No description provided for @reportNoNote.
   ///

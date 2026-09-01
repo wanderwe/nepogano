@@ -73,9 +73,11 @@ class _ReportData {
   final Map<MoodLevel, String> moodLabels;
   final Uint8List interFontBytes;
   final Uint8List loraFontBytes;
+  final Uint8List? constellationPng;
   final String daysFilledText;
   final String moodDistributionLabel;
   final String notesSectionLabel;
+  final String constellationSectionLabel;
   final String footerBrand;
 
   _ReportData({
@@ -87,9 +89,11 @@ class _ReportData {
     required this.moodLabels,
     required this.interFontBytes,
     required this.loraFontBytes,
+    required this.constellationPng,
     required this.daysFilledText,
     required this.moodDistributionLabel,
     required this.notesSectionLabel,
+    required this.constellationSectionLabel,
     required this.footerBrand,
   });
 }
@@ -127,6 +131,18 @@ Future<void> shareMonthReport({
   );
   final loraData = await rootBundle.load('assets/fonts/Lora-Static-Bold.ttf');
 
+  // Растеризація потребує рушія рендеру Flutter, тож тільки тут, на
+  // головному ізоляті, ДО Isolate.run нижче — сам PNG (Uint8List) після
+  // цього вже звичайні байти, які спокійно перетинають межу ізолятів.
+  final constellationPng = entriesByDay.isEmpty
+      ? null
+      : await renderConstellationPng(
+          entriesByDay: entriesByDay,
+          daysInMonth: daysInMonth,
+          year: month.year,
+          month: month.month,
+        );
+
   final data = _ReportData(
     monthEntries: monthEntries,
     sortedAsc: sortedAsc,
@@ -136,9 +152,11 @@ Future<void> shareMonthReport({
     moodLabels: moodLabels,
     interFontBytes: interData.buffer.asUint8List(),
     loraFontBytes: loraData.buffer.asUint8List(),
+    constellationPng: constellationPng,
     daysFilledText: l10n.reportDaysFilled(filled, consideredDays, missed),
     moodDistributionLabel: l10n.reportMoodDistribution,
     notesSectionLabel: l10n.reportNotesSection,
+    constellationSectionLabel: l10n.reportConstellationSection,
     footerBrand: l10n.reportFooterBrand,
   );
 
@@ -242,6 +260,32 @@ Future<Uint8List> _buildReportBytes(_ReportData data) async {
         pw.SizedBox(height: 24),
         if (data.sortedAsc.isNotEmpty)
           ..._buildNotesSection(data, headingFont, contentWidth),
+        // Бонусом в кінці, не на видному місці зверху — декоративний вигляд
+        // місяця, не функціональна частина звіту (та сама причина, з якої
+        // в самому застосунку це окремий тогл, а не заміна календаря).
+        if (data.constellationPng != null) ...[
+          pw.SizedBox(height: 28),
+          pw.Text(
+            data.constellationSectionLabel,
+            style: pw.TextStyle(
+              font: headingFont,
+              fontSize: 15,
+              color: _pdfInk,
+            ),
+          ),
+          pw.SizedBox(height: 10),
+          // Ширина = та сама вузька колонка нотаток вище (contentWidth -
+          // rightGap із _buildNotesSection), а не довільна частка сторінки
+          // — щоб не виглядало ширшим/окремим блоком від тексту над ним.
+          pw.Align(
+            alignment: pw.Alignment.centerLeft,
+            child: pw.SizedBox(
+              width: contentWidth * 0.5,
+              height: contentWidth * 0.5,
+              child: pw.Image(pw.MemoryImage(data.constellationPng!)),
+            ),
+          ),
+        ],
       ],
     ),
   );
