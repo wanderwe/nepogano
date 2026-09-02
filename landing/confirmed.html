@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Пошту підтверджено · Nepogano</title>
+<link rel="icon" href="/assets/icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Lora:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="wrap topbar-inner">
+    <span class="wordmark">Nepogano</span>
+  </div>
+</header>
+
+<main class="join-card">
+  <h1 id="title">Пошту підтверджено</h1>
+  <p class="join-note" id="subtitle">
+    Акаунт активний. Заходь у застосунок з телефону.
+  </p>
+
+  <a id="open-app-link" class="btn-primary" href="#" style="display:none">Відкрити застосунок</a>
+  <p class="join-note join-note-small" id="open-app-hint" style="display:none">
+    Не відкрилось? Це через вбудований браузер месенджера чи поштового клієнта:
+    натисни ⋮ (три крапки) чи ⋯ вгорі сторінки і обери "Відкрити в браузері",
+    і спробуй ще раз.
+  </p>
+
+  <p class="join-note" id="desktop-note" style="display:none">
+    Це посилання відкрито не з телефону — застосунок тут відкрити не можна.
+    Email уже підтверджено, тож просто закрий цю вкладку і заходь у Nepogano
+    з телефону, на якому він встановлений.
+  </p>
+</main>
+
+<footer class="footer">
+  <div class="wrap footer-inner">
+    <a href="/">На головну</a>
+    <a href="https://github.com/wanderwe/nepogano/wiki/Privacy-Policy">Політика конфіденційності</a>
+  </div>
+</footer>
+
+<script>
+  // Supabase підтверджує email на СЕРВЕРІ ще до цього редіректу — незалежно
+  // від того, звідки відкрито цю сторінку. Тут лише повідомляємо про
+  // результат і, якщо це мобільний пристрій, пробуємо завести в застосунок.
+  // Токени сесії (access_token/refresh_token) Supabase кладе в hash-частину
+  // URL (#access_token=...) — переносимо її без змін у кастомну схему,
+  // інакше застосунок отримає лінк без токена і сесія не встановиться.
+  var customSchemeUrl = 'io.supabase.nepogano://login-callback' + window.location.hash;
+
+  var isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+  if (isMobile) {
+    // Той самий підхід, що на /join: тиха автоматична спроба одразу, плюс
+    // видима кнопка-запасний варіант — деякі вбудовані браузери (Gmail,
+    // месенджери) блокують автоматичний window.location, але коректно
+    // обробляють пряме натискання на <a href>.
+    window.location.href = customSchemeUrl;
+
+    var openAppLink = document.getElementById('open-app-link');
+    openAppLink.setAttribute('href', customSchemeUrl);
+    openAppLink.style.display = '';
+    document.getElementById('open-app-hint').style.display = '';
+  } else {
+    document.getElementById('subtitle').style.display = 'none';
+    document.getElementById('desktop-note').style.display = '';
+  }
+</script>
+</body>
+</html>
