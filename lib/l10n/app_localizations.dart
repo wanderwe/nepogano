@@ -323,7 +323,7 @@ abstract class AppLocalizations {
   /// No description provided for @repositionPhotoHint.
   ///
   /// In uk, this message translates to:
-  /// **'Перетягни фото вгору чи вниз або зведи пальці, щоб наблизити'**
+  /// **'Перетягни фото, щоб посунути кадр, або розведи пальці, щоб наблизити'**
   String get repositionPhotoHint;
 
   /// No description provided for @repositionPhotoTooltip.
@@ -331,6 +331,18 @@ abstract class AppLocalizations {
   /// In uk, this message translates to:
   /// **'Змінити розташування фото'**
   String get repositionPhotoTooltip;
+
+  /// No description provided for @repositionPhotoPostPreviewLabel.
+  ///
+  /// In uk, this message translates to:
+  /// **'Так виглядатиме в записі'**
+  String get repositionPhotoPostPreviewLabel;
+
+  /// No description provided for @repositionPhotoDayCardPreview.
+  ///
+  /// In uk, this message translates to:
+  /// **'У картці дня'**
+  String get repositionPhotoDayCardPreview;
 
   /// No description provided for @history.
   ///

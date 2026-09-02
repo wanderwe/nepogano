@@ -126,10 +126,16 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get repositionPhotoHint =>
-      'Перетягни фото вгору чи вниз або зведи пальці, щоб наблизити';
+      'Перетягни фото, щоб посунути кадр, або розведи пальці, щоб наблизити';
 
   @override
   String get repositionPhotoTooltip => 'Змінити розташування фото';
+
+  @override
+  String get repositionPhotoPostPreviewLabel => 'Так виглядатиме в записі';
+
+  @override
+  String get repositionPhotoDayCardPreview => 'У картці дня';
 
   @override
   String get history => 'Історія';

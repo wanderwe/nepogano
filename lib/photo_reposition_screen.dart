@@ -6,11 +6,27 @@ import 'l10n/app_localizations.dart';
 import 'style.dart';
 
 /// Дає перетягнути фото вертикально Й ГОРИЗОНТАЛЬНО та наблизити пінчем у
-/// рамці тієї ж пропорції (`kPhotoAspectRatio`), що й картка дня — щоб
-/// підняти/опустити/зсунути видиму частину або наблизити, якщо BoxFit.cover
-/// десь зрізав важливе (наприклад, голову чи когось скраю кадру). Повертає
-/// `(alignX, alignY, scale)` через Navigator.pop, або null якщо закрито
-/// без змін.
+/// рамці тієї ж пропорції (`kCompactPhotoAspectRatio`, 4:3), що й компактні
+/// прев'ю фото скрізь у застосунку (запис в Історії, у друга, підсумок на
+/// головному екрані) — саме там юзер і бачить фото після публікації.
+/// Раніше рамка була квадратною (`kPhotoAspectRatio`, тепер прибрано),
+/// не тією самою пропорцією, що фактичний перегляд: `BoxFit.cover`
+/// обрізає по-різному залежно від пропорції рамки (для фото, чия
+/// натуральна пропорція лежить МІЖ 1:1 і 4:3, "покривний" вимір взагалі
+/// перемикається між шириною й висотою), тож те, що юзер бачив і
+/// кадрував у квадраті, після публікації показувалось інакше — реальний
+/// фідбек ("бачу 1/3 фото в редакторі, після публікації бачу 2/3").
+/// Тепер редактор і кінцевий перегляд — той самий кадр, підписаний як
+/// такий. Картка дня (`day_card_screen.dart`) — окрема історія, 9:16,
+/// свідомо інша пропорція, не канонічна тут — для неї поруч є власне
+/// маленьке живе прев'ю (той самий `ScaledPhoto`, лише 9:16), а не
+/// порахована підказка: та сама пастка з "перемиканням покривного
+/// виміру" так само реальна для пари 4:3↔9:16, тож замість повторно
+/// ризикувати неточною формулою — просто інший розмір того самого
+/// реального рендеру.
+///
+/// Повертає `(alignX, alignY, scale)` через Navigator.pop, або null якщо
+/// закрито без змін.
 class PhotoRepositionScreen extends StatefulWidget {
   final ImageProvider image;
   final double initialAlignX;
@@ -145,7 +161,7 @@ class _PhotoRepositionScreenState extends State<PhotoRepositionScreen> {
               ),
               const SizedBox(height: 24),
               AspectRatio(
-                aspectRatio: kPhotoAspectRatio,
+                aspectRatio: kCompactPhotoAspectRatio,
                 child: LayoutBuilder(
                   builder: (context, constraints) {
                     return ClipRRect(
@@ -256,27 +272,61 @@ class _PhotoRepositionScreenState extends State<PhotoRepositionScreen> {
                             }
                           });
                         },
-                        child: Stack(
-                          fit: StackFit.expand,
-                          children: [
-                            ScaledPhoto(
-                              scale: _scale,
-                              alignX: _alignX,
-                              child: Image(
-                                image: widget.image,
-                                fit: BoxFit.cover,
-                                alignment: Alignment(_alignX, _alignY),
-                              ),
-                            ),
-                            IgnorePointer(
-                              child: _FeedCropOverlay(alignY: _alignY),
-                            ),
-                          ],
+                        child: ScaledPhoto(
+                          scale: _scale,
+                          alignX: _alignX,
+                          child: Image(
+                            image: widget.image,
+                            fit: BoxFit.cover,
+                            alignment: Alignment(_alignX, _alignY),
+                          ),
                         ),
                       ),
                     );
                   },
                 ),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                l10n.repositionPhotoPostPreviewLabel,
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontSize: 12, color: AppColors.inkMuted),
+              ),
+              const SizedBox(height: 20),
+              // Живий прев'ю Картки дня (9:16) — той самий ScaledPhoto+Image
+              // з поточними alignX/alignY/scale, лише маленький, не
+              // порахована окремо геометрія. Що бачить юзер тут, те й буде
+              // в Картці дня, без ризику розійтись формулою.
+              Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  SizedBox(
+                    width: 64,
+                    child: AspectRatio(
+                      aspectRatio: 9 / 16,
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(6),
+                        child: ScaledPhoto(
+                          scale: _scale,
+                          alignX: _alignX,
+                          child: Image(
+                            image: widget.image,
+                            fit: BoxFit.cover,
+                            alignment: Alignment(_alignX, _alignY),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    l10n.repositionPhotoDayCardPreview,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: AppColors.inkMuted,
+                    ),
+                  ),
+                ],
               ),
               const Spacer(),
               SizedBox(
@@ -292,61 +342,6 @@ class _PhotoRepositionScreenState extends State<PhotoRepositionScreen> {
           ),
         ),
       ),
-    );
-  }
-}
-
-/// Затемнює зверху й знизу квадратної рамки позиціювання ту частину, яку
-/// показує ЛИШЕ картка дня (`kPhotoAspectRatio` — квадрат) — стрічка,
-/// друзі й учасники кола бачать вужчу [kCompactPhotoAspectRatio] (4:3),
-/// тому та сама позиція/зум може виглядати добре в картці дня, але
-/// зрізати важливе (наприклад, голову) у компактному перегляді. Юзер
-/// раніше дізнавався про це лише постфактум, побачивши обрізаний
-/// прев'ю в Історії чи в друга.
-///
-/// Формула виведена геометрично, не виміряна на пікселях фото: обидві
-/// рамки рендерять те саме фото на ту саму ширину через `BoxFit.cover`,
-/// тож натуральний розмір фото скорочується з формули — лишається
-/// тільки співвідношення висот рамок. Похибка можлива тільки для дуже
-/// вузьких/панорамних фото, де ширина насправді НЕ є "зв'язуючим"
-/// виміром для одного з двох `BoxFit.cover` — прийнятний компроміс для
-/// візуальної підказки, не для точного розрахунку.
-class _FeedCropOverlay extends StatelessWidget {
-  final double alignY;
-
-  const _FeedCropOverlay({required this.alignY});
-
-  @override
-  Widget build(BuildContext context) {
-    final compactHeightFraction = kPhotoAspectRatio / kCompactPhotoAspectRatio;
-    final topFraction = (1 - compactHeightFraction) * (alignY + 1) / 2;
-    final bottomFraction = topFraction + compactHeightFraction;
-
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final topHeight = constraints.maxHeight * topFraction;
-        final bottomHeight = constraints.maxHeight * (1 - bottomFraction);
-        const dim = Color(0x99000000);
-        const lineColor = AppColors.accent;
-
-        return Column(
-          children: [
-            SizedBox(
-              height: topHeight,
-              width: double.infinity,
-              child: const ColoredBox(color: dim),
-            ),
-            Container(height: 1.5, color: lineColor),
-            SizedBox(height: constraints.maxHeight - topHeight - bottomHeight),
-            Container(height: 1.5, color: lineColor),
-            SizedBox(
-              height: bottomHeight,
-              width: double.infinity,
-              child: const ColoredBox(color: dim),
-            ),
-          ],
-        );
-      },
     );
   }
 }

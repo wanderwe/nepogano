@@ -125,10 +125,17 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get repositionPhotoHint =>
-      'Drag the photo up or down, or pinch to zoom in';
+      'Drag the photo to shift the frame, or spread your fingers to zoom in';
 
   @override
   String get repositionPhotoTooltip => 'Reposition photo';
+
+  @override
+  String get repositionPhotoPostPreviewLabel =>
+      'This is how it\'ll look in your post';
+
+  @override
+  String get repositionPhotoDayCardPreview => 'In Day Card';
 
   @override
   String get history => 'History';

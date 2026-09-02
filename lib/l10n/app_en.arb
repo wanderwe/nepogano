@@ -41,8 +41,10 @@
   "chooseFromGallery": "Choose from gallery",
   "removePhotoTooltip": "Remove photo",
   "repositionPhoto": "Reposition photo",
-  "repositionPhotoHint": "Drag the photo up or down, or pinch to zoom in",
+  "repositionPhotoHint": "Drag the photo to shift the frame, or spread your fingers to zoom in",
   "repositionPhotoTooltip": "Reposition photo",
+  "repositionPhotoPostPreviewLabel": "This is how it'll look in your post",
+  "repositionPhotoDayCardPreview": "In Day Card",
 
   "history": "History",
   "scrollToTop": "Scroll to top",
