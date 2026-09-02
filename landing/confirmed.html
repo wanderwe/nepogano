@@ -39,12 +39,77 @@
 
 <footer class="footer">
   <div class="wrap footer-inner">
-    <a href="/">На головну</a>
-    <a href="/uk/privacy/">Політика конфіденційності</a>
+    <a href="/" id="home-link">На головну</a>
+    <a href="/uk/privacy/" id="privacy-link">Політика конфіденційності</a>
   </div>
 </footer>
 
 <script>
+  // Той самий детект, що на index.html (?lang= → localStorage → navigator.language),
+  // але БЕЗ редіректу на окремий /en/ URL — ця сторінка не дублюється по
+  // директоріях під кожну мову (сама лише транзакційна, не має власного
+  // /en/confirmed), тож мова тут — підміна тексту на місці, не окрема сторінка.
+  function detectLang() {
+    var params = new URLSearchParams(location.search);
+    var chosen = params.get('lang');
+    if (chosen === 'en') {
+      try { localStorage.setItem('nepogano_lang', 'en'); } catch (e) {}
+      return 'en';
+    }
+    try {
+      if (localStorage.getItem('nepogano_lang') === 'en') return 'en';
+    } catch (e) {}
+    var browserLang = ((navigator.language || navigator.userLanguage || '') + '').toLowerCase();
+    if (browserLang.indexOf('uk') === 0 || browserLang.indexOf('ru') === 0) return 'uk';
+    return 'en';
+  }
+
+  var strings = {
+    uk: {
+      title: 'Пошту підтверджено · Nepogano',
+      heading: 'Пошту підтверджено',
+      subtitle: 'Акаунт активний. Заходь у застосунок з телефону.',
+      openApp: 'Відкрити застосунок',
+      openAppHint: 'Не відкрилось? Це через вбудований браузер месенджера чи ' +
+        'поштового клієнта: натисни ⋮ (три крапки) чи ⋯ вгорі сторінки і ' +
+        'обери "Відкрити в браузері", і спробуй ще раз.',
+      desktopNote: 'Це посилання відкрито не з телефону, застосунок тут ' +
+        'відкрити не можна. Email уже підтверджено, тож просто закрий цю ' +
+        'вкладку і заходь у Nepogano з телефону, на якому він встановлений.',
+      home: 'На головну',
+      privacy: 'Політика конфіденційності',
+      privacyHref: '/uk/privacy/'
+    },
+    en: {
+      title: 'Email confirmed · Nepogano',
+      heading: 'Email confirmed',
+      subtitle: 'Your account is active. Open the app on your phone.',
+      openApp: 'Open the app',
+      openAppHint: 'Didn’t open? That’s usually an in-app browser ' +
+        '(a messaging or email app): tap ⋮ (three dots) or ⋯ at ' +
+        'the top of the page, choose "Open in browser," and try again.',
+      desktopNote: 'This link was opened somewhere other than your phone, ' +
+        'so the app can’t open here. Your email is already confirmed, ' +
+        'just close this tab and open Nepogano on your phone.',
+      home: 'Home',
+      privacy: 'Privacy Policy',
+      privacyHref: '/privacy/'
+    }
+  };
+
+  var lang = detectLang();
+  var s = strings[lang];
+  document.documentElement.lang = lang;
+  document.title = s.title;
+  document.getElementById('title').textContent = s.heading;
+  document.getElementById('subtitle').textContent = s.subtitle;
+  document.getElementById('open-app-link').textContent = s.openApp;
+  document.getElementById('open-app-hint').textContent = s.openAppHint;
+  document.getElementById('desktop-note').textContent = s.desktopNote;
+  document.getElementById('home-link').textContent = s.home;
+  document.getElementById('privacy-link').textContent = s.privacy;
+  document.getElementById('privacy-link').setAttribute('href', s.privacyHref);
+
   // Supabase підтверджує email на СЕРВЕРІ ще до цього редіректу — незалежно
   // від того, звідки відкрито цю сторінку. Тут лише повідомляємо про
   // результат і, якщо це мобільний пристрій, пробуємо завести в застосунок.

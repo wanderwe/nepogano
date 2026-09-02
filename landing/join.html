@@ -28,25 +28,96 @@
 
   <div class="join-code" id="join-code">— — — — — —</div>
   <button type="button" id="copy-code-btn" class="btn-secondary">Скопіювати код</button>
-  <p class="join-note">
+  <p class="join-note" id="no-app-note">
     Якщо застосунок ще не встановлений:
   </p>
   <a id="install-link" class="btn-secondary" href="https://play.google.com/store/apps/details?id=com.nepogano.app">Завантажити застосунок</a>
-  <p class="join-note">
-    Nepogano поки в закритому тестуванні. Посилання встановить застосунок,
-    якщо в тебе вже є доступ до тестування. Якщо ще немає, зверніся до
-    того, хто тебе запросив.
+  <p class="join-note" id="install-note">
+    Після встановлення код запрошення підхопиться сам. Якщо ні, встав його
+    вручну зі скопійованого вище.
   </p>
 </main>
 
 <footer class="footer">
   <div class="wrap footer-inner">
-    <a href="/">На головну</a>
-    <a href="/uk/privacy/">Політика конфіденційності</a>
+    <a href="/" id="home-link">На головну</a>
+    <a href="/uk/privacy/" id="privacy-link">Політика конфіденційності</a>
   </div>
 </footer>
 
 <script>
+  // Той самий детект, що на index.html (?lang= → localStorage → navigator.language),
+  // без редіректу на окремий /en/ URL — сторінка сама підміняє текст, а не
+  // дублюється по директоріях під кожну мову (та сама причина, що на /confirmed).
+  function detectLang() {
+    var params = new URLSearchParams(location.search);
+    var chosen = params.get('lang');
+    if (chosen === 'en') {
+      try { localStorage.setItem('nepogano_lang', 'en'); } catch (e) {}
+      return 'en';
+    }
+    try {
+      if (localStorage.getItem('nepogano_lang') === 'en') return 'en';
+    } catch (e) {}
+    var browserLang = ((navigator.language || navigator.userLanguage || '') + '').toLowerCase();
+    if (browserLang.indexOf('uk') === 0 || browserLang.indexOf('ru') === 0) return 'uk';
+    return 'en';
+  }
+
+  var strings = {
+    uk: {
+      title: 'Приєднатися · Nepogano',
+      defaultTitle: 'Хтось хоче додати тебе другом',
+      titleWithName: function (name) { return name + ' хоче додати тебе другом'; },
+      openApp: 'Відкрити застосунок',
+      openAppHint: 'Не відкрилось? Це через вбудований браузер месенджера: ' +
+        'натисни ⋮ (три крапки) чи ⋯ вгорі сторінки і обери "Відкрити в ' +
+        'браузері", і спробуй ще раз.',
+      copy: 'Скопіювати код',
+      copied: 'Скопійовано!',
+      noApp: 'Якщо застосунок ще не встановлений:',
+      install: 'Завантажити застосунок',
+      installNote: 'Після встановлення код запрошення підхопиться сам. ' +
+        'Якщо ні, встав його вручну зі скопійованого вище.',
+      home: 'На головну',
+      privacy: 'Політика конфіденційності',
+      privacyHref: '/uk/privacy/'
+    },
+    en: {
+      title: 'Join · Nepogano',
+      defaultTitle: 'Someone wants to add you as a friend',
+      titleWithName: function (name) { return name + ' wants to add you as a friend'; },
+      openApp: 'Open the app',
+      openAppHint: 'Didn’t open? That’s usually an in-app browser (a ' +
+        'messaging app): tap ⋮ (three dots) or ⋯ at the top of the page, ' +
+        'choose "Open in browser," and try again.',
+      copy: 'Copy code',
+      copied: 'Copied!',
+      noApp: 'If you don’t have the app yet:',
+      install: 'Download the app',
+      installNote: 'The invite code fills in on its own once you install. ' +
+        'If it doesn’t, paste the one you copied above.',
+      home: 'Home',
+      privacy: 'Privacy Policy',
+      privacyHref: '/privacy/'
+    }
+  };
+
+  var lang = detectLang();
+  var s = strings[lang];
+  document.documentElement.lang = lang;
+  document.title = s.title;
+  document.getElementById('join-title').textContent = s.defaultTitle;
+  document.getElementById('open-app-link').textContent = s.openApp;
+  document.getElementById('open-app-hint').textContent = s.openAppHint;
+  document.getElementById('copy-code-btn').textContent = s.copy;
+  document.getElementById('no-app-note').textContent = s.noApp;
+  document.getElementById('install-link').textContent = s.install;
+  document.getElementById('install-note').textContent = s.installNote;
+  document.getElementById('home-link').textContent = s.home;
+  document.getElementById('privacy-link').textContent = s.privacy;
+  document.getElementById('privacy-link').setAttribute('href', s.privacyHref);
+
   var parts = window.location.pathname.split('/').filter(Boolean);
   var code = parts[parts.length - 1];
   if (code && code.toLowerCase() !== 'join') {
@@ -82,17 +153,16 @@
 
   var inviterName = new URLSearchParams(window.location.search).get('name');
   if (inviterName) {
-    document.getElementById('join-title').textContent =
-      inviterName + ' хоче додати тебе другом';
+    document.getElementById('join-title').textContent = s.titleWithName(inviterName);
   }
 
   var copyBtn = document.getElementById('copy-code-btn');
   copyBtn.addEventListener('click', function () {
     var text = document.getElementById('join-code').textContent;
     var onCopied = function () {
-      copyBtn.textContent = 'Скопійовано!';
+      copyBtn.textContent = s.copied;
       setTimeout(function () {
-        copyBtn.textContent = 'Скопіювати код';
+        copyBtn.textContent = s.copy;
       }, 1500);
     };
     if (navigator.clipboard && navigator.clipboard.writeText) {
