@@ -1719,7 +1719,12 @@ class _PersonDetailScreenState extends State<PersonDetailScreen> {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text(l10n.nudgeSent)));
+        ).showSnackBar(
+          SnackBar(
+            content: Text(l10n.nudgeSent),
+            duration: const Duration(seconds: 2),
+          ),
+        );
       }
       await _refreshNudgeStatus();
     } catch (e) {
