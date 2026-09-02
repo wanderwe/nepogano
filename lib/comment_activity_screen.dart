@@ -86,7 +86,10 @@ class _CommentActivityScreenState extends State<CommentActivityScreen> {
         _markingAllRead = false;
       });
       scaffoldMessengerKey.currentState?.showSnackBar(
-        SnackBar(content: Text(l10n.commentActivityMarkedAllRead)),
+        SnackBar(
+          content: Text(l10n.commentActivityMarkedAllRead),
+          duration: const Duration(seconds: 2),
+        ),
       );
     } catch (e) {
       if (!mounted) return;

@@ -912,7 +912,12 @@ class _FriendsScreenState extends State<FriendsScreen> {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text(l10n.friendAdded)));
+        ).showSnackBar(
+          SnackBar(
+            content: Text(l10n.friendAdded),
+            duration: const Duration(seconds: 2),
+          ),
+        );
       }
       _load();
     } catch (e) {
@@ -964,7 +969,12 @@ class _FriendsScreenState extends State<FriendsScreen> {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text(l10n.friendInviteSent)));
+        ).showSnackBar(
+          SnackBar(
+            content: Text(l10n.friendInviteSent),
+            duration: const Duration(seconds: 2),
+          ),
+        );
       }
       _load();
     } catch (e) {

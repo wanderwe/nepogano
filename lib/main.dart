@@ -460,7 +460,10 @@ class _AuthGateState extends State<AuthGate> {
         params: {'code': code},
       );
       scaffoldMessengerKey.currentState?.showSnackBar(
-        SnackBar(content: Text(l10n.friendAdded)),
+        SnackBar(
+          content: Text(l10n.friendAdded),
+          duration: const Duration(seconds: 2),
+        ),
       );
     } catch (e) {
       scaffoldMessengerKey.currentState?.showSnackBar(
@@ -2518,6 +2521,7 @@ class _CheckInScreenState extends State<CheckInScreen>
               ).savedSnackbar(_selected!.label(context)),
             ),
             behavior: SnackBarBehavior.floating,
+            duration: const Duration(seconds: 2),
           ),
         );
       }

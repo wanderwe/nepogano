@@ -335,7 +335,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
     // системного фідбеку нема, тож лишаємо свій.
     if (mounted && !Platform.isAndroid) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(AppLocalizations.of(context).codeCopied)),
+        SnackBar(
+          content: Text(AppLocalizations.of(context).codeCopied),
+          duration: const Duration(seconds: 2),
+        ),
       );
     }
   }
