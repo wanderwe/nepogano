@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io' show Platform;
 import 'dart:math';
@@ -57,11 +58,42 @@ class _AuthScreenState extends State<AuthScreen> {
 
   final _supabase = Supabase.instance.client;
 
+  // Клієнтський кулдаун після реєстрації — не заміна серверних Rate
+  // Limits у Supabase Dashboard (той захист лишається головним і працює
+  // незалежно від застосунку), а перша лінія проти найпростішого
+  // зловживання: повторний тап "Зареєструватись" одразу після
+  // попереднього, щоб закидати чужу (чи будь-яку) поштову скриньку
+  // листами підтвердження. 30с — досить, щоб зробити ручний спам
+  // відчутно повільним, не заважаючи звичайній реєстрації.
+  static const _signUpCooldownSeconds = 30;
+  int _signUpCooldownRemaining = 0;
+  Timer? _cooldownTimer;
+
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
+    _cooldownTimer?.cancel();
     super.dispose();
+  }
+
+  void _startSignUpCooldown() {
+    _cooldownTimer?.cancel();
+    setState(() => _signUpCooldownRemaining = _signUpCooldownSeconds);
+    _cooldownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
+      setState(() {
+        if (_signUpCooldownRemaining <= 1) {
+          _signUpCooldownRemaining = 0;
+          timer.cancel();
+        } else {
+          _signUpCooldownRemaining--;
+        }
+      });
+    });
   }
 
   Future<void> _submitEmailAuth() async {
@@ -76,6 +108,7 @@ class _AuthScreenState extends State<AuthScreen> {
           email: _emailController.text.trim(),
           password: _passwordController.text,
         );
+        _startSignUpCooldown();
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -90,8 +123,14 @@ class _AuthScreenState extends State<AuthScreen> {
         );
       }
     } on AuthException catch (e) {
+      // Кулдаун і тут теж, не лише при успіху — запит однаково дійшов до
+      // сервера (і врахувався в його власний rate limit), тож дозволяти
+      // миттєвий повтор після помилки так само дозволяло б спамити
+      // швидше, ніж захист має на меті.
+      if (_isSignUp) _startSignUpCooldown();
       setState(() => _errorMessage = e.message);
     } catch (e) {
+      if (_isSignUp) _startSignUpCooldown();
       if (mounted) {
         setState(
           () => _errorMessage = AppLocalizations.of(context).somethingWentWrong,
@@ -296,7 +335,11 @@ class _AuthScreenState extends State<AuthScreen> {
 
                         const SizedBox(height: 20),
                         ElevatedButton(
-                          onPressed: _loading ? null : _submitEmailAuth,
+                          onPressed:
+                              (_loading ||
+                                  (_isSignUp && _signUpCooldownRemaining > 0))
+                              ? null
+                              : _submitEmailAuth,
                           child: _loading
                               ? const SizedBox(
                                   height: 18,
@@ -306,7 +349,15 @@ class _AuthScreenState extends State<AuthScreen> {
                                     color: AppColors.accentInk,
                                   ),
                                 )
-                              : Text(_isSignUp ? l10n.signUp : l10n.signIn),
+                              : Text(
+                                  _isSignUp && _signUpCooldownRemaining > 0
+                                      ? l10n.signUpCooldown(
+                                          _signUpCooldownRemaining,
+                                        )
+                                      : (_isSignUp
+                                            ? l10n.signUp
+                                            : l10n.signIn),
+                                ),
                         ),
 
                         const SizedBox(height: 12),
