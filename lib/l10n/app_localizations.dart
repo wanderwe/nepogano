@@ -326,6 +326,12 @@ abstract class AppLocalizations {
   /// **'Перетягни або наблизь фото, щоб підібрати кадр для запису'**
   String get repositionPhotoHint;
 
+  /// No description provided for @repositionPhotoHintAvatar.
+  ///
+  /// In uk, this message translates to:
+  /// **'Перетягни або наблизь фото, щоб підібрати кадр для аватарки'**
+  String get repositionPhotoHintAvatar;
+
   /// No description provided for @repositionPhotoTooltip.
   ///
   /// In uk, this message translates to:

@@ -292,6 +292,9 @@ class _HistoryScreenState extends State<HistoryScreen> {
       await file.writeAsBytes(bytes, flush: true);
 
       if (!mounted) return;
+      // Без місяця в тексті повідомлення: дата вже видна на самому
+      // зображенні картки, а в месенджерах підпис з місяцем виявився
+      // занадто довгим рядком над прев'ю картинки.
       final shareText = widget.subjectName == null
           ? l10n.myConstellationInNepogano
           : l10n.subjectConstellationInNepogano(widget.subjectName!);
@@ -437,7 +440,16 @@ class _HistoryScreenState extends State<HistoryScreen> {
                           style: const TextStyle(color: AppColors.inkMuted),
                         ),
                         const SizedBox(height: 12),
-                        TextButton(onPressed: _load, child: Text(l10n.retry)),
+                        TextButton(
+                          onPressed: _load,
+                          // Той самий фікс, що й для помилки завантаження
+                          // запису на Хоумпейджі: акцентний колір замість
+                          // приглушеного дефолту, щоб кнопка читалась як дія.
+                          style: TextButton.styleFrom(
+                            foregroundColor: AppColors.accent,
+                          ),
+                          child: Text(l10n.retry),
+                        ),
                       ],
                     ),
                   ),
@@ -1110,12 +1122,19 @@ class _MonthConstellationPainter extends CustomPainter {
   final int daysInMonth;
   final int year;
   final int month;
+  // За замовчуванням true скрізь (екран, PDF) — фон і справжні зірки
+  // ділять те саме полотно. Картка шеру — виняток: фоновий зоряний пил
+  // малюється окремо на весь кадр 9:16 (`renderConstellationSharePng`),
+  // а сюди передається false, щоб не малювати його вдруге поверх уже
+  // готового фону в межах самого квадрата справжніх зірок.
+  final bool drawBackground;
 
   _MonthConstellationPainter({
     required this.entriesByDay,
     required this.daysInMonth,
     required this.year,
     required this.month,
+    this.drawBackground = true,
   });
 
   static const _marginFraction = 0.12;
@@ -1182,7 +1201,7 @@ class _MonthConstellationPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    _drawBackgroundStars(canvas, size);
+    if (drawBackground) _drawBackgroundStars(canvas, size);
 
     final positions = _positionsFor(
       year: year,
@@ -1217,8 +1236,11 @@ class _MonthConstellationPainter extends CustomPainter {
 
   /// Тьмяні статичні крапки, розкидані по всій канві незалежно від реальних
   /// днів — суто атмосфера нічного неба, приглушені настільки, щоб їх не
-  /// можна було сплутати зі справжніми зірками-чек-інами.
-  void _drawBackgroundStars(Canvas canvas, Size size) {
+  /// можна було сплутати зі справжніми зірками-чек-інами. `static` — не
+  /// використовує нічого, крім статичних констант класу, тож картка шеру
+  /// (`renderConstellationSharePng`) викликає це напряму для повного
+  /// кадру 9:16, без створення цілого `_MonthConstellationPainter`.
+  static void _drawBackgroundStars(Canvas canvas, Size size) {
     final random = Random(_backgroundSeed);
     final paint = Paint()..color = AppColors.inkMuted.withValues(alpha: 0.4);
     final placed = <Offset>[];
@@ -1416,17 +1438,22 @@ Future<(Uint8List bytes, int width, int height)> renderConstellationPng({
 }
 
 /// Брендована картка для шеру "як пост", портретна 9:16 — той самий формат,
-/// що й Day Card у `day_card_screen.dart`. Зверху один дрібний рядок "місяць
-/// рік · Сузір'я місяця", той самий стиль, що дата в Day Card ("29 August ·
-/// Saturday") — не окремий великий Lora-заголовок (пробували: виглядав
-/// важче за решту картки, а місяць/рік дублювався ще й унизу) і не
-/// емоційний підсумок настрою кольором (пробували й це: середній рівень
-/// шкали настрою, `moodNepogano`, пишеться так само, як назва застосунку —
-/// "Непогано"/"Nepogano" — тож окремим великим словом читався як
-/// бренд-заголовок, а не як індикатор настрою). "Nepogano" тут не пишемо
-/// взагалі — бренд лише внизу як "nepogano.app". Готова одразу до
-/// системного шер-листа, без окремого екрана попереднього перегляду, так
-/// само як "Експортувати місяць" одразу відкриває шер без проміжного кроку.
+/// що й Day Card у `day_card_screen.dart`. "Сузір'я місяця" зверху зліва
+/// звичайним рядком, дата одразу під ним, менша й приглушеніша —
+/// заголовок+підзаголовок в ОДНОМУ куті, не два окремі написи по різних
+/// кутах нагорі (пробували — забагато шуму зверху, погляд тягнуло в різні
+/// боки), і не в парі з "nepogano.app" унизу (теж пробували: губилась
+/// поруч із брендовим підписом, читалась як дрібний текст, не як назва
+/// самого сузір'я). Не окремий великий Lora-заголовок теж (пробували:
+/// виглядав важче за решту картки, а місяць/рік дублювався ще й унизу) і
+/// не емоційний підсумок настрою кольором (пробували й це: середній
+/// рівень шкали настрою, `moodNepogano`, пишеться так само, як назва
+/// застосунку — "Непогано"/"Nepogano" — тож окремим великим словом
+/// читався як бренд-заголовок, а не як індикатор настрою). "Nepogano" тут
+/// не пишемо взагалі — бренд лише внизу як "nepogano.app". Готова одразу
+/// до системного шер-листа, без окремого екрана попереднього перегляду,
+/// так само як "Експортувати місяць" одразу відкриває шер без проміжного
+/// кроку.
 Future<Uint8List> renderConstellationSharePng({
   required Map<int, CheckinEntry> entriesByDay,
   required int daysInMonth,
@@ -1452,18 +1479,41 @@ Future<Uint8List> renderConstellationSharePng({
     Paint()..color = const Color(0xFF141414),
   );
 
-  // Той самий рядок, що дата в Day Card ("29 August · Saturday") — дрібно,
-  // звичайним шрифтом, крапка-роздільник. Раніше тут був окремий великий
-  // Lora-заголовок, який виглядав важче, ніж усе інше на картці, а сам
-  // місяць/рік дублювався ще й унизу — тепер один рядок замість двох.
-  final header = TextPainter(
+  // Фоновий зоряний пил — на весь кадр 9:16, не лише в межах квадрата
+  // справжніх зірок нижче: та сама ідея, що в Картці дня (фото на весь
+  // кадр, текст поверх), тільки для декоративного "нічного неба" замість
+  // фото. Справжні зірки (нижче) навмисно НЕ малюють свій власний фон
+  // (`drawBackground: false`) — інакше тут була б друга, густіша копія
+  // того самого пилу поверх цієї.
+  _MonthConstellationPainter._drawBackgroundStars(
+    canvas,
+    const Size(cardWidth, cardHeight),
+  );
+
+  // "Сузір'я місяця" зверху зліва, дата одразу під нею, менша й
+  // приглушеніша — заголовок картки з датою-підзаголовком, все в одному
+  // куті, верх картки не розтягується на всю ширину.
+  final titleLabelPainter = TextPainter(
     text: TextSpan(
-      text: '$monthTitle · $titleLabel',
+      text: titleLabel,
       style: const TextStyle(fontSize: 12, color: Color(0xD9FFFFFF)),
     ),
     textDirection: TextDirection.ltr,
   )..layout(maxWidth: cardWidth - padding * 2);
-  const headerOffset = Offset(padding, padding);
+  const titleLabelOffset = Offset(padding, padding);
+  titleLabelPainter.paint(canvas, titleLabelOffset);
+
+  final header = TextPainter(
+    text: TextSpan(
+      text: monthTitle,
+      style: const TextStyle(fontSize: 11, color: mutedWhite),
+    ),
+    textDirection: TextDirection.ltr,
+  )..layout(maxWidth: cardWidth - padding * 2);
+  final headerOffset = Offset(
+    padding,
+    titleLabelOffset.dy + titleLabelPainter.height + 2,
+  );
   header.paint(canvas, headerOffset);
 
   final domainLabel = TextPainter(
@@ -1497,6 +1547,7 @@ Future<Uint8List> renderConstellationSharePng({
     daysInMonth: daysInMonth,
     year: year,
     month: month,
+    drawBackground: false,
   ).paint(canvas, Size(constellationSize, constellationSize));
   canvas.restore();
 

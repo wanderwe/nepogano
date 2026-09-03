@@ -42,6 +42,7 @@
   "removePhotoTooltip": "Remove photo",
   "repositionPhoto": "Reposition photo",
   "repositionPhotoHint": "Drag or zoom the photo to adjust the frame for your post",
+  "repositionPhotoHintAvatar": "Drag or zoom the photo to adjust the frame for your avatar",
   "repositionPhotoTooltip": "Reposition photo",
   "changePhotoTooltip": "Change photo",
   "repositionPhotoDayCardPreview": "Day card preview",
@@ -112,7 +113,9 @@
   "myConstellationInNepogano": "My constellation with Nepogano",
   "subjectConstellationInNepogano": "{name}'s constellation with Nepogano",
   "@subjectConstellationInNepogano": {
-    "placeholders": { "name": { "type": "String" } }
+    "placeholders": {
+      "name": { "type": "String" }
+    }
   },
 
   "friends": "Friends",

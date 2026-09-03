@@ -28,6 +28,14 @@ import 'style.dart';
 /// ризикувати неточною формулою — просто інший розмір того самого
 /// реального рендеру.
 ///
+/// [isAvatar] перемикає на контекст аватарки профілю: там фото завжди
+/// показується колом у квадратному контейнері (`ClipOval` 88×88,
+/// `profile_screen.dart`), не 4:3 карткою запису — рамка тут стає 1:1 й
+/// теж замаскована колом (та сама WYSIWYG-логіка, що й фікс для запису:
+/// редактор має показувати РІВНО те, що покаже реальний рендер), а
+/// прев'ю Картки дня ховається зовсім — аватарка в Картці дня взагалі не
+/// з'являється.
+///
 /// Повертає `(alignX, alignY, scale)` через Navigator.pop, або null якщо
 /// закрито без змін.
 class PhotoRepositionScreen extends StatefulWidget {
@@ -35,6 +43,7 @@ class PhotoRepositionScreen extends StatefulWidget {
   final double initialAlignX;
   final double initialAlignY;
   final double initialScale;
+  final bool isAvatar;
 
   const PhotoRepositionScreen({
     super.key,
@@ -42,6 +51,7 @@ class PhotoRepositionScreen extends StatefulWidget {
     this.initialAlignX = 0,
     this.initialAlignY = 0,
     this.initialScale = 1,
+    this.isAvatar = false,
   });
 
   @override
@@ -154,6 +164,15 @@ class _PhotoRepositionScreenState extends State<PhotoRepositionScreen> {
     return math.max(boxWidth / size.width, boxHeight / size.height);
   }
 
+  /// Аватарка скрізь показується колом (`ClipOval` 88×88), не скругленим
+  /// прямокутником — рамка редактора має маскувати так само колом, інакше
+  /// юзер кадрує по кутах, які насправді обріже коло.
+  Widget _clipFrame({required Widget child}) {
+    return widget.isAvatar
+        ? ClipOval(child: child)
+        : ClipRRect(borderRadius: BorderRadius.circular(20), child: child);
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -188,123 +207,133 @@ class _PhotoRepositionScreenState extends State<PhotoRepositionScreen> {
               ),
               const SizedBox(height: 8),
               Text(
-                l10n.repositionPhotoHint,
+                widget.isAvatar
+                    ? l10n.repositionPhotoHintAvatar
+                    : l10n.repositionPhotoHint,
                 textAlign: TextAlign.center,
                 style: const TextStyle(fontSize: 13, color: AppColors.inkMuted),
               ),
               const SizedBox(height: 24),
               AspectRatio(
-                aspectRatio: kCompactPhotoAspectRatio,
+                aspectRatio: widget.isAvatar ? 1 : kCompactPhotoAspectRatio,
                 child: LayoutBuilder(
                   builder: (context, constraints) {
-                    return ClipRRect(
-                      borderRadius: BorderRadius.circular(20),
-                      child: GestureDetector(
-                        onScaleStart: (_) {
-                          _gestureStartScale = _scale;
-                          _panAxisLock = null;
-                        },
-                        onScaleUpdate: (details) {
-                          setState(() {
-                            _scale = (_gestureStartScale * details.scale).clamp(
-                              1.0,
-                              3.0,
-                            );
-                            // Мінус, не плюс: фото має "триматись" пальця,
-                            // як у стандартних фоторедакторах (Instagram,
-                            // Google Photos) — тягнеш, і сама картинка
-                            // з'їжджає під пальцем, відкриваючи те, що було
-                            // приховано за краєм.
-                            //
-                            // Вертикаль (нижче) ділить на РЕАЛЬНИЙ overflow
-                            // конкретного фото (не на розмір рамки) —
-                            // інакше швидкість перетягування "стрибала" б
-                            // між фото різних пропорцій (майже квадратне
-                            // фото мало куди панорамувати — те саме
-                            // перетягування пальцем відчувалось би як
-                            // "повільно" проти витягнутого портрета).
-                            // `_overflow` вже сам враховує поточний
-                            // `_scale` всередині формули, тож тут його
-                            // вдруге множити НЕ треба — формула тримає 1px
-                            // пальця ≈ 1px видимого зсуву завжди, незалежно
-                            // від фото чи поточного зуму. Горизонталь має
-                            // ІНШУ формулу — див. коментар нижче біля
-                            // `hOverflow`.
-                            //
-                            // Однопальцевий дотик визначає переважну вісь
-                            // ОДИН РАЗ, щойно рух перевищив дрібний шум
-                            // (_panAxisLockThreshold), і тримає її до
-                            // відпускання пальця — без цього найменше
-                            // "гуляння" по діагоналі (палець ніколи не
-                            // рухається ідеально по прямій) видно як
-                            // небажаний зсув по обох осях одразу. Пінч
-                            // (2+ пальці) навмисно НЕ замикає вісь — це вже
-                            // свідомо комбінований жест зум+пан.
-                            if (details.pointerCount == 1 &&
-                                _panAxisLock == null) {
-                              final dx = details.focalPointDelta.dx.abs();
-                              final dy = details.focalPointDelta.dy.abs();
-                              if (dx > _panAxisLockThreshold ||
-                                  dy > _panAxisLockThreshold) {
-                                _panAxisLock = dx > dy
-                                    ? Axis.horizontal
-                                    : Axis.vertical;
-                              }
+                    // GestureDetector НАД кадруванням, не всередині нього:
+                    // `ClipOval`/`ClipRRect` за замовчуванням обрізає й
+                    // hit-testing теж, не лише малювання — якби детектор
+                    // жестів був усередині обрізки (як був раніше), дотик
+                    // біля кутів квадратної рамки аватарки (поза видимим
+                    // колом, ~21% площі) взагалі не запускав би жест.
+                    // `HitTestBehavior.opaque` тримає весь квадрат
+                    // тапабельним незалежно від видимої форми всередині.
+                    return GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onScaleStart: (_) {
+                        _gestureStartScale = _scale;
+                        _panAxisLock = null;
+                      },
+                      onScaleUpdate: (details) {
+                        setState(() {
+                          _scale = (_gestureStartScale * details.scale).clamp(
+                            1.0,
+                            3.0,
+                          );
+                          // Мінус, не плюс: фото має "триматись" пальця,
+                          // як у стандартних фоторедакторах (Instagram,
+                          // Google Photos) — тягнеш, і сама картинка
+                          // з'їжджає під пальцем, відкриваючи те, що було
+                          // приховано за краєм.
+                          //
+                          // Вертикаль (нижче) ділить на РЕАЛЬНИЙ overflow
+                          // конкретного фото (не на розмір рамки) —
+                          // інакше швидкість перетягування "стрибала" б
+                          // між фото різних пропорцій (майже квадратне
+                          // фото мало куди панорамувати — те саме
+                          // перетягування пальцем відчувалось би як
+                          // "повільно" проти витягнутого портрета).
+                          // `_overflow` вже сам враховує поточний
+                          // `_scale` всередині формули, тож тут його
+                          // вдруге множити НЕ треба — формула тримає 1px
+                          // пальця ≈ 1px видимого зсуву завжди, незалежно
+                          // від фото чи поточного зуму. Горизонталь має
+                          // ІНШУ формулу — див. коментар нижче біля
+                          // `hOverflow`.
+                          //
+                          // Однопальцевий дотик визначає переважну вісь
+                          // ОДИН РАЗ, щойно рух перевищив дрібний шум
+                          // (_panAxisLockThreshold), і тримає її до
+                          // відпускання пальця — без цього найменше
+                          // "гуляння" по діагоналі (палець ніколи не
+                          // рухається ідеально по прямій) видно як
+                          // небажаний зсув по обох осях одразу. Пінч
+                          // (2+ пальці) навмисно НЕ замикає вісь — це вже
+                          // свідомо комбінований жест зум+пан.
+                          if (details.pointerCount == 1 &&
+                              _panAxisLock == null) {
+                            final dx = details.focalPointDelta.dx.abs();
+                            final dy = details.focalPointDelta.dy.abs();
+                            if (dx > _panAxisLockThreshold ||
+                                dy > _panAxisLockThreshold) {
+                              _panAxisLock = dx > dy
+                                  ? Axis.horizontal
+                                  : Axis.vertical;
                             }
+                          }
 
-                            final coverScale = _coverScale(
-                              constraints.maxWidth,
-                              constraints.maxHeight,
-                            );
-                            if (coverScale != null) {
-                              final verticalAllowed =
-                                  details.pointerCount != 1 ||
-                                  _panAxisLock != Axis.horizontal;
-                              if (verticalAllowed) {
-                                final vOverflow = _overflow(
-                                  boxSize: constraints.maxHeight,
-                                  naturalDimension: _naturalSize!.height,
-                                  coverScale: coverScale,
-                                );
-                                if (vOverflow != null) {
-                                  _alignY =
-                                      (_alignY -
-                                              details.focalPointDelta.dy *
-                                                  2 /
-                                                  vOverflow)
-                                          .clamp(-1.0, 1.0);
-                                }
-                              }
-                              final horizontalAllowed =
-                                  details.pointerCount != 1 ||
-                                  _panAxisLock != Axis.vertical;
-                              if (horizontalAllowed) {
-                                // На відміну від вертикалі, тут НЕ рахуємо
-                                // запас від натуральних пікселів фото —
-                                // `ScaledPhoto` (яка й реально показує
-                                // фото скрізь у застосунку) реалізує
-                                // горизонтальний пан не через
-                                // BoxFit.cover-кадрування, а окремим
-                                // `Transform.translate` поверх
-                                // center-anchored зуму, і рахує доступний
-                                // запас так само суто від розміру РАМКИ
-                                // (`boxWidth * (scale - 1)`). Якщо тут
-                                // порахувати інакше — прев'ю в редакторі
-                                // й реальний рендер розійдуться.
-                                final hOverflow =
-                                    constraints.maxWidth * (_scale - 1);
-                                if (hOverflow > 0) {
-                                  _alignX =
-                                      (_alignX -
-                                              details.focalPointDelta.dx *
-                                                  2 /
-                                                  hOverflow)
-                                          .clamp(-1.0, 1.0);
-                                }
+                          final coverScale = _coverScale(
+                            constraints.maxWidth,
+                            constraints.maxHeight,
+                          );
+                          if (coverScale != null) {
+                            final verticalAllowed =
+                                details.pointerCount != 1 ||
+                                _panAxisLock != Axis.horizontal;
+                            if (verticalAllowed) {
+                              final vOverflow = _overflow(
+                                boxSize: constraints.maxHeight,
+                                naturalDimension: _naturalSize!.height,
+                                coverScale: coverScale,
+                              );
+                              if (vOverflow != null) {
+                                _alignY =
+                                    (_alignY -
+                                            details.focalPointDelta.dy *
+                                                2 /
+                                                vOverflow)
+                                        .clamp(-1.0, 1.0);
                               }
                             }
-                          });
-                        },
+                            final horizontalAllowed =
+                                details.pointerCount != 1 ||
+                                _panAxisLock != Axis.vertical;
+                            if (horizontalAllowed) {
+                              // На відміну від вертикалі, тут НЕ рахуємо
+                              // запас від натуральних пікселів фото —
+                              // `ScaledPhoto` (яка й реально показує
+                              // фото скрізь у застосунку) реалізує
+                              // горизонтальний пан не через
+                              // BoxFit.cover-кадрування, а окремим
+                              // `Transform.translate` поверх
+                              // center-anchored зуму, і рахує доступний
+                              // запас так само суто від розміру РАМКИ
+                              // (`boxWidth * (scale - 1)`). Якщо тут
+                              // порахувати інакше — прев'ю в редакторі
+                              // й реальний рендер розійдуться.
+                              final hOverflow =
+                                  constraints.maxWidth * (_scale - 1);
+                              if (hOverflow > 0) {
+                                _alignX =
+                                    (_alignX -
+                                            details.focalPointDelta.dx *
+                                                2 /
+                                                hOverflow)
+                                        .clamp(-1.0, 1.0);
+                              }
+                            }
+                          }
+                        });
+                      },
+                      child: _clipFrame(
                         child: ScaledPhoto(
                           scale: _scale,
                           alignX: _alignX,
@@ -319,42 +348,48 @@ class _PhotoRepositionScreenState extends State<PhotoRepositionScreen> {
                   },
                 ),
               ),
-              const SizedBox(height: 20),
-              // Живий прев'ю Картки дня (9:16) — той самий ScaledPhoto+Image
-              // з поточними alignX/alignY/scale, лише маленький, не
-              // порахована окремо геометрія. Що бачить юзер тут, те й буде
-              // в Картці дня, без ризику розійтись формулою.
-              Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    l10n.repositionPhotoDayCardPreview,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: AppColors.inkMuted,
+              // Прев'ю Картки дня має сенс лише для фото ЗАПИСУ — аватарка
+              // в Картці дня взагалі не з'являється (вона колом у шапці
+              // профілю/списку друзів), тож для isAvatar цей блок зайвий,
+              // не просто інша пропорція.
+              if (!widget.isAvatar) ...[
+                const SizedBox(height: 20),
+                // Живий прев'ю Картки дня (9:16) — той самий ScaledPhoto+Image
+                // з поточними alignX/alignY/scale, лише маленький, не
+                // порахована окремо геометрія. Що бачить юзер тут, те й буде
+                // в Картці дня, без ризику розійтись формулою.
+                Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      l10n.repositionPhotoDayCardPreview,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: AppColors.inkMuted,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 6),
-                  SizedBox(
-                    width: 64,
-                    child: AspectRatio(
-                      aspectRatio: 9 / 16,
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(6),
-                        child: ScaledPhoto(
-                          scale: _scale,
-                          alignX: _alignX,
-                          child: Image(
-                            image: _image,
-                            fit: BoxFit.cover,
-                            alignment: Alignment(_alignX, _alignY),
+                    const SizedBox(height: 6),
+                    SizedBox(
+                      width: 64,
+                      child: AspectRatio(
+                        aspectRatio: 9 / 16,
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(6),
+                          child: ScaledPhoto(
+                            scale: _scale,
+                            alignX: _alignX,
+                            child: Image(
+                              image: _image,
+                              fit: BoxFit.cover,
+                              alignment: Alignment(_alignX, _alignY),
+                            ),
                           ),
                         ),
                       ),
                     ),
-                  ),
-                ],
-              ),
+                  ],
+                ),
+              ],
               const Spacer(),
               SizedBox(
                 width: double.infinity,

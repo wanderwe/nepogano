@@ -42,6 +42,7 @@
   "removePhotoTooltip": "Прибрати фото",
   "repositionPhoto": "Розташування фото",
   "repositionPhotoHint": "Перетягни або наблизь фото, щоб підібрати кадр для запису",
+  "repositionPhotoHintAvatar": "Перетягни або наблизь фото, щоб підібрати кадр для аватарки",
   "repositionPhotoTooltip": "Змінити розташування фото",
   "changePhotoTooltip": "Змінити фото",
   "repositionPhotoDayCardPreview": "Прев'ю картки дня",
@@ -121,7 +122,9 @@
   "myConstellationInNepogano": "Моє сузір'я з Nepogano",
   "subjectConstellationInNepogano": "Сузір'я {name} з Nepogano",
   "@subjectConstellationInNepogano": {
-    "placeholders": { "name": { "type": "String" } }
+    "placeholders": {
+      "name": { "type": "String" }
+    }
   },
 
   "friends": "Друзі",

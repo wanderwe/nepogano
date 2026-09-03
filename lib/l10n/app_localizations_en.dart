@@ -128,6 +128,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'Drag or zoom the photo to adjust the frame for your post';
 
   @override
+  String get repositionPhotoHintAvatar =>
+      'Drag or zoom the photo to adjust the frame for your avatar';
+
+  @override
   String get repositionPhotoTooltip => 'Reposition photo';
 
   @override

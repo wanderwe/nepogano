@@ -19,6 +19,17 @@ import 'style.dart';
 
 PdfColor _toPdfColor(Color color) => PdfColor.fromInt(color.toARGB32());
 
+// Спільні для shareMonthReport (головний ізолят, ДО Isolate.run) і
+// _buildReportBytes (сам ізолят) — щоб растр сузір'я малювався одразу в
+// тому самому логічному розмірі, що й буде показаний у PDF (див.
+// виклик renderConstellationPng нижче), без жодного подальшого
+// масштабування. Без цього текст, намальований Canvas-ом при одному
+// розмірі, після стиснення під ширину колонки в PDF виглядає меншим за
+// справжній pw.Text того самого fontSize — саме так і сталось із
+// заголовком "Сузір'я місяця" проти "Нотатки місяця".
+const _pdfPageMargin = 32.0;
+final _pdfContentWidth = PdfPageFormat.a4.width - _pdfPageMargin * 2;
+
 Future<String?> _myDisplayNameForFilename() async {
   final supabase = Supabase.instance.client;
   final userId = supabase.auth.currentUser?.id;
@@ -149,6 +160,12 @@ Future<void> shareMonthReport({
           year: month.year,
           month: month.month,
           heading: l10n.reportConstellationSection,
+          // Той самий логічний розмір, у якому зображення реально
+          // покажеться в PDF (contentWidth * 0.5 — колонка нотаток),
+          // не довільна фіксована величина — без масштабування після
+          // растеризації текст заголовка виходить справжнього fontSize,
+          // 1:1 з рештою PDF-тексту.
+          logicalSize: _pdfContentWidth * 0.5,
         );
 
   final data = _ReportData(
@@ -211,19 +228,12 @@ Future<Uint8List> _buildReportBytes(_ReportData data) async {
     entriesByDay[entry.createdAt.day] = entry;
   }
 
-  // Рахуємо тут, а не через `LayoutBuilder` у самих записах нотаток —
-  // `LayoutBuilder` не спанsuch, розбиває пагінацію (див. коментар біля
-  // `_buildNoteEntry`). Ширина відома наперед: A4 мінус ті самі поля, що
-  // нижче в `pageTheme.margin`.
-  const pageMargin = 32.0;
-  final contentWidth = PdfPageFormat.a4.width - pageMargin * 2;
-
   final doc = pw.Document();
   doc.addPage(
     pw.MultiPage(
       pageTheme: pw.PageTheme(
         margin: const pw.EdgeInsets.symmetric(
-          horizontal: pageMargin,
+          horizontal: _pdfPageMargin,
           vertical: 36,
         ),
         theme: pw.ThemeData.withFont(base: baseFont, bold: headingFont)
@@ -266,7 +276,7 @@ Future<Uint8List> _buildReportBytes(_ReportData data) async {
         ),
         pw.SizedBox(height: 24),
         if (data.sortedAsc.isNotEmpty)
-          ..._buildNotesSection(data, headingFont, contentWidth),
+          ..._buildNotesSection(data, headingFont, _pdfContentWidth),
         // Бонусом в кінці, не на видному місці зверху — декоративний вигляд
         // місяця, не функціональна частина звіту (та сама причина, з якої
         // в самому застосунку це окремий тогл, а не заміна календаря).
@@ -286,9 +296,9 @@ Future<Uint8List> _buildReportBytes(_ReportData data) async {
           pw.Align(
             alignment: pw.Alignment.centerLeft,
             child: pw.SizedBox(
-              width: contentWidth * 0.5,
+              width: _pdfContentWidth * 0.5,
               height:
-                  contentWidth *
+                  _pdfContentWidth *
                   0.5 *
                   data.constellationImage!.$3 /
                   data.constellationImage!.$2,

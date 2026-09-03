@@ -135,7 +135,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final file = File(picked.path);
     final result = await Navigator.of(context).push<(double, double, double)>(
       MaterialPageRoute(
-        builder: (_) => PhotoRepositionScreen(image: FileImage(file)),
+        builder: (_) =>
+            PhotoRepositionScreen(image: FileImage(file), isAvatar: true),
       ),
     );
     if (result == null || !mounted) return;
@@ -188,6 +189,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           initialAlignX: _avatarAlignX,
           initialAlignY: _avatarAlignY,
           initialScale: _avatarScale,
+          isAvatar: true,
         ),
       ),
     );

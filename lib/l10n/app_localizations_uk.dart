@@ -129,6 +129,10 @@ class AppLocalizationsUk extends AppLocalizations {
       'Перетягни або наблизь фото, щоб підібрати кадр для запису';
 
   @override
+  String get repositionPhotoHintAvatar =>
+      'Перетягни або наблизь фото, щоб підібрати кадр для аватарки';
+
+  @override
   String get repositionPhotoTooltip => 'Змінити розташування фото';
 
   @override
