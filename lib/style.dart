@@ -37,6 +37,20 @@ class ExpandableNote extends StatelessWidget {
     this.maxLines = 5,
   });
 
+  // Раніше тут перед рендером питали TextPainter.didExceedMaxLines, чи
+  // текст реально не влазить у maxLines рядків при поточній ширині — і
+  // ЛИШЕ тоді обгортали в GestureDetector, щоб короткі нотатки, яким
+  // нема чого розгортати, не мали зайвого тап-таргету. Реальний,
+  // відтворений баг: TextPainter міряє текст ДО того, як кастомний
+  // шрифт (Inter) гарантовано довантажився — по запасному системному
+  // шрифту з іншими метриками рядок інколи "влазить" за розрахунком, а
+  // фактичний рендер тим самим кастомним шрифтом далі показує "...".
+  // Юзер бачив обрізаний текст, який на тап не реагував ВЗАГАЛІ — не
+  // "гасне", а без жодного GestureDetector, бо `overflows` застряг на
+  // `false`, порахованому проти шрифту, який ніколи не рендериться.
+  // Рішення — узагалі не намагатись угадати наперед: нотатка завжди
+  // тапабельна. Якщо текст і так уміщається — тап просто нічого
+  // візуально не міняє (той самий текст в обох гілках), не проблема.
   @override
   Widget build(BuildContext context) {
     if (expanded) {
@@ -46,26 +60,14 @@ class ExpandableNote extends StatelessWidget {
       );
     }
 
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final painter = TextPainter(
-          text: TextSpan(text: text, style: style),
-          maxLines: maxLines,
-          textDirection: Directionality.of(context),
-        )..layout(maxWidth: constraints.maxWidth);
-        final overflows = painter.didExceedMaxLines;
-
-        final textWidget = Text(
-          text,
-          style: style,
-          maxLines: maxLines,
-          overflow: TextOverflow.ellipsis,
-        );
-
-        return overflows
-            ? GestureDetector(onTap: onToggle, child: textWidget)
-            : textWidget;
-      },
+    return GestureDetector(
+      onTap: onToggle,
+      child: Text(
+        text,
+        style: style,
+        maxLines: maxLines,
+        overflow: TextOverflow.ellipsis,
+      ),
     );
   }
 }
