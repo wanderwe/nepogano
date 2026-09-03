@@ -16,6 +16,7 @@ import 'photo_storage.dart';
 import 'share_utils.dart';
 import 'style.dart';
 import 'subject_detail_screen.dart';
+import 'subject_diary_views.dart';
 
 /// Унікальний ключ для (друг, день) — щоб кожен день зберігав власний
 /// статус вгадування незалежно від інших днів того самого друга.
@@ -1662,6 +1663,7 @@ class _PersonDetailScreenState extends State<PersonDetailScreen> {
   List<_FriendDayEntry> _entries = [];
   final Map<String, String?> _myGuesses = {};
   NudgeStatus? _nudgeStatus;
+  Set<String> _sharedSubjectsWithUnseenUpdates = {};
 
   // RLS уже й так дає друзям повний доступ до всієї історії одне одного,
   // незалежно від дати — kGuessWindowDays лише клієнтське вікно першого
@@ -1680,11 +1682,23 @@ class _PersonDetailScreenState extends State<PersonDetailScreen> {
     super.initState();
     _load();
     _refreshNudgeStatus();
+    _refreshSharedSubjectsUnseenUpdates();
   }
 
   Future<void> _refreshNudgeStatus() async {
     final status = await nudgeStatus(_supabase, widget.userId);
     if (mounted) setState(() => _nudgeStatus = status);
+  }
+
+  // Той самий підхід, що для власних кіл/співавторства на головному екрані
+  // (`_refreshSubjectUnseenUpdates`) — той самий `subjectsWithUnseenUpdates`
+  // працює з будь-якими subjectId, не лише "своїми". Раніше чіпи відкритих
+  // друзями щоденників не показували взагалі нічого про нові пости — юзер
+  // мав тапати кожен наосліп, щоб дізнатись, чи там щось нове.
+  Future<void> _refreshSharedSubjectsUnseenUpdates() async {
+    final ids = widget.sharedSubjects.map((s) => s.subjectId).toList();
+    final result = await subjectsWithUnseenUpdates(ids);
+    if (mounted) setState(() => _sharedSubjectsWithUnseenUpdates = result);
   }
 
   // Іконка тепер завжди на екрані (раніше зникала одразу після відправки —
@@ -1944,14 +1958,24 @@ class _PersonDetailScreenState extends State<PersonDetailScreen> {
                       return AppChip(
                         label: shared.subjectName,
                         selected: false,
-                        onTap: () => Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) => SubjectDetailScreen(
-                              subjectId: shared.subjectId,
-                              subjectName: shared.subjectName,
+                        showUnseenDot: _sharedSubjectsWithUnseenUpdates
+                            .contains(shared.subjectId),
+                        onTap: () async {
+                          await Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => SubjectDetailScreen(
+                                subjectId: shared.subjectId,
+                                subjectName: shared.subjectName,
+                              ),
                             ),
-                          ),
-                        ),
+                          );
+                          // SubjectDetailScreen гасить індикатор на сервері
+                          // при завантаженні, але цей чіп уже намальований
+                          // зі старим станом — без оновлення після
+                          // повернення крапка лишалась б до наступного
+                          // холодного старту екрана.
+                          _refreshSharedSubjectsUnseenUpdates();
+                        },
                       );
                     },
                   ),

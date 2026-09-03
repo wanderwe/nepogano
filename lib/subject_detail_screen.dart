@@ -10,6 +10,7 @@ import 'l10n/app_localizations.dart';
 import 'main.dart';
 import 'photo_storage.dart';
 import 'style.dart';
+import 'subject_diary_views.dart';
 
 bool _isSameDay(DateTime a, DateTime b) =>
     a.year == b.year && a.month == b.month && a.day == b.day;
@@ -190,6 +191,13 @@ class _SubjectDetailScreenState extends State<SubjectDetailScreen> {
       _loading = false;
       _hasMore = hasMore;
     });
+    // Той самий виклик, що в HistoryScreen для власника/співавтора —
+    // гасить і "сьогоднішню", і "історичну" частину індикатора нових
+    // записів одразу (цей екран показує обидві в одній стрічці, на
+    // відміну від HistoryScreen, тож окремого маркера для "сьогодні"
+    // тут не потрібно). Лише при першому завантаженні, не при кожному
+    // "Показати ще" — виклик ідемпотентний, повторювати його даремно.
+    if (!isLoadMore) markSubjectHistoryViewed(widget.subjectId);
   }
 
   Future<void> _guess(_SubjectDayEntry entry, MoodLevel guessedMood) async {
