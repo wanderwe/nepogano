@@ -1,6 +1,8 @@
+import 'dart:io';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'l10n/app_localizations.dart';
 import 'style.dart';
@@ -16,8 +18,9 @@ import 'style.dart';
 /// перемикається між шириною й висотою), тож те, що юзер бачив і
 /// кадрував у квадраті, після публікації показувалось інакше — реальний
 /// фідбек ("бачу 1/3 фото в редакторі, після публікації бачу 2/3").
-/// Тепер редактор і кінцевий перегляд — той самий кадр, підписаний як
-/// такий. Картка дня (`day_card_screen.dart`) — окрема історія, 9:16,
+/// Тепер редактор і кінцевий перегляд — той самий кадр (позиціювання й
+/// так очевидно про сам запис, окремий підпис під основним фото зайвий).
+/// Картка дня (`day_card_screen.dart`) — окрема історія, 9:16,
 /// свідомо інша пропорція, не канонічна тут — для неї поруч є власне
 /// маленьке живе прев'ю (той самий `ScaledPhoto`, лише 9:16), а не
 /// порахована підказка: та сама пастка з "перемиканням покривного
@@ -46,6 +49,7 @@ class PhotoRepositionScreen extends StatefulWidget {
 }
 
 class _PhotoRepositionScreenState extends State<PhotoRepositionScreen> {
+  late ImageProvider _image = widget.image;
   late double _alignX = widget.initialAlignX;
   late double _alignY = widget.initialAlignY;
   late double _scale = widget.initialScale;
@@ -86,8 +90,33 @@ class _PhotoRepositionScreenState extends State<PhotoRepositionScreen> {
         );
       });
     });
-    _imageStream = widget.image.resolve(const ImageConfiguration())
+    _listenToImage(_image);
+  }
+
+  void _listenToImage(ImageProvider image) {
+    _imageStream?.removeListener(_imageStreamListener);
+    _imageStream = image.resolve(const ImageConfiguration())
       ..addListener(_imageStreamListener);
+  }
+
+  Future<void> _changePhoto() async {
+    final picked = await ImagePicker().pickImage(
+      source: ImageSource.gallery,
+      maxWidth: 1600,
+      imageQuality: 80,
+    );
+    if (picked == null || !mounted) return;
+    final newImage = FileImage(File(picked.path));
+    setState(() {
+      _image = newImage;
+      _naturalSize = null;
+      // Позиція/зум були підібрані під СТАРЕ фото — переносити їх на
+      // нове немає сенсу, тож скидаємо на дефолт, а не лишаємо як є.
+      _alignX = 0;
+      _alignY = 0;
+      _scale = 1;
+    });
+    _listenToImage(newImage);
   }
 
   @override
@@ -150,7 +179,11 @@ class _PhotoRepositionScreenState extends State<PhotoRepositionScreen> {
                       style: appScreenTitle(fontSize: 18),
                     ),
                   ),
-                  const SizedBox(width: 48),
+                  IconButton(
+                    onPressed: _changePhoto,
+                    icon: const Icon(PhosphorIconsLight.images, size: 20),
+                    tooltip: l10n.changePhotoTooltip,
+                  ),
                 ],
               ),
               const SizedBox(height: 8),
@@ -276,7 +309,7 @@ class _PhotoRepositionScreenState extends State<PhotoRepositionScreen> {
                           scale: _scale,
                           alignX: _alignX,
                           child: Image(
-                            image: widget.image,
+                            image: _image,
                             fit: BoxFit.cover,
                             alignment: Alignment(_alignX, _alignY),
                           ),
@@ -286,12 +319,6 @@ class _PhotoRepositionScreenState extends State<PhotoRepositionScreen> {
                   },
                 ),
               ),
-              const SizedBox(height: 10),
-              Text(
-                l10n.repositionPhotoPostPreviewLabel,
-                textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 12, color: AppColors.inkMuted),
-              ),
               const SizedBox(height: 20),
               // Живий прев'ю Картки дня (9:16) — той самий ScaledPhoto+Image
               // з поточними alignX/alignY/scale, лише маленький, не
@@ -300,6 +327,14 @@ class _PhotoRepositionScreenState extends State<PhotoRepositionScreen> {
               Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
+                  Text(
+                    l10n.repositionPhotoDayCardPreview,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: AppColors.inkMuted,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
                   SizedBox(
                     width: 64,
                     child: AspectRatio(
@@ -310,20 +345,12 @@ class _PhotoRepositionScreenState extends State<PhotoRepositionScreen> {
                           scale: _scale,
                           alignX: _alignX,
                           child: Image(
-                            image: widget.image,
+                            image: _image,
                             fit: BoxFit.cover,
                             alignment: Alignment(_alignX, _alignY),
                           ),
                         ),
                       ),
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    l10n.repositionPhotoDayCardPreview,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: AppColors.inkMuted,
                     ),
                   ),
                 ],
