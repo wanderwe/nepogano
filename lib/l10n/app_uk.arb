@@ -41,10 +41,10 @@
   "chooseFromGallery": "Обрати з галереї",
   "removePhotoTooltip": "Прибрати фото",
   "repositionPhoto": "Розташування фото",
-  "repositionPhotoHint": "Перетягни фото, щоб посунути кадр, або розведи пальці, щоб наблизити",
+  "repositionPhotoHint": "Перетягни або наблизь фото, щоб підібрати кадр для запису",
   "repositionPhotoTooltip": "Змінити розташування фото",
-  "repositionPhotoPostPreviewLabel": "Так виглядатиме в записі",
-  "repositionPhotoDayCardPreview": "У картці дня",
+  "changePhotoTooltip": "Змінити фото",
+  "repositionPhotoDayCardPreview": "Прев'ю картки дня",
 
   "history": "Історія",
   "scrollToTop": "Прогорнути нагору",
@@ -87,6 +87,10 @@
   "emailHint": "Email",
   "passwordHint": "Пароль",
   "signUp": "Зареєструватись",
+  "signUpCooldown": "Зареєструватись ({seconds}с)",
+  "@signUpCooldown": {
+    "placeholders": { "seconds": { "type": "int" } }
+  },
   "signIn": "Увійти",
   "alreadyHaveAccountQuestion": "Вже є акаунт?",
   "noAccountYetQuestion": "Немає акаунту?",

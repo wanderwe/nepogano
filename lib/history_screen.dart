@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show FontLoader, rootBundle;
 import 'package:path_provider/path_provider.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:share_plus/share_plus.dart';
@@ -1324,28 +1325,94 @@ class _MonthConstellationPainter extends CustomPainter {
 /// `pixelRatio` (той самий підхід, що й `RepaintBoundary.toImage` у
 /// `day_card_screen.dart`) — композиція лишається тією ж, що на екрані,
 /// а растеризується вже у вищу піксельну щільність.
-Future<Uint8List> renderConstellationPng({
+///
+/// `heading`, якщо задано, домальовується ПРЯМО в те саме зображення над
+/// сузір'ям — не окремим `pw.Text` поруч у PDF. `pw.Column`, який раніше
+/// об'єднував заголовок і `pw.Image` в один список-елемент MultiPage, НЕ
+/// гарантує атомарність (та сама пастка, що вже задокументована для
+/// нотаток місяця нижче в `month_report.dart`: Column вимірює кожну
+/// дитину на її повну висоту і вирішує, скільки дітей влізло, а не
+/// переносить себе цілком) — на практиці заголовок лишався сиротою
+/// внизу сторінки, а саме зображення переїжджало на наступну. Один
+/// растеризований PNG із заголовком усередині — єдиний спосіб
+/// гарантувати, що вони ніколи не розійдуться: `pw.Image` — атомарний
+/// лист-віджет, MultiPage переносить його цілком, якщо не влазить.
+/// Повертає `(bytes, width, height)` у пікселях — ширина й висота вже НЕ
+/// обов'язково збігаються (заголовок додає висоту), викликач має
+/// порахувати правильну пропорцію показу з них, а не форсувати квадрат.
+// Заголовок сузір'я в PDF малюється Canvas-ом (растр), не справжнім
+// pw.Text — тому за замовчуванням брав би VARIABLE "Lora" застосунку, а
+// решта тексту в тому самому PDF рендериться пакетом `pdf` через
+// СТАТИЧНИЙ Lora-Static-Bold.ttf (`pdf` не вміє variable-шрифти, див.
+// коментар у pubspec.yaml) — два різні файли, візуально помітно різний
+// шрифт в одному документі. Підвантажуємо той самий статичний файл під
+// окремою назвою родини (щоб не підмінити "Lora" всюди по застосунку) і
+// рендеримо заголовок ним — той самий шрифт, що й решта PDF-тексту.
+// Один раз за життя застосунку: FontLoader.load() — важка операція,
+// кешуємо через Future, не bool (паралельні виклики чекають той самий
+// Future, не тригерять завантаження вдруге).
+Future<void>? _pdfHeadingFontLoad;
+const _pdfHeadingFontFamily = 'LoraStaticPdf';
+
+Future<void> _ensurePdfHeadingFontLoaded() {
+  return _pdfHeadingFontLoad ??= () async {
+    final data = await rootBundle.load('assets/fonts/Lora-Static-Bold.ttf');
+    await (FontLoader(_pdfHeadingFontFamily)..addFont(
+          Future.value(data),
+        ))
+        .load();
+  }();
+}
+
+Future<(Uint8List bytes, int width, int height)> renderConstellationPng({
   required Map<int, CheckinEntry> entriesByDay,
   required int daysInMonth,
   required int year,
   required int month,
+  String? heading,
   double logicalSize = 340,
   double pixelRatio = 3.0,
 }) async {
+  if (heading != null) await _ensurePdfHeadingFontLoaded();
+
   final recorder = ui.PictureRecorder();
   final canvas = Canvas(recorder);
   canvas.scale(pixelRatio);
+
+  var headingHeight = 0.0;
+  if (heading != null) {
+    final painter = TextPainter(
+      text: TextSpan(
+        text: heading,
+        style: const TextStyle(
+          fontFamily: _pdfHeadingFontFamily,
+          fontWeight: FontWeight.w600,
+          fontSize: 15,
+          color: Colors.white,
+        ),
+      ),
+      textDirection: TextDirection.ltr,
+    )..layout(maxWidth: logicalSize);
+    painter.paint(canvas, Offset.zero);
+    headingHeight = painter.height + 12;
+  }
+
+  canvas.save();
+  canvas.translate(0, headingHeight);
   _MonthConstellationPainter(
     entriesByDay: entriesByDay,
     daysInMonth: daysInMonth,
     year: year,
     month: month,
   ).paint(canvas, Size(logicalSize, logicalSize));
+  canvas.restore();
+
   final picture = recorder.endRecording();
-  final size = (logicalSize * pixelRatio).round();
-  final image = await picture.toImage(size, size);
+  final width = (logicalSize * pixelRatio).round();
+  final height = ((logicalSize + headingHeight) * pixelRatio).round();
+  final image = await picture.toImage(width, height);
   final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
-  return byteData!.buffer.asUint8List();
+  return (byteData!.buffer.asUint8List(), width, height);
 }
 
 /// Брендована картка для шеру "як пост", портретна 9:16 — той самий формат,

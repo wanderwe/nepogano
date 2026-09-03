@@ -73,11 +73,15 @@ class _ReportData {
   final Map<MoodLevel, String> moodLabels;
   final Uint8List interFontBytes;
   final Uint8List loraFontBytes;
-  final Uint8List? constellationPng;
+  // Заголовок секції вже вмальований у сам PNG (renderConstellationPng),
+  // не окремий pw.Text — тому тут лише байти й реальні піксельні
+  // розміри (ширина/висота вже НЕ обов'язково рівні, заголовок додає
+  // висоту), щоб PDF показав зображення в правильній пропорції, не
+  // квадратом.
+  final (Uint8List, int, int)? constellationImage;
   final String daysFilledText;
   final String moodDistributionLabel;
   final String notesSectionLabel;
-  final String constellationSectionLabel;
   final String footerBrand;
 
   _ReportData({
@@ -89,11 +93,10 @@ class _ReportData {
     required this.moodLabels,
     required this.interFontBytes,
     required this.loraFontBytes,
-    required this.constellationPng,
+    required this.constellationImage,
     required this.daysFilledText,
     required this.moodDistributionLabel,
     required this.notesSectionLabel,
-    required this.constellationSectionLabel,
     required this.footerBrand,
   });
 }
@@ -134,13 +137,18 @@ Future<void> shareMonthReport({
   // Растеризація потребує рушія рендеру Flutter, тож тільки тут, на
   // головному ізоляті, ДО Isolate.run нижче — сам PNG (Uint8List) після
   // цього вже звичайні байти, які спокійно перетинають межу ізолятів.
-  final constellationPng = entriesByDay.isEmpty
+  // Заголовок ("Сузір'я місяця") домальовується ПРЯМО в зображення — не
+  // окремим pw.Text поруч, бо pw.Column не гарантує, що вони лишаться на
+  // тій самій сторінці (перевірено на практиці: заголовок лишався
+  // сиротою внизу, зображення переїжджало на наступну).
+  final constellationImage = entriesByDay.isEmpty
       ? null
       : await renderConstellationPng(
           entriesByDay: entriesByDay,
           daysInMonth: daysInMonth,
           year: month.year,
           month: month.month,
+          heading: l10n.reportConstellationSection,
         );
 
   final data = _ReportData(
@@ -152,11 +160,10 @@ Future<void> shareMonthReport({
     moodLabels: moodLabels,
     interFontBytes: interData.buffer.asUint8List(),
     loraFontBytes: loraData.buffer.asUint8List(),
-    constellationPng: constellationPng,
+    constellationImage: constellationImage,
     daysFilledText: l10n.reportDaysFilled(filled, consideredDays, missed),
     moodDistributionLabel: l10n.reportMoodDistribution,
     notesSectionLabel: l10n.reportNotesSection,
-    constellationSectionLabel: l10n.reportConstellationSection,
     footerBrand: l10n.reportFooterBrand,
   );
 
@@ -263,26 +270,29 @@ Future<Uint8List> _buildReportBytes(_ReportData data) async {
         // Бонусом в кінці, не на видному місці зверху — декоративний вигляд
         // місяця, не функціональна частина звіту (та сама причина, з якої
         // в самому застосунку це окремий тогл, а не заміна календаря).
-        if (data.constellationPng != null) ...[
+        // Заголовок уже вмальований у саме зображення (renderConstellationPng,
+        // history_screen.dart) — ОДИН pw.Image, атомарний лист-віджет
+        // MultiPage: раніше заголовок ішов окремим pw.Text у pw.Column
+        // поруч, і Column НЕ гарантує, що вони лишаться на тій самій
+        // сторінці (перевірено на практиці: заголовок лишався сиротою
+        // внизу, зображення переїжджало на наступну).
+        if (data.constellationImage != null) ...[
           pw.SizedBox(height: 28),
-          pw.Text(
-            data.constellationSectionLabel,
-            style: pw.TextStyle(
-              font: headingFont,
-              fontSize: 15,
-              color: _pdfInk,
-            ),
-          ),
-          pw.SizedBox(height: 10),
           // Ширина = та сама вузька колонка нотаток вище (contentWidth -
           // rightGap із _buildNotesSection), а не довільна частка сторінки
           // — щоб не виглядало ширшим/окремим блоком від тексту над ним.
+          // Висота — за реальною пропорцією зображення (ширина/висота вже
+          // не квадрат, заголовок додав висоти), не форсований квадрат.
           pw.Align(
             alignment: pw.Alignment.centerLeft,
             child: pw.SizedBox(
               width: contentWidth * 0.5,
-              height: contentWidth * 0.5,
-              child: pw.Image(pw.MemoryImage(data.constellationPng!)),
+              height:
+                  contentWidth *
+                  0.5 *
+                  data.constellationImage!.$3 /
+                  data.constellationImage!.$2,
+              child: pw.Image(pw.MemoryImage(data.constellationImage!.$1)),
             ),
           ),
         ],
@@ -510,13 +520,26 @@ List<pw.Widget> _buildNotesSection(
   double contentWidth,
 ) {
   final rightGap = contentWidth * 0.5;
+  final entries = data.sortedAsc;
+  // Заголовок — ПЕРШИЙ TextSpan усередині RichText першого запису, не
+  // окремий pw.Text/pw.Column поруч. pw.Column НЕ гарантує, що згруповані
+  // в неї віджети лишаться на тій самій сторінці (перевірено на практиці
+  // на заголовку сузір'я нижче — той самий трюк там не спрацював; і тут
+  // на реальному PDF заголовок лишався сиротою внизу сторінки, перший
+  // запис переїжджав на наступну). Один RichText — уже перевірений
+  // роками атомарний блок (той самий механізм, що тримає дату й нотатку
+  // одного запису нероздільними нижче), тож заголовок як частина ЦЬОГО Ж
+  // RichText успадковує ту саму гарантію без нового трюку.
   return [
-    pw.Text(
-      data.notesSectionLabel,
-      style: pw.TextStyle(font: headingFont, fontSize: 15, color: _pdfInk),
+    ..._buildNoteEntryWidgets(
+      entries.first,
+      rightGap,
+      headingSpan: pw.TextSpan(
+        text: '${data.notesSectionLabel}\n\n',
+        style: pw.TextStyle(font: headingFont, fontSize: 15, color: _pdfInk),
+      ),
     ),
-    pw.SizedBox(height: 10),
-    for (final entry in data.sortedAsc)
+    for (final entry in entries.skip(1))
       ..._buildNoteEntryWidgets(entry, rightGap),
   ];
 }
@@ -526,7 +549,11 @@ List<pw.Widget> _buildNotesSection(
 // невдало: під текстом розтягувало кожен запис і ламало ритм читання
 // списку, поруч — не завжди вдало компонувалось з дуже різною довжиною
 // нотаток). Лишили голий текст, найчитабельніший варіант із перевірених.
-List<pw.Widget> _buildNoteEntryWidgets(CheckinEntry entry, double rightGap) {
+List<pw.Widget> _buildNoteEntryWidgets(
+  CheckinEntry entry,
+  double rightGap, {
+  pw.TextSpan? headingSpan,
+}) {
   final hasNote = entry.note != null && entry.note!.trim().isNotEmpty;
   final dateStr =
       '${entry.createdAt.day}.${entry.createdAt.month}.${entry.createdAt.year}';
@@ -542,6 +569,7 @@ List<pw.Widget> _buildNoteEntryWidgets(CheckinEntry entry, double rightGap) {
       child: pw.RichText(
         text: pw.TextSpan(
           children: [
+            ?headingSpan,
             pw.TextSpan(
               text: '● ',
               style: pw.TextStyle(

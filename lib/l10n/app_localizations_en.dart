@@ -125,17 +125,16 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get repositionPhotoHint =>
-      'Drag the photo to shift the frame, or spread your fingers to zoom in';
+      'Drag or zoom the photo to adjust the frame for your post';
 
   @override
   String get repositionPhotoTooltip => 'Reposition photo';
 
   @override
-  String get repositionPhotoPostPreviewLabel =>
-      'This is how it\'ll look in your post';
+  String get changePhotoTooltip => 'Change photo';
 
   @override
-  String get repositionPhotoDayCardPreview => 'In Day Card';
+  String get repositionPhotoDayCardPreview => 'Day card preview';
 
   @override
   String get history => 'History';
@@ -247,6 +246,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get signUp => 'Sign up';
+
+  @override
+  String signUpCooldown(int seconds) {
+    return 'Sign up (${seconds}s)';
+  }
 
   @override
   String get signIn => 'Sign in';
@@ -790,7 +794,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get reportNotesSection => 'Notes this month';
+  String get reportNotesSection => 'Month\'s notes';
 
   @override
   String get reportConstellationSection => 'Month\'s constellation';

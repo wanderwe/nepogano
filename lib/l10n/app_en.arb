@@ -41,10 +41,10 @@
   "chooseFromGallery": "Choose from gallery",
   "removePhotoTooltip": "Remove photo",
   "repositionPhoto": "Reposition photo",
-  "repositionPhotoHint": "Drag the photo to shift the frame, or spread your fingers to zoom in",
+  "repositionPhotoHint": "Drag or zoom the photo to adjust the frame for your post",
   "repositionPhotoTooltip": "Reposition photo",
-  "repositionPhotoPostPreviewLabel": "This is how it'll look in your post",
-  "repositionPhotoDayCardPreview": "In Day Card",
+  "changePhotoTooltip": "Change photo",
+  "repositionPhotoDayCardPreview": "Day card preview",
 
   "history": "History",
   "scrollToTop": "Scroll to top",
@@ -81,6 +81,10 @@
   "emailHint": "Email",
   "passwordHint": "Password",
   "signUp": "Sign up",
+  "signUpCooldown": "Sign up ({seconds}s)",
+  "@signUpCooldown": {
+    "placeholders": { "seconds": { "type": "int" } }
+  },
   "signIn": "Sign in",
   "alreadyHaveAccountQuestion": "Already have an account?",
   "noAccountYetQuestion": "No account yet?",
@@ -364,7 +368,7 @@
   "@reportWeekdayInsight": {
     "placeholders": { "weekday": { "type": "String" } }
   },
-  "reportNotesSection": "Notes this month",
+  "reportNotesSection": "Month's notes",
   "reportConstellationSection": "Month's constellation",
   "reportNoNote": "No note",
   "reportFooterBrand": "nepogano.app",

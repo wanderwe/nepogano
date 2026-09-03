@@ -126,16 +126,16 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get repositionPhotoHint =>
-      'Перетягни фото, щоб посунути кадр, або розведи пальці, щоб наблизити';
+      'Перетягни або наблизь фото, щоб підібрати кадр для запису';
 
   @override
   String get repositionPhotoTooltip => 'Змінити розташування фото';
 
   @override
-  String get repositionPhotoPostPreviewLabel => 'Так виглядатиме в записі';
+  String get changePhotoTooltip => 'Змінити фото';
 
   @override
-  String get repositionPhotoDayCardPreview => 'У картці дня';
+  String get repositionPhotoDayCardPreview => 'Прев\'ю картки дня';
 
   @override
   String get history => 'Історія';
@@ -246,6 +246,11 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get signUp => 'Зареєструватись';
+
+  @override
+  String signUpCooldown(int seconds) {
+    return 'Зареєструватись ($secondsс)';
+  }
 
   @override
   String get signIn => 'Увійти';

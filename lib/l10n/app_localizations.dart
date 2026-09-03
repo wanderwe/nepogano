@@ -323,7 +323,7 @@ abstract class AppLocalizations {
   /// No description provided for @repositionPhotoHint.
   ///
   /// In uk, this message translates to:
-  /// **'Перетягни фото, щоб посунути кадр, або розведи пальці, щоб наблизити'**
+  /// **'Перетягни або наблизь фото, щоб підібрати кадр для запису'**
   String get repositionPhotoHint;
 
   /// No description provided for @repositionPhotoTooltip.
@@ -332,16 +332,16 @@ abstract class AppLocalizations {
   /// **'Змінити розташування фото'**
   String get repositionPhotoTooltip;
 
-  /// No description provided for @repositionPhotoPostPreviewLabel.
+  /// No description provided for @changePhotoTooltip.
   ///
   /// In uk, this message translates to:
-  /// **'Так виглядатиме в записі'**
-  String get repositionPhotoPostPreviewLabel;
+  /// **'Змінити фото'**
+  String get changePhotoTooltip;
 
   /// No description provided for @repositionPhotoDayCardPreview.
   ///
   /// In uk, this message translates to:
-  /// **'У картці дня'**
+  /// **'Прев\'ю картки дня'**
   String get repositionPhotoDayCardPreview;
 
   /// No description provided for @history.
@@ -547,6 +547,12 @@ abstract class AppLocalizations {
   /// In uk, this message translates to:
   /// **'Зареєструватись'**
   String get signUp;
+
+  /// No description provided for @signUpCooldown.
+  ///
+  /// In uk, this message translates to:
+  /// **'Зареєструватись ({seconds}с)'**
+  String signUpCooldown(int seconds);
 
   /// No description provided for @signIn.
   ///
