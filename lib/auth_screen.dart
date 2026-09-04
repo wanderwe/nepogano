@@ -104,15 +104,30 @@ class _AuthScreenState extends State<AuthScreen> {
 
     try {
       if (_isSignUp) {
-        await _supabase.auth.signUp(
+        final response = await _supabase.auth.signUp(
           email: _emailController.text.trim(),
           password: _passwordController.text,
         );
         _startSignUpCooldown();
         if (mounted) {
+          // Supabase навмисно НЕ каже прямо "такий email уже є" (анти-enumeration
+          // — інакше форма реєстрації стала б способом перевірити чужу пошту
+          // на акаунт), а мовчки повертає той самий "успішний" респонс, що й
+          // для реального нового підпису, просто без листа. Єдиний клієнтський
+          // сигнал — `identities` порожній масив (задокументована поведінка
+          // Supabase), а не null (null — це коли листа взагалі не бракує
+          // резолвити, напр. інша помилка). Без цієї перевірки юзер, що
+          // повторно тисне "Зареєструватись" на вже підтверджений акаунт,
+          // бачив би "Перевір пошту" й чекав лист, якого ніколи не буде —
+          // реальний випадок, спіймано на живому тесті кулдауну.
+          final alreadyRegistered = response.user?.identities?.isEmpty == true;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(AppLocalizations.of(context).checkEmailToConfirm),
+              content: Text(
+                alreadyRegistered
+                    ? AppLocalizations.of(context).accountAlreadyRegistered
+                    : AppLocalizations.of(context).checkEmailToConfirm,
+              ),
             ),
           );
         }

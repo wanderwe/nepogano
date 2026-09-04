@@ -74,6 +74,7 @@
   "previousWeek": "Previous week",
 
   "checkEmailToConfirm": "Check your email: we sent a confirmation link",
+  "accountAlreadyRegistered": "This account already exists and is confirmed. Try signing in instead.",
   "somethingWentWrong": "Something went wrong. Try again.",
   "googleSignInFailed": "Couldn't sign in with Google.",
   "appleSignInFailed": "Couldn't sign in with Apple.",

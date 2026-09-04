@@ -228,6 +228,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'Check your email: we sent a confirmation link';
 
   @override
+  String get accountAlreadyRegistered =>
+      'This account already exists and is confirmed. Try signing in instead.';
+
+  @override
   String get somethingWentWrong => 'Something went wrong. Try again.';
 
   @override

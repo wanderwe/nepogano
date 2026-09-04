@@ -506,6 +506,12 @@ abstract class AppLocalizations {
   /// **'Перевір пошту: надіслали лист для підтвердження'**
   String get checkEmailToConfirm;
 
+  /// No description provided for @accountAlreadyRegistered.
+  ///
+  /// In uk, this message translates to:
+  /// **'Такий акаунт уже існує й підтверджений. Спробуй увійти замість реєстрації.'**
+  String get accountAlreadyRegistered;
+
   /// No description provided for @somethingWentWrong.
   ///
   /// In uk, this message translates to:

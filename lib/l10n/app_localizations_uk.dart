@@ -228,6 +228,10 @@ class AppLocalizationsUk extends AppLocalizations {
       'Перевір пошту: надіслали лист для підтвердження';
 
   @override
+  String get accountAlreadyRegistered =>
+      'Такий акаунт уже існує й підтверджений. Спробуй увійти замість реєстрації.';
+
+  @override
   String get somethingWentWrong => 'Щось пішло не так. Спробуй ще раз.';
 
   @override
