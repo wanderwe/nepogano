@@ -365,12 +365,21 @@ h1 {
   margin: 0 0 12px;
 }
 
-/* join.html */
+/* join.html / confirmed.html */
 .join-card {
   max-width: 420px;
   margin: 96px auto;
   text-align: center;
   padding: 0 24px;
+}
+
+/* Глобальний h1 (clamp до 44px) розрахований на широкий hero index.html —
+   у вузькій 420px картці довший заголовок ("Ім'я хоче додати тебе
+   другом") ламався на 3 рядки й виглядав затиснутим (реальний фідбек,
+   скріншот з живого /join). Менший clamp тримає до 2 рядків для
+   реалістичної довжини імені. */
+.join-card h1 {
+  font-size: clamp(22px, 6.5vw, 27px);
 }
 
 /* Кнопка, не div — код копіюється прямо звідси (іконка праворуч), без
@@ -439,6 +448,7 @@ h1 {
   font-weight: 500;
   font-size: 14px;
   font-family: inherit;
+  text-decoration: none;
   cursor: pointer;
   border: 1px solid rgba(255, 255, 255, 0.16);
   padding: 10px 20px;

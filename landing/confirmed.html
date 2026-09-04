@@ -125,7 +125,20 @@
     // видима кнопка-запасний варіант — деякі вбудовані браузери (Gmail,
     // месенджери) блокують автоматичний window.location, але коректно
     // обробляють пряме натискання на <a href>.
-    window.location.href = customSchemeUrl;
+    //
+    // Через прихований iframe, НЕ напряму `window.location.href` —
+    // останній у Safari для незареєстрованої/відсутньої схеми показує
+    // системний алерт "Safari не може відкрити вебсторінку, бо її адреса
+    // недійсна" одразу при завантаженні, ще до дії юзера (реальний
+    // випадок, зловлено на живому тесті /join, той самий механізм тут).
+    // iframe.src мовчки не спрацьовує в тому самому випадку, без діалогу.
+    var tryFrame = document.createElement('iframe');
+    tryFrame.style.display = 'none';
+    tryFrame.src = customSchemeUrl;
+    document.body.appendChild(tryFrame);
+    setTimeout(function () {
+      if (tryFrame.parentNode) tryFrame.parentNode.removeChild(tryFrame);
+    }, 1000);
 
     var openAppLink = document.getElementById('open-app-link');
     openAppLink.setAttribute('href', customSchemeUrl);

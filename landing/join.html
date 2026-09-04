@@ -122,50 +122,72 @@
   document.getElementById('privacy-link').setAttribute('href', s.privacyHref);
 
   // "Завантажити застосунок" раніше вело в Google Play завжди, навіть з
-  // iPhone — реальна знахідка (юзер помітив, що кнопка "не розуміє", де
+  // iPhone чи з макбука — реальна знахідка (кнопка "не розуміла", де
   // шукати застосунок). App Store ID той самий, що вже на index.html.
-  // Десктоп (ні iOS, ні Android) лишається на Play Store — той самий
-  // дефолт, що був і раніше, застосунок однаково не встановити з
-  // комп'ютера, посилання тут суто інформаційне.
+  // Десктоп (ні iOS, ні Android) веде на головну (`/`) — там одразу обидва
+  // офіційні стори, а не довільно вибраний один, який на комп'ютері однаково
+  // не відкриється.
   var ua = navigator.userAgent || navigator.vendor || '';
   var isIOS = /iPhone|iPad|iPod/i.test(ua);
+  var isMobile = /Android|iPhone|iPad|iPod/i.test(ua);
   var installLink = document.getElementById('install-link');
   if (isIOS) {
     installLink.setAttribute('href', 'https://apps.apple.com/app/id6796667458');
+  } else if (!isMobile) {
+    installLink.setAttribute('href', '/');
   }
 
   var parts = window.location.pathname.split('/').filter(Boolean);
   var code = parts[parts.length - 1];
   if (code && code.toLowerCase() !== 'join') {
-    var customSchemeUrl = 'io.supabase.nepogano://join/' + code;
-
-    // App Links (https://nepogano.app/join/...) не спрацьовує, коли лінк
-    // відкритий у вбудованому браузері месенджера (Telegram тощо) — той
-    // рендерить сторінку сам, минаючи систему Android, яка й перевіряє App
-    // Links. Кастомна URL-схема — інший механізм: більшість webview все
-    // одно передають невідому їм схему системі Android, навіть зсередини
-    // in-app браузера. Тиха автоматична спроба, без видимого ефекту, якщо
-    // не спрацює — плюс справжня кнопка-посилання нижче як запасний
-    // варіант: пряме натискання на <a href> строгіші webview сприймають
-    // надійніше, ніж автоматичний window.location зі скрипта.
-    window.location.href = customSchemeUrl;
-
-    var openAppLink = document.getElementById('open-app-link');
-    openAppLink.setAttribute('href', customSchemeUrl);
-    openAppLink.style.display = '';
-    document.getElementById('open-app-hint').style.display = '';
-
     document.getElementById('join-code').textContent = code;
-    // Play Install Referrer API — лише для Android/Play Store, у App Store
-    // нема відповідника цього механізму (той самий Universal Links вже
-    // працює на iOS незалежно, а без встановленого застосунку код і так
-    // підхопиться вручну зі скопійованого).
-    if (!isIOS) {
-      var base = installLink.getAttribute('href');
-      installLink.setAttribute(
-        'href',
-        base + '&referrer=' + encodeURIComponent('join_code=' + code)
-      );
+
+    // Спроба відкрити застосунок — лише на мобільному, десктоп фізично не
+    // має куди йому відкриватись.
+    if (isMobile) {
+      var customSchemeUrl = 'io.supabase.nepogano://join/' + code;
+
+      // App Links (https://nepogano.app/join/...) не спрацьовує, коли лінк
+      // відкритий у вбудованому браузері месенджера (Telegram тощо) — той
+      // рендерить сторінку сам, минаючи систему Android, яка й перевіряє App
+      // Links. Кастомна URL-схема — інший механізм: більшість webview все
+      // одно передають невідому їм схему системі Android, навіть зсередини
+      // in-app браузера.
+      //
+      // Тиха спроба — через прихований iframe, НЕ через
+      // `window.location.href`: останній у Safari (і на iPhone, і на
+      // маку) для незареєстрованої/відсутньої схеми показує системний
+      // алерт "Safari не може відкрити вебсторінку, бо її адреса
+      // недійсна" одразу при завантаженні сторінки, ще до будь-якої дії
+      // юзера — реальний випадок, зловлено на живому тесті. `iframe.src`
+      // на ту саму невалідну схему так само не спрацьовує, якщо
+      // застосунку нема, але робить це МОВЧКИ, без діалогу — той самий
+      // ефект (застосунок відкривається, якщо він є), без побічного шуму,
+      // якщо його нема.
+      var tryFrame = document.createElement('iframe');
+      tryFrame.style.display = 'none';
+      tryFrame.src = customSchemeUrl;
+      document.body.appendChild(tryFrame);
+      setTimeout(function () {
+        if (tryFrame.parentNode) tryFrame.parentNode.removeChild(tryFrame);
+      }, 1000);
+
+      var openAppLink = document.getElementById('open-app-link');
+      openAppLink.setAttribute('href', customSchemeUrl);
+      openAppLink.style.display = '';
+      document.getElementById('open-app-hint').style.display = '';
+
+      // Play Install Referrer API — лише для Android/Play Store, у App
+      // Store нема відповідника цього механізму (той самий Universal
+      // Links вже працює на iOS незалежно, а без встановленого
+      // застосунку код і так підхопиться вручну зі скопійованого).
+      if (!isIOS) {
+        var base = installLink.getAttribute('href');
+        installLink.setAttribute(
+          'href',
+          base + '&referrer=' + encodeURIComponent('join_code=' + code)
+        );
+      }
     }
   }
 
