@@ -25,6 +25,22 @@ html, body {
   color: var(--ink);
   font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
   overflow-x: hidden;
+  height: 100%;
+}
+
+/* Футер притиснутий до низу В'ЮПОРТА, не просто йде одразу після контенту —
+   без цього короткі транзакційні сторінки (confirmed.html, join.html) на
+   високому екрані лишали футер "у повітрі" посередині, з порожнім простором
+   під ним. header/main ростуть природно, footer лишається де є (не тягнеться
+   на всю висоту завдяки flex-shrink:0 нижче), а margin-top:auto на самому
+   футері з'їдає весь зайвий простір над ним. index.html з достатньою для
+   заповнення екрана висотою контенту це ніяк не зачіпає — той самий ефект,
+   просто непомітний, коли й без нього футер уже внизу.
+   */
+body {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
 }
 
 h1, h2, .wordmark, .scale-word {
@@ -243,6 +259,8 @@ h1 {
 .footer {
   border-top: 1px solid rgba(255, 255, 255, 0.06);
   padding: 24px 0 40px;
+  margin-top: auto;
+  flex-shrink: 0;
 }
 
 .footer-inner {
@@ -355,16 +373,40 @@ h1 {
   padding: 0 24px;
 }
 
+/* Кнопка, не div — код копіюється прямо звідси (іконка праворуч), без
+   окремої кнопки "Скопіювати код" під ним (був зайвий третій елемент на
+   маленькому екрані). inline-flex зберігає центрування батьківського
+   text-align:center, у якому раніше центрувався звичайний div. */
 .join-code {
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
   font-family: "Lora", Georgia, serif;
   font-size: 32px;
   font-weight: 700;
   letter-spacing: 2px;
   background: var(--surface);
+  border: none;
   border-radius: 16px;
-  padding: 20px;
+  padding: 20px 22px;
   margin: 24px 0;
   color: var(--nepogano);
+  cursor: pointer;
+}
+
+.join-code #copy-icon,
+.join-code #check-icon {
+  color: var(--ink-muted);
+  flex-shrink: 0;
+}
+
+.join-code:hover #copy-icon,
+.join-code:hover #check-icon {
+  color: var(--ink);
+}
+
+.join-code:active {
+  background: rgba(255, 255, 255, 0.08);
 }
 
 .join-note {

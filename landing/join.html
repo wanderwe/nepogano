@@ -26,8 +26,11 @@
     крапки) чи ⋯ вгорі сторінки і обери "Відкрити в браузері", і спробуй ще раз.
   </p>
 
-  <div class="join-code" id="join-code">— — — — — —</div>
-  <button type="button" id="copy-code-btn" class="btn-secondary">Скопіювати код</button>
+  <button type="button" class="join-code" id="join-code-btn" aria-label="Скопіювати код">
+    <span id="join-code">— — — — — —</span>
+    <svg id="copy-icon" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" d="M8 8V5.5A1.5 1.5 0 0 1 9.5 4h9A1.5 1.5 0 0 1 20 5.5v9a1.5 1.5 0 0 1-1.5 1.5H16M5.5 8h9A1.5 1.5 0 0 1 16 9.5v9a1.5 1.5 0 0 1-1.5 1.5h-9A1.5 1.5 0 0 1 4 18.5v-9A1.5 1.5 0 0 1 5.5 8Z"/></svg>
+    <svg id="check-icon" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" style="display:none"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M5 13l4.5 4.5L19 7"/></svg>
+  </button>
   <p class="join-note" id="no-app-note">
     Якщо застосунок ще не встановлений:
   </p>
@@ -73,8 +76,8 @@
       openAppHint: 'Не відкрилось? Це через вбудований браузер месенджера: ' +
         'натисни ⋮ (три крапки) чи ⋯ вгорі сторінки і обери "Відкрити в ' +
         'браузері", і спробуй ще раз.',
-      copy: 'Скопіювати код',
-      copied: 'Скопійовано!',
+      copyLabel: 'Скопіювати код',
+      copiedLabel: 'Код скопійовано',
       noApp: 'Якщо застосунок ще не встановлений:',
       install: 'Завантажити застосунок',
       installNote: 'Після встановлення код запрошення підхопиться сам. ' +
@@ -91,8 +94,8 @@
       openAppHint: 'Didn’t open? That’s usually an in-app browser (a ' +
         'messaging app): tap ⋮ (three dots) or ⋯ at the top of the page, ' +
         'choose "Open in browser," and try again.',
-      copy: 'Copy code',
-      copied: 'Copied!',
+      copyLabel: 'Copy code',
+      copiedLabel: 'Code copied',
       noApp: 'If you don’t have the app yet:',
       install: 'Download the app',
       installNote: 'The invite code fills in on its own once you install. ' +
@@ -110,13 +113,26 @@
   document.getElementById('join-title').textContent = s.defaultTitle;
   document.getElementById('open-app-link').textContent = s.openApp;
   document.getElementById('open-app-hint').textContent = s.openAppHint;
-  document.getElementById('copy-code-btn').textContent = s.copy;
+  document.getElementById('join-code-btn').setAttribute('aria-label', s.copyLabel);
   document.getElementById('no-app-note').textContent = s.noApp;
   document.getElementById('install-link').textContent = s.install;
   document.getElementById('install-note').textContent = s.installNote;
   document.getElementById('home-link').textContent = s.home;
   document.getElementById('privacy-link').textContent = s.privacy;
   document.getElementById('privacy-link').setAttribute('href', s.privacyHref);
+
+  // "Завантажити застосунок" раніше вело в Google Play завжди, навіть з
+  // iPhone — реальна знахідка (юзер помітив, що кнопка "не розуміє", де
+  // шукати застосунок). App Store ID той самий, що вже на index.html.
+  // Десктоп (ні iOS, ні Android) лишається на Play Store — той самий
+  // дефолт, що був і раніше, застосунок однаково не встановити з
+  // комп'ютера, посилання тут суто інформаційне.
+  var ua = navigator.userAgent || navigator.vendor || '';
+  var isIOS = /iPhone|iPad|iPod/i.test(ua);
+  var installLink = document.getElementById('install-link');
+  if (isIOS) {
+    installLink.setAttribute('href', 'https://apps.apple.com/app/id6796667458');
+  }
 
   var parts = window.location.pathname.split('/').filter(Boolean);
   var code = parts[parts.length - 1];
@@ -140,15 +156,17 @@
     document.getElementById('open-app-hint').style.display = '';
 
     document.getElementById('join-code').textContent = code;
-    // Play Маркет передає цей referrer застосунку одразу після встановлення
-    // (Play Install Referrer API) — так код доходить до застосунку, навіть
-    // якщо його не було на пристрої в момент переходу по лінку.
-    var link = document.getElementById('install-link');
-    var base = link.getAttribute('href');
-    link.setAttribute(
-      'href',
-      base + '&referrer=' + encodeURIComponent('join_code=' + code)
-    );
+    // Play Install Referrer API — лише для Android/Play Store, у App Store
+    // нема відповідника цього механізму (той самий Universal Links вже
+    // працює на iOS незалежно, а без встановленого застосунку код і так
+    // підхопиться вручну зі скопійованого).
+    if (!isIOS) {
+      var base = installLink.getAttribute('href');
+      installLink.setAttribute(
+        'href',
+        base + '&referrer=' + encodeURIComponent('join_code=' + code)
+      );
+    }
   }
 
   var inviterName = new URLSearchParams(window.location.search).get('name');
@@ -156,13 +174,24 @@
     document.getElementById('join-title').textContent = s.titleWithName(inviterName);
   }
 
-  var copyBtn = document.getElementById('copy-code-btn');
+  // Код тепер копіюється прямо з блоку, де він показаний — окрема кнопка
+  // "Скопіювати код" під ним була зайвим третім елементом на маленькому
+  // екрані (реальний фідбек: "дуже забагато кнопок"). Іконка (не текст)
+  // всередині того самого блоку — copy-іконка на час дії, галочка на 1.5с
+  // після успіху, той самий таймінг, що був у старого текстового стану.
+  var copyBtn = document.getElementById('join-code-btn');
+  var copyIcon = document.getElementById('copy-icon');
+  var checkIcon = document.getElementById('check-icon');
   copyBtn.addEventListener('click', function () {
     var text = document.getElementById('join-code').textContent;
     var onCopied = function () {
-      copyBtn.textContent = s.copied;
+      copyIcon.style.display = 'none';
+      checkIcon.style.display = '';
+      copyBtn.setAttribute('aria-label', s.copiedLabel);
       setTimeout(function () {
-        copyBtn.textContent = s.copy;
+        copyIcon.style.display = '';
+        checkIcon.style.display = 'none';
+        copyBtn.setAttribute('aria-label', s.copyLabel);
       }, 1500);
     };
     if (navigator.clipboard && navigator.clipboard.writeText) {
