@@ -128,7 +128,21 @@ class _AuthScreenState extends State<AuthScreen> {
       // миттєвий повтор після помилки так само дозволяло б спамити
       // швидше, ніж захист має на меті.
       if (_isSignUp) _startSignUpCooldown();
-      setState(() => _errorMessage = e.message);
+      // Supabase має ВЛАСНИЙ короткий тротлінг на повторну відправку email
+      // підтвердження (`over_email_send_rate_limit`/`over_request_rate_limit`/
+      // `over_sms_send_rate_limit`), незалежний від нашого 30с кулдауну і від
+      // серверних Rate Limits у Dashboard — просто ще один шар. Сире
+      // англійське `e.message` ("For security purposes, you can only
+      // request this after 10 seconds") лише заплутує поруч із кнопкою, яка
+      // вже показує СВІЙ відлік ("Зареєструватись (27с)") з іншим числом —
+      // не перекладено, не наш голос, і саме тому виглядає як витік
+      // внутрішньої помилки. Кнопка з відліком уже й так каже "зачекай",
+      // другий, неспівпадаючий сигнал під нею зайвий.
+      final isThrottled =
+          e.code == 'over_email_send_rate_limit' ||
+          e.code == 'over_request_rate_limit' ||
+          e.code == 'over_sms_send_rate_limit';
+      setState(() => _errorMessage = isThrottled ? null : e.message);
     } catch (e) {
       if (_isSignUp) _startSignUpCooldown();
       if (mounted) {
