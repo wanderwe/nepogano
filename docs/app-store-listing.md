@@ -46,10 +46,15 @@ mood,diary,journal,honest,checkin,reflection,friends,calendar,mood tracker,time 
 
 ### What's New — version log (найновіша зверху, копіювати верхню в App Store Connect)
 
-#### 1.7.0 (2026-09-01)
+#### 1.7.1 (замінює 1.7.0 — той білд review на iOS не пройшов, тож тут об'єднано нотатки обох версій в один список, щоб нічого не загубилось)
 The week strip on the home screen is now tappable: jumps straight to that day in History.
 New view for your month in History: Constellation. Each day becomes a star, the more you shared, the brighter it glows, and now you can share it or add it to the month's PDF report.
+Repositioning your avatar now shows it as a circle, matching how it looks everywhere else.
+Friends can now see when there's something new in a diary shared with them.
+Fixed: switching to a different photo while repositioning could save the wrong crop.
 Fixed: some comments under a friend's day weren't sending.
+Fixed: the truncated note on the home screen sometimes didn't expand when tapped.
+Small fixes and interface improvements.
 
 #### 1.6.0 (2026-08-29)
 Export your month as a PDF right from the History screen.
@@ -94,10 +99,15 @@ Nepogano будується поступово: спершу особистий 
 
 ### What's New — журнал версій (найновіша зверху, копіювати верхню в App Store Connect)
 
-#### 1.7.0 (2026-09-01)
+#### 1.7.1 (замінює 1.7.0 — той білд review на iOS не пройшов, тож тут об'єднано нотатки обох версій в один список, щоб нічого не загубилось)
 Тижнева стрічка на головному екрані тепер клікабельна: тап на минулий день відкриває Історію одразу на потрібній даті.
 Новий погляд на місяць в Історії: Сузір'я. Кожен день стає зіркою, чим більше поділився, тим яскравіша, і тепер нею можна поділитись чи додати до PDF-звіту місяця.
+Перекадрування аватарки тепер показує коло, як вона й виглядає скрізь у застосунку.
+Друзі тепер бачать, коли зʼявляється щось нове у щоденнику, який їм відкрили.
+Виправлено: зміна фото під час кадрування могла зберегти не той кадр.
 Виправлено: деякі коментарі під днями друзів не надсилались.
+Виправлено: обрізана нотатка на головному екрані інколи не розгорталась по тапу.
+Дрібні виправлення й покращення інтерфейсу.
 
 #### 1.6.0 (2026-08-29)
 Місячний звіт тепер можна експортувати в PDF просто з екрана "Історія".

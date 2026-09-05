@@ -150,6 +150,25 @@ Nepogano ("застосунок", "ми") поважає вашу приватн
 
 Накопичувати тут кожен реліз — щоб було видно, що вже казали користувачам, і не повторюватись/не губити тон між версіями.
 
+## 1.7.1+22 (заплановано)
+
+```
+<uk>
+Перекадрування аватарки тепер показує коло, як вона й виглядає скрізь у застосунку.
+Друзі тепер бачать, коли зʼявляється щось нове у щоденнику, який їм відкрили.
+Виправлено: зміна фото під час кадрування могла зберегти не той кадр.
+Виправлено: обрізана нотатка на головному екрані інколи не розгорталась по тапу.
+Дрібні виправлення й покращення інтерфейсу.
+</uk>
+<en-US>
+Repositioning your avatar now shows it as a circle, matching how it looks everywhere else.
+Friends can now see when there's something new in a diary shared with them.
+Fixed: switching to a different photo while repositioning could save the wrong crop.
+Fixed: the truncated note on the home screen sometimes didn't expand when tapped.
+Small fixes and interface improvements.
+</en-US>
+```
+
 ## 1.7.0+21 (01.09.2026)
 
 ```
