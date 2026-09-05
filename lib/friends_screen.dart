@@ -688,12 +688,18 @@ class _FriendsScreenState extends State<FriendsScreen> {
               ? row['addressee_id'] as String?
               : row['requester_id'] as String;
           if (friendUserId == null) continue;
-          final dates = datesByUser[friendUserId];
+          // Лише НАЙСВІЖІШИЙ день, не все вікно kGuessWindowDays —
+          // узгоджено з тим самим індикатором на іконці "Друзі"
+          // (hasUnseenFriendActivity), який теж дивиться лише на останній
+          // день. Раніше тут перевірялось `dates.any(...)` (УСІ дні
+          // вікна) — реальний баг: юзер вгадував найсвіжіший день, а
+          // крапка на рядку друга лишалась горіти, доки не вгадає
+          // геть усі старіші дні за тиждень теж, хоча сенс індикатора —
+          // "є щось нове", не "є невгаданий борг".
+          final latestDate = latestDateByUser[friendUserId];
           final hasUnguessed =
-              dates != null &&
-              dates.any(
-                (d) => !guessedKeys.contains(_entryKey(friendUserId, d)),
-              );
+              latestDate != null &&
+              !guessedKeys.contains(_entryKey(friendUserId, latestDate));
           friends.add(
             Friend(
               friendshipId: row['id'],
