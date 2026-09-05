@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:app_links/app_links.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/retry.dart';
 import 'package:image_picker/image_picker.dart';
@@ -1954,11 +1955,12 @@ class _CheckInScreenState extends State<CheckInScreen>
     if (picked == null || !mounted) return;
 
     final file = File(picked.path);
-    final result = await Navigator.of(context).push<(double, double, double)>(
-      MaterialPageRoute(
-        builder: (_) => PhotoRepositionScreen(image: FileImage(file)),
-      ),
-    );
+    final result = await Navigator.of(context)
+        .push<(double, double, double, File?)>(
+          MaterialPageRoute(
+            builder: (_) => PhotoRepositionScreen(image: FileImage(file)),
+          ),
+        );
     if (!mounted) return;
     // result == null означає, що юзер натиснув "X" і скасував розташування
     // — тут це має скасовувати весь процес додавання фото, не лише саму
@@ -1966,7 +1968,9 @@ class _CheckInScreenState extends State<CheckInScreen>
     // align/scale, навіть якщо юзер щойно явно натиснув "скасувати".
     if (result == null) return;
     setState(() {
-      _pickedPhotoFile = file;
+      // $4 — файл, обраний через "Змінити фото" ВСЕРЕДИНІ редактора, якщо
+      // юзер ним скористався; інакше null, і лишається оригінальний file.
+      _pickedPhotoFile = result.$4 ?? file;
       _photoAlignX = result.$1;
       _photoAlignY = result.$2;
       _photoScale = result.$3;
@@ -1975,21 +1979,30 @@ class _CheckInScreenState extends State<CheckInScreen>
   }
 
   Future<void> _repositionPhoto(ImageProvider image) async {
-    final result = await Navigator.of(context).push<(double, double, double)>(
-      MaterialPageRoute(
-        builder: (_) => PhotoRepositionScreen(
-          image: image,
-          initialAlignX: _photoAlignX,
-          initialAlignY: _photoAlignY,
-          initialScale: _photoScale,
-        ),
-      ),
-    );
+    final result = await Navigator.of(context)
+        .push<(double, double, double, File?)>(
+          MaterialPageRoute(
+            builder: (_) => PhotoRepositionScreen(
+              image: image,
+              initialAlignX: _photoAlignX,
+              initialAlignY: _photoAlignY,
+              initialScale: _photoScale,
+            ),
+          ),
+        );
     if (result != null && mounted) {
       setState(() {
         _photoAlignX = result.$1;
         _photoAlignY = result.$2;
         _photoScale = result.$3;
+        // Якщо юзер змінив фото всередині редактора (result.$4 не null) —
+        // це тепер локальний файл, що чекає на завантаження при _save(),
+        // так само як щойно обране фото, незалежно від того, чи це
+        // перекадрування вже збереженого чи ще не збереженого фото
+        // (`_save()` однаково перезавантажує, коли `_pickedPhotoFile !=
+        // null`). Без цього нове фото, обране тут, тихо губилось —
+        // зберігалось би старе з кадруванням, порахованим для нового.
+        if (result.$4 != null) _pickedPhotoFile = result.$4;
       });
     }
   }
@@ -2539,6 +2552,20 @@ class _CheckInScreenState extends State<CheckInScreen>
   }
 
   Future<void> _signOut() async {
+    // Виходило лише з сесії Supabase — нативна сесія Google лишалась
+    // живою (Google Play Services сама пам'ятає, який акаунт востаннє
+    // авторизувався). На спільному/сімейному телефоні наступний юзер, що
+    // тисне "Продовжити з Google", тихо отримував токен ПОПЕРЕДНЬОГО
+    // акаунта без жодного вибору чи пароля (реальна знахідка
+    // security-аудиту). `signOut()` тут не показує жодного UI, просто
+    // забуває поточний Google-акаунт для цього застосунку.
+    try {
+      await GoogleSignIn().signOut();
+    } catch (_) {
+      // Не блокуємо вихід із застосунку через збій суто Google-частини
+      // (напр. юзер узагалі не заходив через Google) — Supabase-сесія
+      // нижче все одно мусить завершитись.
+    }
     await _supabase.auth.signOut();
   }
 
@@ -2617,7 +2644,9 @@ class _CheckInScreenState extends State<CheckInScreen>
 
     try {
       await _supabase.rpc('delete_own_account');
-      await _supabase.auth.signOut();
+      // Той самий вихід, що й звичайний "Sign out" — теж забуває нативну
+      // Google-сесію, не лише Supabase.
+      await _signOut();
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

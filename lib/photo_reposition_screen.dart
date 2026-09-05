@@ -36,8 +36,12 @@ import 'style.dart';
 /// прев'ю Картки дня ховається зовсім — аватарка в Картці дня взагалі не
 /// з'являється.
 ///
-/// Повертає `(alignX, alignY, scale)` через Navigator.pop, або null якщо
-/// закрито без змін.
+/// Повертає `(alignX, alignY, scale, pickedFile)` через Navigator.pop, або
+/// null якщо закрито без змін. `pickedFile` — null, якщо юзер лишив
+/// оригінальне фото (лише перекадрував), і файл нового фото, якщо
+/// скористався кнопкою "Змінити фото" всередині редактора — викликач МАЄ
+/// перевірити це поле й завантажити/зберегти саме його, а не своє
+/// початкове фото (яке в такому разі вже застаріле).
 class PhotoRepositionScreen extends StatefulWidget {
   final ImageProvider image;
   final double initialAlignX;
@@ -60,6 +64,13 @@ class PhotoRepositionScreen extends StatefulWidget {
 
 class _PhotoRepositionScreenState extends State<PhotoRepositionScreen> {
   late ImageProvider _image = widget.image;
+  // Null, поки юзер не скористався "Змінити фото" — саме тоді викликач має
+  // підмінити файл, який він завантажує/зберігає, на цей, а не на той, що
+  // мав ДО відкриття цього екрана. Раніше цей екран повертав лише
+  // (alignX, alignY, scale), тож зміна фото всередині редактора була
+  // невидимою для викликача — той тихо зберігав СТАРЕ фото з кадруванням,
+  // порахованим для НОВОГО (реальний баг, знайдено code review).
+  File? _pickedFile;
   late double _alignX = widget.initialAlignX;
   late double _alignY = widget.initialAlignY;
   late double _scale = widget.initialScale;
@@ -116,9 +127,11 @@ class _PhotoRepositionScreenState extends State<PhotoRepositionScreen> {
       imageQuality: 80,
     );
     if (picked == null || !mounted) return;
-    final newImage = FileImage(File(picked.path));
+    final newFile = File(picked.path);
+    final newImage = FileImage(newFile);
     setState(() {
       _image = newImage;
+      _pickedFile = newFile;
       _naturalSize = null;
       // Позиція/зум були підібрані під СТАРЕ фото — переносити їх на
       // нове немає сенсу, тож скидаємо на дефолт, а не лишаємо як є.
@@ -395,7 +408,9 @@ class _PhotoRepositionScreenState extends State<PhotoRepositionScreen> {
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: () =>
-                      Navigator.of(context).pop((_alignX, _alignY, _scale)),
+                      Navigator.of(
+                        context,
+                      ).pop((_alignX, _alignY, _scale, _pickedFile)),
                   child: Text(l10n.done),
                 ),
               ),

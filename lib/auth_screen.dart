@@ -78,6 +78,13 @@ class _AuthScreenState extends State<AuthScreen> {
   }
 
   void _startSignUpCooldown() {
+    // Викликається одразу після await signUp() — юзер міг вийти з екрана,
+    // поки запит ще летів (закрив реєстрацію, свайпнув назад), і на момент
+    // резолву State вже задиспожений. Периодичний таймер нижче вже мав цю
+    // перевірку, а сам старт кулдауну — ні (реальний баг, знайдено code
+    // review): без неї цей виклик кидав би "setState() called after
+    // dispose()".
+    if (!mounted) return;
     _cooldownTimer?.cancel();
     setState(() => _signUpCooldownRemaining = _signUpCooldownSeconds);
     _cooldownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {

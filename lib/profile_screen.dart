@@ -133,20 +133,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (picked == null || !mounted) return;
 
     final file = File(picked.path);
-    final result = await Navigator.of(context).push<(double, double, double)>(
-      MaterialPageRoute(
-        builder: (_) =>
-            PhotoRepositionScreen(image: FileImage(file), isAvatar: true),
-      ),
-    );
+    final result = await Navigator.of(context)
+        .push<(double, double, double, File?)>(
+          MaterialPageRoute(
+            builder: (_) =>
+                PhotoRepositionScreen(image: FileImage(file), isAvatar: true),
+          ),
+        );
     if (result == null || !mounted) return;
     final alignX = result.$1;
     final alignY = result.$2;
     final scale = result.$3;
+    // $4 — файл, обраний через "Змінити фото" ВСЕРЕДИНІ редактора, якщо
+    // юзер ним скористався; інакше null, і завантажуємо оригінальний file.
+    final uploadFile = result.$4 ?? file;
 
     setState(() => _uploadingAvatar = true);
     try {
-      final path = await uploadAvatar(file);
+      final path = await uploadAvatar(uploadFile);
       await _supabase
           .from('profiles')
           .update({
@@ -156,7 +160,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             'avatar_scale': scale,
           })
           .eq('user_id', _supabase.auth.currentUser!.id);
-      final bytes = await file.readAsBytes();
+      final bytes = await uploadFile.readAsBytes();
       if (mounted) {
         setState(() {
           _avatarPath = path;
@@ -177,45 +181,65 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
-  /// Той самий файл, лише нове кадрування — на відміну від вибору нового
-  /// фото, тут не треба нічого перезавантажувати в Storage.
+  /// Зазвичай той самий файл, лише нове кадрування — тоді нічого не треба
+  /// перезавантажувати в Storage. Але юзер може скористатись кнопкою
+  /// "Змінити фото" ВСЕРЕДИНІ редактора (`result.$4` тоді не null) — у
+  /// цьому випадку це вже НЕ "той самий файл", і його таки треба
+  /// завантажити, як і при виборі нової аватарки взагалі (раніше цей
+  /// випадок був непомічений: нове фото тихо губилось, зберігалось старе
+  /// з кадруванням, порахованим для нового).
   Future<void> _repositionExistingAvatar() async {
     final bytes = _avatarBytes;
     if (bytes == null) return;
-    final result = await Navigator.of(context).push<(double, double, double)>(
-      MaterialPageRoute(
-        builder: (_) => PhotoRepositionScreen(
-          image: MemoryImage(bytes),
-          initialAlignX: _avatarAlignX,
-          initialAlignY: _avatarAlignY,
-          initialScale: _avatarScale,
-          isAvatar: true,
-        ),
-      ),
-    );
+    final result = await Navigator.of(context)
+        .push<(double, double, double, File?)>(
+          MaterialPageRoute(
+            builder: (_) => PhotoRepositionScreen(
+              image: MemoryImage(bytes),
+              initialAlignX: _avatarAlignX,
+              initialAlignY: _avatarAlignY,
+              initialScale: _avatarScale,
+              isAvatar: true,
+            ),
+          ),
+        );
     if (result == null || !mounted) return;
 
     final alignX = result.$1;
     final alignY = result.$2;
     final scale = result.$3;
+    final newFile = result.$4;
+    setState(() => _uploadingAvatar = true);
     try {
+      final update = <String, Object?>{
+        'avatar_align_x': alignX,
+        'avatar_align_y': alignY,
+        'avatar_scale': scale,
+      };
+      String? newPath;
+      Uint8List? newBytes;
+      if (newFile != null) {
+        newPath = await uploadAvatar(newFile);
+        newBytes = await newFile.readAsBytes();
+        update['avatar_path'] = newPath;
+      }
       await _supabase
           .from('profiles')
-          .update({
-            'avatar_align_x': alignX,
-            'avatar_align_y': alignY,
-            'avatar_scale': scale,
-          })
+          .update(update)
           .eq('user_id', _supabase.auth.currentUser!.id);
       if (mounted) {
         setState(() {
           _avatarAlignX = alignX;
           _avatarAlignY = alignY;
           _avatarScale = scale;
+          _uploadingAvatar = false;
+          if (newPath != null) _avatarPath = newPath;
+          if (newBytes != null) _avatarBytes = newBytes;
         });
       }
     } catch (e) {
       if (mounted) {
+        setState(() => _uploadingAvatar = false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(AppLocalizations.of(context).couldNotSaveAvatar),
