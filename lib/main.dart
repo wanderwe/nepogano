@@ -1188,7 +1188,14 @@ class _CheckInScreenState extends State<CheckInScreen>
         ),
       ),
     );
-    if (mounted) _checkCommentActivity();
+    if (mounted) {
+      _checkCommentActivity();
+      // Історія сама гасить крапку нових оновлень на сервері
+      // (markSubjectHistoryViewed), але без цього виклику чіп перемикача
+      // сутностей на цьому екрані не дізнавався про це одразу — лише при
+      // наступному холодному старті чи перемиканні вкладки.
+      _refreshSubjectUnseenUpdates();
+    }
   }
 
   /// Перше натискання "+" за весь час на цьому пристрої — одноразово
@@ -2711,7 +2718,16 @@ class _CheckInScreenState extends State<CheckInScreen>
                           // після повернення — якщо додав коментар до
                           // сьогоднішнього запису прямо в Історії, банер
                           // на головному екрані про це не дізнавався.
-                          if (mounted) _checkCommentActivity();
+                          if (mounted) {
+                            _checkCommentActivity();
+                            // Той самий фікс, що й для тапу по дню
+                            // тижневої стрічки (_openHistoryOnDay) — без
+                            // цього крапка нових оновлень на чіпі
+                            // сутності не гасла одразу після перегляду
+                            // Історії, лише при наступному холодному
+                            // старті чи перемиканні вкладки.
+                            _refreshSubjectUnseenUpdates();
+                          }
                         },
                         icon: const Icon(
                           PhosphorIconsLight.calendarBlank,

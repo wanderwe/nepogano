@@ -230,7 +230,11 @@ class _HistoryScreenState extends State<HistoryScreen> {
         }
       }
       if (widget.subjectId != null) {
-        markSubjectHistoryViewed(widget.subjectId!);
+        // AWAIT, не fire-and-forget — інакше повернення на головний
+        // екран одразу після відкриття Історії могло оновити крапку
+        // нових оновлень ДО того, як цей запис "переглянуто" реально
+        // дійшов до сервера.
+        await markSubjectHistoryViewed(widget.subjectId!);
       }
     } catch (e) {
       if (mounted) {

@@ -197,7 +197,12 @@ class _SubjectDetailScreenState extends State<SubjectDetailScreen> {
     // відміну від HistoryScreen, тож окремого маркера для "сьогодні"
     // тут не потрібно). Лише при першому завантаженні, не при кожному
     // "Показати ще" — виклик ідемпотентний, повторювати його даремно.
-    if (!isLoadMore) markSubjectHistoryViewed(widget.subjectId);
+    // AWAIT тут обов'язковий, не fire-and-forget: реальний баг — юзер
+    // відкривав щоденник, одразу тиснув "назад", і чіп на сторінці друга
+    // повертав _refreshSharedSubjectsUnseenUpdates() ДО того, як цей
+    // запис "переглянуто" встиг дійти до сервера — крапка лишалась
+    // червоною, хоча щойно все й показали.
+    if (!isLoadMore) await markSubjectHistoryViewed(widget.subjectId);
   }
 
   Future<void> _guess(_SubjectDayEntry entry, MoodLevel guessedMood) async {
