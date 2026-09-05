@@ -46,6 +46,16 @@ class AppLocalizationsEn extends AppLocalizations {
       'Check your internet connection and try again.';
 
   @override
+  String get updateRequiredTitle => 'Update required';
+
+  @override
+  String get updateRequiredBody =>
+      'This version of Nepogano is out of date. Update the app to keep using it.';
+
+  @override
+  String get updateRequiredButton => 'Update the app';
+
+  @override
   String get done => 'Done';
 
   @override

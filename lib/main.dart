@@ -11,6 +11,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'app_update_gate.dart';
 import 'auth_screen.dart';
 import 'comment_activity.dart';
 import 'comment_activity_screen.dart';
@@ -204,7 +205,7 @@ class NepoganoApp extends StatelessWidget {
   }
 }
 
-enum _BootstrapStatus { loading, error, ready }
+enum _BootstrapStatus { loading, error, updateRequired, ready }
 
 /// Виконує всю асинхронну підготовку (локаль, нагадування, Supabase) вже
 /// ПІСЛЯ того, як щось Flutter-намальоване з'явилось на екрані — на відміну
@@ -261,6 +262,16 @@ class _AppBootstrapState extends State<_AppBootstrap> {
       return;
     }
 
+    // Після Supabase.initialize, до решти застосунку — блокуючий екран тут
+    // не показує сам застосунок узагалі, тож перевіряти РАНІШЕ (до
+    // AuthGate/CheckInScreen) нема сенсу відкладати. "Fail open" усередині
+    // isUpdateRequired() сам подбає, щоб мережева проблема не заблокувала
+    // застосунок замість реальної старої версії.
+    if (await isUpdateRequired()) {
+      if (mounted) setState(() => _status = _BootstrapStatus.updateRequired);
+      return;
+    }
+
     final appLinks = AppLinks();
     unawaited(appLinks.getInitialLink().then(_handleJoinLink));
     appLinks.uriLinkStream.listen(_handleJoinLink);
@@ -271,6 +282,9 @@ class _AppBootstrapState extends State<_AppBootstrap> {
   @override
   Widget build(BuildContext context) {
     if (_status == _BootstrapStatus.ready) return const AuthGate();
+    if (_status == _BootstrapStatus.updateRequired) {
+      return const UpdateRequiredScreen();
+    }
 
     final l10n = AppLocalizations.of(context);
     return Scaffold(

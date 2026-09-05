@@ -170,6 +170,24 @@ abstract class AppLocalizations {
   /// **'Перевір інтернет-з\'єднання і спробуй ще раз.'**
   String get connectionFailedBody;
 
+  /// No description provided for @updateRequiredTitle.
+  ///
+  /// In uk, this message translates to:
+  /// **'Потрібне оновлення'**
+  String get updateRequiredTitle;
+
+  /// No description provided for @updateRequiredBody.
+  ///
+  /// In uk, this message translates to:
+  /// **'Ця версія Nepogano вже застаріла. Онови застосунок, щоб продовжити користуватись ним.'**
+  String get updateRequiredBody;
+
+  /// No description provided for @updateRequiredButton.
+  ///
+  /// In uk, this message translates to:
+  /// **'Оновити застосунок'**
+  String get updateRequiredButton;
+
   /// No description provided for @done.
   ///
   /// In uk, this message translates to:

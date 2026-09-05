@@ -47,6 +47,16 @@ class AppLocalizationsUk extends AppLocalizations {
       'Перевір інтернет-з\'єднання і спробуй ще раз.';
 
   @override
+  String get updateRequiredTitle => 'Потрібне оновлення';
+
+  @override
+  String get updateRequiredBody =>
+      'Ця версія Nepogano вже застаріла. Онови застосунок, щоб продовжити користуватись ним.';
+
+  @override
+  String get updateRequiredButton => 'Оновити застосунок';
+
+  @override
   String get done => 'Готово';
 
   @override
