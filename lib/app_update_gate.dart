@@ -6,6 +6,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'l10n/app_localizations.dart';
+import 'locale_provider.dart';
 import 'style.dart';
 
 /// App Store: https://apps.apple.com/app/id6796667458 (той самий ID, що на
@@ -62,32 +63,77 @@ class UpdateRequiredScreen extends StatelessWidget {
         backgroundColor: AppColors.background,
         body: SafeArea(
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 32),
-            child: Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    l10n.updateRequiredTitle,
-                    textAlign: TextAlign.center,
-                    style: appScreenTitle(fontSize: 22),
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    l10n.updateRequiredBody,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(color: AppColors.inkMuted),
-                  ),
-                  const SizedBox(height: 28),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: _openStore,
-                      child: Text(l10n.updateRequiredButton),
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // Той самий перемикач, у тій самій позиції, що на
+                // онбордингу/логіні — автовизначення мови системи не
+                // завжди вгадує, а тут, як і там, юзер не має іншого
+                // способу її змінити (сам застосунок за екраном
+                // недоступний, поки не оновиться).
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    GestureDetector(
+                      onTap: () {
+                        final next = appLocale.value.languageCode == 'uk'
+                            ? 'en'
+                            : 'uk';
+                        setAppLocale(Locale(next));
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.surface,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          appLocale.value.languageCode == 'uk' ? 'EN' : 'UK',
+                          style: const TextStyle(
+                            color: AppColors.inkMuted,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    child: Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            l10n.updateRequiredTitle,
+                            textAlign: TextAlign.center,
+                            style: appScreenTitle(fontSize: 22),
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            l10n.updateRequiredBody,
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(color: AppColors.inkMuted),
+                          ),
+                          const SizedBox(height: 28),
+                          SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton(
+                              onPressed: _openStore,
+                              child: Text(l10n.updateRequiredButton),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ),
