@@ -84,9 +84,17 @@ class _HistoryScreenState extends State<HistoryScreen> {
   List<CheckinEntry> _entries = [];
   late DateTime _visibleMonth;
 
-  /// Ключі записів у списку внизу (по дню місяця), щоб можна було
-  /// проскролити до потрібного запису кліком по дню в календарі.
-  final Map<int, GlobalKey> _entryKeys = {};
+  /// Ключі записів у списку внизу — по НЕЗМІННОМУ entry.id, не по дню
+  /// місяця. Реальний краш, знайдений на живому пристрої: коли ключ
+  /// прив'язувався до дня, той самий GlobalKey міг "перестрибнути" з
+  /// одного фізичного запису на інший між білдами (напр. після
+  /// перезавантаження даних, коли для дня зі спільним щоденником
+  /// "перший" запис за created_at змінився) — Flutter забороняє
+  /// переносити GlobalKey між елементами так, як це неявно робилось тут,
+  /// і падав на assertion `_dependents.isEmpty`. Ключ на entry.id завжди
+  /// лишається за тим самим записом, незалежно від того, який саме запис
+  /// вважається "представником" дня для скролу.
+  final Map<String, GlobalKey> _entryKeys = {};
 
   final _scrollController = ScrollController();
   // Клік по дню в календарі скролить вниз до запису — якщо він далеко,
@@ -358,7 +366,11 @@ class _HistoryScreenState extends State<HistoryScreen> {
   }
 
   void _scrollToDay(int day) {
-    final ctx = _entryKeys[day]?.currentContext;
+    // Той самий запис, що календар вважає "представником" цього дня
+    // (останній/новіший, якщо їх декілька) — консистентно з тим, що
+    // фактично показує клітинка календаря.
+    final entryId = _entriesByDay[day]?.id;
+    final ctx = entryId == null ? null : _entryKeys[entryId]?.currentContext;
     if (ctx == null) return;
     Scrollable.ensureVisible(
       ctx,
@@ -893,22 +905,18 @@ class _HistoryScreenState extends State<HistoryScreen> {
       );
     }
 
-    // GlobalKey лише для ПЕРШОГО запису конкретного дня в цьому білді —
-    // реальний краш, знайдений повторним аудитом: якщо для спільного
-    // щоденника два співавтори чекінились в один день (можливо на різних
-    // пристроях), тут виходило ДВА записи з однаковим d.day, і
-    // putIfAbsent повертав ТОЙ САМИЙ GlobalKey удруге — Flutter падає на
-    // "Multiple widgets used the same GlobalKey". Скрол-до-дня й так
-    // потребує лише ОДНОГО якоря на день.
-    final daysWithKeyThisBuild = <int>{};
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: entries.map((entry) {
         final d = entry.createdAt;
         final dateLabel = '${d.day}.${d.month}.${d.year}';
-        final key = daysWithKeyThisBuild.add(d.day)
-            ? _entryKeys.putIfAbsent(d.day, () => GlobalKey())
-            : null;
+        // Кожен запис отримує СВІЙ GlobalKey за незмінним entry.id —
+        // ключ ніколи не "перестрибує" на інший фізичний запис між
+        // білдами (на відміну від попередньої версії, прив'язаної до
+        // дня, яка й спричинила краш на живому пристрої). Для дня з
+        // кількома записами (спільний щоденник, два співавтори) кожен
+        // все одно отримує ВЛАСНИЙ, окремий ключ — колізії неможливі.
+        final key = _entryKeys.putIfAbsent(entry.id, () => GlobalKey());
 
         return Container(
           key: key,
