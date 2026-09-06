@@ -273,6 +273,7 @@ class _TimeCapsulesScreenState extends State<TimeCapsulesScreen> {
   }
 
   Future<void> _load() async {
+    if (!mounted) return;
     setState(() => _loading = true);
     try {
       final (letters, hasMore) = await _fetchLettersPage();
@@ -394,10 +395,16 @@ class _TimeCapsulesScreenState extends State<TimeCapsulesScreen> {
       final column = myId == letter.authorId
           ? 'author_opened_at'
           : 'recipient_opened_at';
-      await _supabase
-          .from('future_letters')
-          .update({column: DateTime.now().toUtc().toIso8601String()})
-          .eq('id', letter.id);
+      try {
+        await _supabase
+            .from('future_letters')
+            .update({column: DateTime.now().toUtc().toIso8601String()})
+            .eq('id', letter.id);
+      } catch (_) {
+        // Позначка "прочитано" — не критична для того, щоб узагалі
+        // показати вже розкритий лист; раніше помилка тут (напр. немає
+        // мережі) не давала відкрити лист узагалі.
+      }
     }
 
     if (!mounted) return;
@@ -478,7 +485,13 @@ class _TimeCapsulesScreenState extends State<TimeCapsulesScreen> {
       canPop: false,
       onPopInvokedWithResult: (didPop, result) async {
         if (didPop) return;
-        await _markSeenFuture;
+        // Якщо _markSeenFuture вже завершився з помилкою (напр. мережа),
+        // повторний await того самого Future тут перекидає ту саму
+        // помилку знову — раніше це залишало кнопку "назад" застряглою
+        // назавжди, бо ніщо далі не викликалось.
+        try {
+          await _markSeenFuture;
+        } catch (_) {}
         if (context.mounted) Navigator.of(context).pop();
       },
       child: Scaffold(

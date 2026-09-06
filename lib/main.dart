@@ -1989,11 +1989,24 @@ class _CheckInScreenState extends State<CheckInScreen>
   }
 
   Future<void> _pickPhoto(ImageSource source) async {
-    final picked = await ImagePicker().pickImage(
-      source: source,
-      maxWidth: 1600,
-      imageQuality: 80,
-    );
+    final XFile? picked;
+    try {
+      picked = await ImagePicker().pickImage(
+        source: source,
+        maxWidth: 1600,
+        imageQuality: 80,
+      );
+    } catch (e) {
+      // Юзер відхилив дозвіл на камеру/галерею (постійно, на iOS/деяких
+      // Android) — image_picker кидає PlatformException замість повернення
+      // null у цьому випадку, раніше це падало необробленим винятком.
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(AppLocalizations.of(context).somethingWentWrong)),
+        );
+      }
+      return;
+    }
     if (picked == null || !mounted) return;
 
     final file = File(picked.path);
@@ -2616,7 +2629,15 @@ class _CheckInScreenState extends State<CheckInScreen>
       // (напр. юзер узагалі не заходив через Google) — Supabase-сесія
       // нижче все одно мусить завершитись.
     }
-    await _supabase.auth.signOut();
+    try {
+      await _supabase.auth.signOut();
+    } catch (_) {
+      // Раніше непіймана помилка тут (напр. немає мережі) або тихо
+      // "вилітала" необробленим винятком з кнопки "Вийти" (виклик без
+      // await), або — гірше — у флоу видалення акаунту змушувала показати
+      // "не вдалось видалити", хоча сам акаунт на сервері вже видалено,
+      // просто цей додатковий крок вийти з нього окремо провалився.
+    }
   }
 
   void _openMoreMenu() {

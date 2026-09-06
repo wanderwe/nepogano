@@ -226,30 +226,46 @@ class _MultiShareSheetState extends State<_MultiShareSheet> {
   final Set<String> _done = {};
 
   Future<void> _shareInstagram() async {
-    final ok = await SocialShare.instagramStory(widget.imagePath);
-    if (!ok && mounted) {
-      _showNotInstalled('Instagram');
-      return;
+    try {
+      final ok = await SocialShare.instagramStory(widget.imagePath);
+      if (!ok && mounted) {
+        _showNotInstalled('Instagram');
+        return;
+      }
+      if (mounted) setState(() => _done.add('instagram'));
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(AppLocalizations.of(context).shareFailed)),
+        );
+      }
     }
-    if (mounted) setState(() => _done.add('instagram'));
   }
 
   Future<void> _shareTikTok() async {
-    var ok = await SocialShare.toPackage(
-      widget.imagePath,
-      'com.zhiliaoapp.musically',
-    );
-    if (!ok) {
-      ok = await SocialShare.toPackage(
+    try {
+      var ok = await SocialShare.toPackage(
         widget.imagePath,
-        'com.ss.android.ugc.trill',
+        'com.zhiliaoapp.musically',
       );
+      if (!ok) {
+        ok = await SocialShare.toPackage(
+          widget.imagePath,
+          'com.ss.android.ugc.trill',
+        );
+      }
+      if (!ok && mounted) {
+        _showNotInstalled('TikTok');
+        return;
+      }
+      if (mounted) setState(() => _done.add('tiktok'));
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(AppLocalizations.of(context).shareFailed)),
+        );
+      }
     }
-    if (!ok && mounted) {
-      _showNotInstalled('TikTok');
-      return;
-    }
-    if (mounted) setState(() => _done.add('tiktok'));
   }
 
   Future<void> _shareOther() async {

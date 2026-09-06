@@ -375,7 +375,9 @@ class _SingleEntryScreenState extends State<SingleEntryScreen> {
     super.initState();
     _load();
     if (widget.relatedCommentIds.isNotEmpty) {
-      markCommentsSeen(_supabase, widget.relatedCommentIds);
+      // Best-effort — транзиентна помилка тут не має вилітати необробленим
+      // винятком; бейдж "нове" просто лишиться до наступного разу.
+      markCommentsSeen(_supabase, widget.relatedCommentIds).catchError((_) {});
     }
   }
 

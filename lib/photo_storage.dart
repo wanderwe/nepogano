@@ -48,6 +48,12 @@ Future<Uint8List?> downloadCheckinPhoto(String path, {int retries = 3}) async {
 }
 
 Future<void> deleteCheckinPhoto(String path) async {
-  await Supabase.instance.client.storage.from(_bucket).remove([path]);
+  try {
+    await Supabase.instance.client.storage.from(_bucket).remove([path]);
+  } catch (_) {
+    // Викликається fire-and-forget (unawaited) з _save() — транзиентна
+    // мережева помилка тут не має вилітати необробленим винятком. Гірший
+    // наслідок — старий файл лишається в сховищі осиротілим, не крах.
+  }
   _photoCache.remove(path);
 }
