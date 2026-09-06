@@ -229,19 +229,28 @@ class _HistoryScreenState extends State<HistoryScreen> {
           });
         }
       }
-      if (widget.subjectId != null) {
-        // AWAIT, не fire-and-forget — інакше повернення на головний
-        // екран одразу після відкриття Історії могло оновити крапку
-        // нових оновлень ДО того, як цей запис "переглянуто" реально
-        // дійшов до сервера.
-        await markSubjectHistoryViewed(widget.subjectId!);
-      }
     } catch (e) {
       if (mounted) {
         setState(() {
           _error = AppLocalizations.of(context).couldNotLoadHistory;
           _loading = false;
         });
+      }
+      return;
+    }
+
+    if (widget.subjectId != null) {
+      // Окремий try/catch, ПОЗА основним — щойно завантажений і показаний
+      // список записів не має ставати помилковим екраном лише тому, що цей
+      // додатковий запит (позначити переглянутим) провалився. AWAIT, не
+      // fire-and-forget — інакше повернення на головний екран одразу після
+      // відкриття Історії могло оновити крапку нових оновлень ДО того, як
+      // цей запис "переглянуто" реально дійшов до сервера.
+      try {
+        await markSubjectHistoryViewed(widget.subjectId!);
+      } catch (_) {
+        // Тихо ігноруємо — крапка нових оновлень лишиться до наступного
+        // разу, це не критично і не має псувати вже показаний контент.
       }
     }
   }

@@ -97,8 +97,10 @@ class CompactSocialButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final enabled = onPressed != null;
     return Semantics(
       button: true,
+      enabled: enabled,
       label: semanticLabel,
       child: Material(
         color: AppColors.surface,
@@ -110,7 +112,15 @@ class CompactSocialButton extends StatelessWidget {
             width: _diameter,
             height: _diameter,
             child: Center(
-              child: SizedBox(width: 22, height: 22, child: icon),
+              // Звичайний OutlinedButton, який ця кнопка замінила,
+              // автоматично притлумлював себе через ButtonStyle, коли
+              // onPressed == null — тут своєї теми нема, тож без цього
+              // юзер не бачив би жодної різниці між "триває вхід" і
+              // "можна тиснути ще раз".
+              child: Opacity(
+                opacity: enabled ? 1 : 0.4,
+                child: SizedBox(width: 22, height: 22, child: icon),
+              ),
             ),
           ),
         ),

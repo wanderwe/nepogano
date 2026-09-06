@@ -202,7 +202,15 @@ class _SubjectDetailScreenState extends State<SubjectDetailScreen> {
     // повертав _refreshSharedSubjectsUnseenUpdates() ДО того, як цей
     // запис "переглянуто" встиг дійти до сервера — крапка лишалась
     // червоною, хоча щойно все й показали.
-    if (!isLoadMore) await markSubjectHistoryViewed(widget.subjectId);
+    if (!isLoadMore) {
+      try {
+        await markSubjectHistoryViewed(widget.subjectId);
+      } catch (_) {
+        // Тихо ігноруємо — крапка нових оновлень лишиться до наступного
+        // разу, не критично й не має ставати необробленим винятком поверх
+        // уже показаного списку записів вище.
+      }
+    }
   }
 
   Future<void> _guess(_SubjectDayEntry entry, MoodLevel guessedMood) async {

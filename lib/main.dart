@@ -266,8 +266,16 @@ class _AppBootstrapState extends State<_AppBootstrap> {
     // не показує сам застосунок узагалі, тож перевіряти РАНІШЕ (до
     // AuthGate/CheckInScreen) нема сенсу відкладати. "Fail open" усередині
     // isUpdateRequired() сам подбає, щоб мережева проблема не заблокувала
-    // застосунок замість реальної старої версії.
-    if (await isUpdateRequired()) {
+    // застосунок замість реальної старої версії — але це ловить лише
+    // ВИКИНУТУ помилку, не зависання самого запиту. `.timeout()` тут той
+    // самий захист, що вже є в обох сусідніх кроках вище (5с/15с) — інакше
+    // саме "завислий" (не миттєво помилковий) запит лишав би юзера на
+    // спінері назавжди, гірше, ніж якби цієї перевірки не було взагалі.
+    final updateRequired = await isUpdateRequired().timeout(
+      const Duration(seconds: 10),
+      onTimeout: () => false,
+    );
+    if (updateRequired) {
       if (mounted) setState(() => _status = _BootstrapStatus.updateRequired);
       return;
     }
