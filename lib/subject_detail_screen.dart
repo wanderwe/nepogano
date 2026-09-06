@@ -465,16 +465,19 @@ class _SubjectDetailScreenState extends State<SubjectDetailScreen> {
               style: const TextStyle(fontSize: 13, color: AppColors.inkMuted),
             ),
             const SizedBox(height: 10),
-            Row(
-              children: MoodLevel.values.map((mood) {
-                return Padding(
-                  padding: const EdgeInsets.only(right: 8),
-                  child: GuessMoodButton(
-                    mood: mood,
-                    onTap: () => _guess(entry, mood),
-                  ),
-                );
-              }).toList(),
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: MoodLevel.values.map((mood) {
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: GuessMoodButton(
+                      mood: mood,
+                      onTap: () => _guess(entry, mood),
+                    ),
+                  );
+                }).toList(),
+              ),
             ),
           ],
         ],

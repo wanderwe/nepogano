@@ -326,6 +326,7 @@ class _CommentsSectionState extends State<CommentsSection> {
         ),
       ),
     );
+    controller.dispose();
 
     if (newBody == null || newBody.isEmpty || newBody == comment.body) return;
 

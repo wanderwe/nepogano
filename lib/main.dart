@@ -1339,6 +1339,7 @@ class _CheckInScreenState extends State<CheckInScreen>
         },
       ),
     );
+    controller.dispose();
 
     if (result == null) return;
 
@@ -1564,6 +1565,7 @@ class _CheckInScreenState extends State<CheckInScreen>
         ),
       ),
     );
+    controller.dispose();
 
     if (name == null || name.isEmpty || name == subject.name) return;
 
@@ -1821,6 +1823,7 @@ class _CheckInScreenState extends State<CheckInScreen>
         },
       ),
     );
+    searchController.dispose();
   }
 
   @override

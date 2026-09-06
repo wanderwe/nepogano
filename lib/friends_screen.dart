@@ -911,6 +911,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
         ),
       ),
     );
+    controller.dispose();
 
     if (code == null || code.isEmpty) return;
 
@@ -961,6 +962,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
         ),
       ),
     );
+    controller.dispose();
 
     if (email == null || email.isEmpty) return;
 
@@ -1025,6 +1027,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
         ),
       ),
     );
+    controller.dispose();
 
     if (name == null || name.isEmpty) return;
 
@@ -1111,6 +1114,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
         ),
       ),
     );
+    controller.dispose();
 
     if (name == null || name.isEmpty || name == folder.name) return;
 
@@ -2186,16 +2190,19 @@ class _PersonDetailScreenState extends State<PersonDetailScreen> {
               style: const TextStyle(fontSize: 13, color: AppColors.inkMuted),
             ),
             const SizedBox(height: 10),
-            Row(
-              children: MoodLevel.values.map((mood) {
-                return Padding(
-                  padding: const EdgeInsets.only(right: 8),
-                  child: GuessMoodButton(
-                    mood: mood,
-                    onTap: () => _guess(entry, mood),
-                  ),
-                );
-              }).toList(),
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: MoodLevel.values.map((mood) {
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: GuessMoodButton(
+                      mood: mood,
+                      onTap: () => _guess(entry, mood),
+                    ),
+                  );
+                }).toList(),
+              ),
             ),
           ],
         ],
