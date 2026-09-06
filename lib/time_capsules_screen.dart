@@ -518,7 +518,11 @@ class _TimeCapsulesScreenState extends State<TimeCapsulesScreen> {
   }
 
   Widget _buildLetterList(AppLocalizations l10n) {
-    final myId = _supabase.auth.currentUser!.id;
+    // Null-safe: сесія могла стати недійсною, поки цей екран ще на екрані
+    // (AuthGate ще не встиг перебудуватись) — тоді просто нічого не
+    // рендеримо тут, а не крашимось прямо в build().
+    final myId = _supabase.auth.currentUser?.id;
+    if (myId == null) return const SizedBox.shrink();
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
       children: [

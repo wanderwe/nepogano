@@ -540,11 +540,14 @@ class _CommentsSectionState extends State<CommentsSection> {
     // виключає видалені рядки з обмеження "одна відповідь").
     final hasLiveReply = reply != null && !reply.isDeleted;
     final replying = _replyToId == comment.id;
+    // Null-safe: сесія могла стати недійсною, поки цей екран ще на
+    // екрані (AuthGate ще не встиг перебудуватись) — тоді просто "не мій
+    // коментар", а не краш прямо в build().
     final canReply =
         widget.isOwner &&
         !comment.isDeleted &&
         !hasLiveReply &&
-        comment.authorId != _supabase.auth.currentUser!.id;
+        comment.authorId != _supabase.auth.currentUser?.id;
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
@@ -588,7 +591,7 @@ class _CommentsSectionState extends State<CommentsSection> {
   }) {
     final l10n = AppLocalizations.of(context);
     final isMine =
-        comment.authorId == _supabase.auth.currentUser!.id &&
+        comment.authorId == _supabase.auth.currentUser?.id &&
         !comment.isDeleted;
 
     final content = Column(
