@@ -10,6 +10,7 @@ import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'l10n/app_localizations.dart';
 import 'locale_provider.dart';
+import 'social_login_icons.dart';
 import 'style.dart';
 
 // Web Client ID з Google Cloud Console (той самий, що використовує Supabase
@@ -444,36 +445,59 @@ class _AuthScreenState extends State<AuthScreen> {
                         ),
                         const SizedBox(height: 20),
 
-                        OutlinedButton(
-                          onPressed: _loading ? null : _signInWithGoogle,
-                          // Навмисно окремий вигляд (залита поверхня, без
-                          // рамки) — конвенція для кнопки стороннього
-                          // провайдера входу, не звичайна другорядна дія
-                          // застосунку.
-                          style: OutlinedButton.styleFrom(
-                            backgroundColor: AppColors.surface,
-                            foregroundColor: AppColors.ink,
-                            side: BorderSide.none,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
+                        // SignInWithAppleButton підтримує лише повний
+                        // вордмарк за гайдлайнами Apple — а показати
+                        // мінімалістичну іконку Apple поруч із широкою
+                        // кнопкою Google Apple не дозволяє (Guideline
+                        // 4.8/HIG вимагають рівноцінного вигляду для всіх
+                        // провайдерів на екрані). Тому на iOS обидві кнопки —
+                        // однакові компактні кружечки з іконками; на Android
+                        // Apple-логіну нема, тож Google лишається
+                        // повнорозмірною кнопкою в стилі застосунку.
+                        if (Platform.isIOS)
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              CompactSocialButton(
+                                icon: const CustomPaint(
+                                  painter: GoogleLogoPainter(),
+                                ),
+                                onPressed: _loading
+                                    ? null
+                                    : _signInWithGoogle,
+                                semanticLabel: l10n.continueWithGoogle,
+                              ),
+                              const SizedBox(width: 20),
+                              CompactSocialButton(
+                                icon: CustomPaint(
+                                  painter: AppleLogoPainter(
+                                    color: AppColors.ink,
+                                  ),
+                                ),
+                                onPressed: _loading
+                                    ? null
+                                    : _signInWithApple,
+                                semanticLabel: l10n.signInWithApple,
+                              ),
+                            ],
+                          )
+                        else
+                          OutlinedButton(
+                            onPressed: _loading ? null : _signInWithGoogle,
+                            // Навмисно окремий вигляд (залита поверхня, без
+                            // рамки) — конвенція для кнопки стороннього
+                            // провайдера входу, не звичайна другорядна дія
+                            // застосунку.
+                            style: OutlinedButton.styleFrom(
+                              backgroundColor: AppColors.surface,
+                              foregroundColor: AppColors.ink,
+                              side: BorderSide.none,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
                             ),
+                            child: Text(l10n.continueWithGoogle),
                           ),
-                          child: Text(l10n.continueWithGoogle),
-                        ),
-
-                        // Apple вимагає рівноцінну альтернативу для
-                        // будь-якого стороннього логіну (Guideline 4.8) —
-                        // тому тільки на iOS, на Android Google Sign-In
-                        // лишається єдиним варіантом.
-                        if (Platform.isIOS) ...[
-                          const SizedBox(height: 12),
-                          SignInWithAppleButton(
-                            onPressed: _loading ? () {} : _signInWithApple,
-                            text: l10n.signInWithApple,
-                            height: 48,
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                        ],
                       ],
                     ),
                   ),
