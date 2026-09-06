@@ -8,14 +8,25 @@ import 'package:timezone/timezone.dart' as tz;
 
 const _channelId = 'daily_reminder';
 const _channelName = 'Щоденне нагадування';
-const _notificationId = 1;
 const _reminderHour = 20;
+
+// Кожен день у вікні отримує СВІЙ notification id (не один спільний) —
+// інакше не можна було б скасувати нагадування конкретно СЬОГОДНІШНЬОГО
+// дня, не зачепивши заплановані на завтра/післязавтра. Базове зміщення —
+// щоб не перетнутись з жодним іншим (поки не існує, але про всяк випадок)
+// id, який колись з'явиться в застосунку.
+const _reminderIdBase = 1000;
+// iOS дозволяє щонайбільше 64 одночасно запланованих локальних сповіщень
+// на застосунок — 30 днів наперед лишає великий запас і покриває місяць
+// "тиші", перш ніж лапсд-юзер, що взагалі перестав відкривати застосунок,
+// перестане отримувати нагадування.
+const _reminderWindowDays = 30;
 
 final _plugin = FlutterLocalNotificationsPlugin();
 
 /// Готує плагін і локальний часовий пояс — виклик один раз при старті
-/// застосунку (в main(), до runApp). Саме планування нагадування (з текстом
-/// конкретною мовою і запитом дозволу) — окремо, в scheduleDailyReminder,
+/// застосунку (в main(), до runApp). Саме планування нагадувань (з текстом
+/// конкретною мовою і запитом дозволу) — окремо, в scheduleDailyReminders,
 /// бо йому потрібен контекст локалізації, якого тут ще нема.
 Future<void> initDailyReminder() async {
   tz_data.initializeTimeZones();
@@ -40,47 +51,83 @@ Future<void> initDailyReminder() async {
   );
 }
 
-/// Питає дозвіл на сповіщення (якщо ще не питали) і планує ОДНОРАЗОВЕ
-/// нагадування на найближчі 20:00 за місцевим часом. Неточний режим
-/// (inexactAllowWhileIdle) — кілька хвилин різниці не критичні для такого
-/// нагадування, а точний вимагав би окремого "чутливого" дозволу
-/// SCHEDULE_EXACT_ALARM і супровідної Play-політики.
+/// Питає дозвіл на сповіщення (якщо ще не питали) і планує ОКРЕМЕ
+/// одноразове нагадування на 20:00 КОЖНОГО з наступних [_reminderWindowDays]
+/// днів (сьогодні включно, якщо ще не пізно й день ще не відмічено).
 ///
-/// Навмисно одноразове, БЕЗ `matchDateTimeComponents` (раніше був
-/// повторюваний на рівні ОС alarm) — юзер скаржився, що нагадування
-/// приходить о 20:00 навіть якщо він уже відмітив сьогоднішній день:
-/// повторюваний alarm ОС показує той самий текст щодня сам, без жодного
-/// шансу для коду застосунку втрутитись перед показом (ні iOS, ні Android
-/// не дають такого гачка для ЛОКАЛЬНИХ сповіщень). Тому тепер виклик цієї
-/// функції — щоденний, з `_AuthGateState._setupDailyReminder` (лише коли
-/// сьогоднішній чек-ін ще не збережено), а [cancelDailyReminder]
-/// скасовує вже заплановане, щойно юзер таки зберігає день.
-Future<bool> scheduleDailyReminder({
+/// Раніше було ОДНЕ нагадування на найближчі 20:00, що самостійно
+/// переплановував `_AuthGateState._setupDailyReminder` при кожному
+/// відкритті застосунку — але це означало, що юзер, який просто відкрив
+/// застосунок і щось у ньому зробив (тим самим скасувавши сьогоднішнє
+/// нагадування), а завтра застосунок НЕ відкрив, взагалі не отримав би
+/// нагадування назавтра: нічого не запланувало б наступний день. Тобто
+/// сама дія в застосунку сьогодні тихо "вимикала" нагадування назавжди,
+/// поки юзер не відкриє застосунок знову — а саме лапсд-юзери, які не
+/// відкривають застосунок, і є головна ціль нагадування. Тепер наперед
+/// планується ціле вікно днів одразу, з окремим id на кожен день
+/// (`_reminderIdForDate`) — тож навіть якщо застосунок більше не
+/// відкриють, усі вже заплановані дні все одно спрацюють по черзі. Кожне
+/// відкриття застосунку (`_setupDailyReminder`, раз на календарний день)
+/// лише "доливає" вікно ще на `_reminderWindowDays` вперед від поточного
+/// дня — застосунок, який відкривають регулярно, завжди має повний запас
+/// наперед; той, який покинули, доспрацьовує вже заплановане і замовкає.
+///
+/// Неточний режим (inexactAllowWhileIdle) — кілька хвилин різниці не
+/// критичні для такого нагадування, а точний вимагав би окремого
+/// "чутливого" дозволу SCHEDULE_EXACT_ALARM і супровідної Play-політики.
+Future<bool> scheduleDailyReminders({
   required String title,
   required String body,
 }) async {
   final granted = await _requestPermission();
   if (!granted) return false;
 
-  await _plugin.zonedSchedule(
-    id: _notificationId,
-    title: title,
-    body: body,
-    scheduledDate: _next20,
-    notificationDetails: const NotificationDetails(
-      android: AndroidNotificationDetails(_channelId, _channelName),
-      iOS: DarwinNotificationDetails(),
-    ),
-    androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
-  );
+  final now = DateTime.now();
+  final todayMidnight = DateTime(now.year, now.month, now.day);
+  final alreadyCheckedInToday = await hasCheckedInToday();
+
+  for (var i = 0; i < _reminderWindowDays; i++) {
+    final date = todayMidnight.add(Duration(days: i));
+    if (i == 0 && alreadyCheckedInToday) continue;
+
+    final scheduledLocal = DateTime(
+      date.year,
+      date.month,
+      date.day,
+      _reminderHour,
+    );
+    if (scheduledLocal.isBefore(now)) continue;
+
+    await _plugin.zonedSchedule(
+      id: _reminderIdForDate(date),
+      title: title,
+      body: body,
+      scheduledDate: tz.TZDateTime.from(scheduledLocal, tz.local),
+      notificationDetails: const NotificationDetails(
+        android: AndroidNotificationDetails(_channelId, _channelName),
+        iOS: DarwinNotificationDetails(),
+      ),
+      androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+    );
+  }
   return true;
 }
 
-/// Скасовує сьогоднішнє заплановане нагадування, якщо воно ще не спрацювало
-/// — викликається одразу після того, як юзер зберігає свій СЬОГОДНІШНІЙ
-/// чек-ін (не чужий/сутності, не редагування вчорашнього), щоб не
-/// отримувати "Як пройшов твій день" о 20:00 про день, який уже описаний.
-Future<void> cancelDailyReminder() => _plugin.cancel(id: _notificationId);
+/// Скасовує СЬОГОДНІШНЄ заплановане нагадування, якщо воно ще не
+/// спрацювало — викликається одразу після того, як юзер зберігає свій
+/// СЬОГОДНІШНІЙ чек-ін (не чужий/сутності, не редагування вчорашнього),
+/// щоб не отримувати "Як пройшов твій день" о 20:00 про день, який уже
+/// описаний. Не чіпає жоден із запланованих майбутніх днів вікна.
+Future<void> cancelTodayReminder() {
+  final now = DateTime.now();
+  final today = DateTime(now.year, now.month, now.day);
+  return _plugin.cancel(id: _reminderIdForDate(today));
+}
+
+int _reminderIdForDate(DateTime date) {
+  final anchor = DateTime(2024, 1, 1);
+  return _reminderIdBase + date.difference(anchor).inDays;
+}
 
 /// Чи юзер уже зберіг ВЛАСНИЙ чек-ін за сьогодні (локальна дата) — від
 /// цього залежить, чи взагалі планувати нагадування на сьогоднішні 20:00.
@@ -116,23 +163,6 @@ Future<bool> hasCheckedInToday() async {
     // насправді ще не відмітив день.
     return false;
   }
-}
-
-// Навмисно НЕ tz.TZDateTime.now(tz.local) — якщо визначення часового поясу
-// в initDailyReminder провалилось (наприклад, tz.getLocation не впізнав
-// ідентифікатор від FlutterTimezone), tz.local тихо лишається дефолтним
-// UTC пакету timezone, і 20:00 рахувалось як 20:00 UTC, тобто 23:00 в
-// Києві влітку — саме так і трапилось на живому пристрої. DateTime.now()
-// натомість Dart завжди рахує вірно (системний локальний зсув), незалежно
-// від того, чи резолвнулась IANA-назва поясу — тому момент часу тут
-// беремо звідси, а tz.local лишається лише міткою для TZDateTime.
-tz.TZDateTime get _next20 {
-  final now = DateTime.now();
-  var scheduledLocal = DateTime(now.year, now.month, now.day, _reminderHour);
-  if (scheduledLocal.isBefore(now)) {
-    scheduledLocal = scheduledLocal.add(const Duration(days: 1));
-  }
-  return tz.TZDateTime.from(scheduledLocal, tz.local);
 }
 
 Future<bool> _requestPermission() async {

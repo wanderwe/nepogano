@@ -374,14 +374,15 @@ class _AuthGateState extends State<AuthGate> {
   /// перепитується — Android/iOS не показують діалог вдруге, якщо він уже
   /// один раз вирішений.
   ///
-  /// Нагадування тепер одноразове (`scheduleDailyReminder` більше не
-  /// повторюване на рівні ОС) — тому перед плануванням перевіряємо, чи
-  /// сьогоднішній день уже відмічений: якщо так, нагадування сьогодні не
-  /// потрібне взагалі (реальна скарга юзера — нагадування продовжувало
-  /// приходити о 20:00, навіть коли день уже було збережено). Якщо юзер
-  /// відкрив застосунок УДЕНЬ, ще не відмітивши день, нагадування
-  /// планується як завжди — і скасовується одразу, щойно він таки
-  /// збереже сьогоднішній чек-ін (`cancelDailyReminder`, виклик у `_save`).
+  /// Нагадування тепер — ціле вікно окремих одноразових сповіщень наперед
+  /// (`scheduleDailyReminders`, `lib/daily_reminder.dart`), не один
+  /// повторюваний ОС-alarm: інакше довелось би вибирати між "нагадування
+  /// нескінченно нагадує навіть про вже відмічені дні" й "юзер, що не
+  /// відкриє застосунок завтра, взагалі не отримає завтрашнього
+  /// нагадування" — жодне не влаштовувало. Це відкриття лише ДОЛИВАЄ вікно
+  /// ще на місяць вперед; сьогоднішній день у вікні пропускається, якщо
+  /// вже відмічений, а решта майбутніх днів планується завжди (скасування
+  /// конкретного дня — окремо, у `_save`, коли той день таки збережуть).
   Future<void> _setupDailyReminder() async {
     final session = Supabase.instance.client.auth.currentSession;
     if (session == null || !mounted) return;
@@ -390,14 +391,9 @@ class _AuthGateState extends State<AuthGate> {
     final prefs = await SharedPreferences.getInstance();
     if (prefs.getString(_dailyReminderScheduledDateKey) == today) return;
 
-    if (await hasCheckedInToday()) {
-      await prefs.setString(_dailyReminderScheduledDateKey, today);
-      return;
-    }
-
     if (!mounted) return;
     final l10n = AppLocalizations.of(context);
-    final scheduled = await scheduleDailyReminder(
+    final scheduled = await scheduleDailyReminders(
       title: l10n.dailyReminderTitle,
       body: l10n.dailyReminderBody,
     );
@@ -2562,8 +2558,10 @@ class _CheckInScreenState extends State<CheckInScreen>
 
       // Лише власний СЬОГОДНІШНІЙ чек-ін (не чужа сутність, не редагування
       // вчорашнього вікна) вимикає вечірнє нагадування — саме про це воно.
+      // Скасовує лише СЬОГОДНІШНІЙ день з вікна, не зачіпаючи заплановані
+      // на наступні дні.
       if (_activeSubjectId == null && _editingDate == null) {
-        unawaited(cancelDailyReminder());
+        unawaited(cancelTodayReminder());
       }
 
       if (mounted) {
