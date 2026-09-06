@@ -24,7 +24,21 @@ Future<String> uploadCheckinPhoto(File file) async {
 
 /// Локальний кеш у пам'яті на сесію — те саме фото не тягнеться з мережі
 /// повторно при кожному перебудуванні екрана.
+///
+/// Обмежений розмір — раніше карта росла необмежено на весь час життя
+/// процесу, по одному запису на кожне переглянуте фото; довга прокрутка
+/// Історії за багато місяців тримала б усі ці декодовані байти в пам'яті
+/// назавжди. 120 — з запасом на кілька місяців перегляду за одну сесію.
+const _photoCacheCap = 120;
 final Map<String, Uint8List> _photoCache = {};
+
+void _rememberInCache(String path, Uint8List bytes) {
+  _photoCache.remove(path);
+  _photoCache[path] = bytes;
+  while (_photoCache.length > _photoCacheCap) {
+    _photoCache.remove(_photoCache.keys.first);
+  }
+}
 
 Future<Uint8List?> downloadCheckinPhoto(String path, {int retries = 3}) async {
   final cached = _photoCache[path];
@@ -37,7 +51,7 @@ Future<Uint8List?> downloadCheckinPhoto(String path, {int retries = 3}) async {
   for (var attempt = 0; attempt <= retries; attempt++) {
     try {
       final bytes = await Supabase.instance.client.storage.from(_bucket).download(path);
-      _photoCache[path] = bytes;
+      _rememberInCache(path, bytes);
       return bytes;
     } catch (e) {
       if (attempt == retries) return null;

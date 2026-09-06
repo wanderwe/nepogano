@@ -73,35 +73,7 @@ class UpdateRequiredScreen extends StatelessWidget {
                 // способу її змінити (сам застосунок за екраном
                 // недоступний, поки не оновиться).
                 const SizedBox(height: 8),
-                Row(
-                  children: [
-                    GestureDetector(
-                      onTap: () {
-                        final next = appLocale.value.languageCode == 'uk'
-                            ? 'en'
-                            : 'uk';
-                        setAppLocale(Locale(next));
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 6,
-                        ),
-                        decoration: BoxDecoration(
-                          color: AppColors.surface,
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Text(
-                          appLocale.value.languageCode == 'uk' ? 'EN' : 'UK',
-                          style: const TextStyle(
-                            color: AppColors.inkMuted,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+                const Row(children: [LanguageTogglePill()]),
                 Expanded(
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 8),

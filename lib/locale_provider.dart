@@ -3,6 +3,8 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'style.dart';
+
 /// Поточна мова застосунку. Слухай через ValueListenableBuilder,
 /// міняй через setAppLocale (зберігає вибір на диск).
 final ValueNotifier<Locale> appLocale = ValueNotifier<Locale>(const Locale('uk'));
@@ -17,7 +19,12 @@ const _supportedLanguageCodes = ['en', 'uk'];
 Future<void> loadSavedLocale() async {
   final prefs = await SharedPreferences.getInstance();
   final code = prefs.getString(_localePrefKey);
-  if (code != null) {
+  // Той самий фільтр _supportedLanguageCodes, що й для системної мови
+  // нижче — раніше збережений код довірявся без перевірки: якщо колись
+  // прибрати підтримувану мову чи значення пошкодиться, appLocale.value
+  // містив би непідтримуваний код, а перемикач (лише 'en'/'uk') не міг
+  // би це виправити тапом.
+  if (code != null && _supportedLanguageCodes.contains(code)) {
     appLocale.value = Locale(code);
     return;
   }
@@ -40,4 +47,37 @@ Future<void> setAppLocale(Locale locale) async {
   appLocale.value = locale;
   final prefs = await SharedPreferences.getInstance();
   await prefs.setString(_localePrefKey, locale.languageCode);
+}
+
+/// Перемикач мови EN/UK — той самий вигляд на онбордингу, логіні й екрані
+/// примусового оновлення, раніше скопійований у кожному з трьох місць
+/// окремо. Не потребує ValueListenableBuilder сама по собі: кожен з трьох
+/// екранів, де вона використовується, і так перебудовується цілком при
+/// зміні appLocale (кореневий MaterialApp застосунку підписаний на нього).
+class LanguageTogglePill extends StatelessWidget {
+  const LanguageTogglePill({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () {
+        final next = appLocale.value.languageCode == 'uk' ? 'en' : 'uk';
+        setAppLocale(Locale(next));
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Text(
+          appLocale.value.languageCode == 'uk' ? 'EN' : 'UK',
+          style: const TextStyle(
+            color: AppColors.inkMuted,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
+    );
+  }
 }

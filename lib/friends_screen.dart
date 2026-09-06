@@ -398,6 +398,11 @@ class FriendsScreen extends StatefulWidget {
 class _FriendsScreenState extends State<FriendsScreen> {
   final _supabase = Supabase.instance.client;
   bool _loading = true;
+  // Захист від навзаєм: кожен виклик _load() рахує лише "своє" покоління
+  // актуальним. Раніше кілька конкурентних _load() (напр. дві мутації
+  // поспіль швидко) не мали такого захисту — повільніша відповідь могла
+  // прилетіти ПІСЛЯ швидшої й тихо перезаписати новіший стан застарілим.
+  int _loadGeneration = 0;
   String? _error;
   String? _myFriendCode;
   String? _myDisplayName;
@@ -444,6 +449,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
   }
 
   Future<void> _load() async {
+    final generation = ++_loadGeneration;
     setState(() {
       _loading = true;
       _error = null;
@@ -744,7 +750,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
           friends.map((f) => f.avatarPath).whereType<String>(),
         );
 
-        if (!mounted) return;
+        if (!mounted || generation != _loadGeneration) return;
         setState(() {
           _myFriendCode = profileRow?['friend_code'] as String?;
           _myDisplayName = profileRow?['display_name'] as String?;
@@ -757,7 +763,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
           _loading = false;
         });
       } else {
-        if (!mounted) return;
+        if (!mounted || generation != _loadGeneration) return;
         setState(() {
           _myFriendCode = profileRow?['friend_code'] as String?;
           _myDisplayName = profileRow?['display_name'] as String?;
@@ -770,7 +776,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
         });
       }
     } catch (e) {
-      if (mounted) {
+      if (mounted && generation == _loadGeneration) {
         setState(() {
           _error = AppLocalizations.of(context).couldNotLoadFriends;
           _loading = false;

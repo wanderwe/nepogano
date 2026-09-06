@@ -61,7 +61,21 @@ Future<void> deleteAvatar() async {
   }
 }
 
+// Обмежений розмір — раніше карта росла необмежено на весь час життя
+// процесу (по одному запису на кожну переглянуту аватарку друга), для
+// юзера з великою кількістю друзів це повний розмір їхніх фото в пам'яті
+// назавжди. 60 — з великим запасом понад типову кількість друзів у цьому
+// продукті (свідомо "мало, але справжніх", див. PRODUCT_BRIEF.md).
+const _avatarCacheCap = 60;
 final Map<String, Uint8List> _avatarCache = {};
+
+void _rememberInMemoryCache(String path, Uint8List bytes) {
+  _avatarCache.remove(path);
+  _avatarCache[path] = bytes;
+  while (_avatarCache.length > _avatarCacheCap) {
+    _avatarCache.remove(_avatarCache.keys.first);
+  }
+}
 
 Future<Uint8List?> downloadAvatar(String path) async {
   final cached = _avatarCache[path];
@@ -71,7 +85,7 @@ Future<Uint8List?> downloadAvatar(String path) async {
     final cacheFile = await _diskCacheFile(path);
     if (cacheFile.existsSync()) {
       final bytes = await cacheFile.readAsBytes();
-      _avatarCache[path] = bytes;
+      _rememberInMemoryCache(path, bytes);
       return bytes;
     }
   } catch (_) {
@@ -82,7 +96,7 @@ Future<Uint8List?> downloadAvatar(String path) async {
     final bytes = await Supabase.instance.client.storage
         .from(_bucket)
         .download(path);
-    _avatarCache[path] = bytes;
+    _rememberInMemoryCache(path, bytes);
     try {
       final cacheFile = await _diskCacheFile(path);
       await cacheFile.writeAsBytes(bytes);

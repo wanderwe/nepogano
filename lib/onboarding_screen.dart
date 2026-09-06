@@ -74,31 +74,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   // а не лише в меню після онбордингу (куди ще й не
                   // дійдеш, якщо не розумієш поточну мову), щоб виправити
                   // це одразу, до того як почнеш читати.
-                  GestureDetector(
-                    onTap: () {
-                      final next = appLocale.value.languageCode == 'uk'
-                          ? 'en'
-                          : 'uk';
-                      setAppLocale(Locale(next));
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.surface,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        appLocale.value.languageCode == 'uk' ? 'EN' : 'UK',
-                        style: const TextStyle(
-                          color: AppColors.inkMuted,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ),
+                  const LanguageTogglePill(),
                   const Spacer(),
                   TextButton(
                     onPressed: widget.onDone,
