@@ -1,5 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'checkin_date.dart';
+
 /// Позначає, що я щойно перемкнув чіп на цю сутність (бачив сьогоднішній
 /// запис на головному екрані) — гасить лише "сьогоднішню" частину
 /// індикатора, не історичну. Див. `docs/subject-diary-views-migration.sql`.
@@ -65,10 +67,11 @@ Future<Set<String>> subjectsWithUnseenUpdates(List<String> subjectIds) async {
   for (final row in checkinRows as List) {
     final subjectId = row['subject_id'] as String;
     final createdAt = DateTime.parse(row['created_at'] as String);
-    final localDateStr = row['local_date'] as String?;
-    final entryDate = localDateStr != null
-        ? DateTime.parse(localDateStr)
-        : createdAt.toLocal();
+    // Спільний хелпер замість власної копії тієї самої логіки — та сама
+    // семантика local_date/created_at-фолбеку, що вже застосовується
+    // скрізь у застосунку, без ризику розійтись, якщо цей принцип колись
+    // зміниться (напр. черговий timezone-фікс).
+    final entryDate = effectiveCheckinDate(row);
     final isToday =
         entryDate.year == today.year &&
         entryDate.month == today.month &&

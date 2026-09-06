@@ -49,6 +49,17 @@ Future<void> initDailyReminder() async {
       ),
     ),
   );
+
+  // Прибираємо застарілий notification id=1 з попередніх схем цієї фічі
+  // (спершу повторюваний ОС-alarm, тоді одноразове нагадування на
+  // найближчі 20:00 — обидва до переходу на поточне вікно з id від
+  // `_reminderIdForDate`). Жоден код більше нічого не планує під id=1,
+  // тож на пристрої, що не відкривався між тими версіями й цією, він міг
+  // назавжди лишитись живим і "застряглим" з текстом старої версії.
+  // cancel() безпечний навіть якщо такого id уже нема.
+  try {
+    await _plugin.cancel(id: 1);
+  } catch (_) {}
 }
 
 /// Питає дозвіл на сповіщення (якщо ще не питали) і планує ОКРЕМЕ
@@ -87,7 +98,21 @@ Future<bool> scheduleDailyReminders({
   final alreadyCheckedInToday = await hasCheckedInToday();
 
   for (var i = 0; i < _reminderWindowDays; i++) {
-    final date = todayMidnight.add(Duration(days: i));
+    // DateTime(y, m, d + i), НЕ todayMidnight.add(Duration(days: i)) —
+    // `.add(Duration)` рахує абсолютний, не календарний, час: якщо між
+    // сьогодні і датою через `i` днів трапляється перехід на літній/зимовий
+    // час, результат може зсунутись на ±1 годину відносно справжньої
+    // півночі того дня, і `date.day` інколи вкаже не той календарний день
+    // — реальний баг, знайдений повторним аудитом (це саме зробило б
+    // `_reminderIdForDate` для дня зі зсувом іншим за той, що порахує
+    // `cancelTodayReminder`, коли той самий день настане насправді).
+    // Конструктор DateTime сам коректно нормалізує "день + i" як
+    // календарну арифметику, без цієї пастки.
+    final date = DateTime(
+      todayMidnight.year,
+      todayMidnight.month,
+      todayMidnight.day + i,
+    );
     if (i == 0 && alreadyCheckedInToday) continue;
 
     final scheduledLocal = DateTime(
@@ -125,8 +150,16 @@ Future<void> cancelTodayReminder() {
 }
 
 int _reminderIdForDate(DateTime date) {
-  final anchor = DateTime(2024, 1, 1);
-  return _reminderIdBase + date.difference(anchor).inDays;
+  // Різниця рахується через DateTime.utc, не сирі локальні DateTime —
+  // `.difference().inDays` на локальних датах чутливий до кумулятивного
+  // зсуву літнього/зимового часу між "сьогодні" й якорем (2024-01-01):
+  // рівно опівнічні локальні дати все одно можуть відрізнятись на
+  // ціле число днів ± дрібна частка години, і ціла частина `.inDays`
+  // могла б округлитись не в той бік. UTC не знає літнього часу, тож
+  // різниця завжди рівно ціле число днів.
+  final anchor = DateTime.utc(2024, 1, 1);
+  final dateUtc = DateTime.utc(date.year, date.month, date.day);
+  return _reminderIdBase + dateUtc.difference(anchor).inDays;
 }
 
 /// Чи юзер уже зберіг ВЛАСНИЙ чек-ін за сьогодні (локальна дата) — від

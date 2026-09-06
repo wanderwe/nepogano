@@ -2499,59 +2499,81 @@ class _CheckInScreenState extends State<CheckInScreen>
   Future<void> _save() async {
     if (_selected == null) return;
 
+    // Знімок стану РІВНО в момент натискання Save — усе, що станеться далі
+    // (перемикання на інший щоденник, зміна фото/кадрування, поки триває
+    // мережевий запит завантаження фото) НЕ повинно вплинути на те, що
+    // фактично збережеться. Реальний баг, знайдений повторним аудитом:
+    // перемикання щоденника під час _save() читало ЖИВІ _table/
+    // _activeSubjectId/_todayEntryId вже ПІСЛЯ await, тож запис міг піти
+    // не в той щоденник; так само _photoAlignX/Y/_photoScale читались
+    // заново ПІСЛЯ того, як фото вже завантажилось, — зміна кадрування чи
+    // видалення фото просто під час завантаження зберігала скинуті
+    // значення для вже завантаженого файлу.
+    final table = _table;
+    final activeSubjectId = _activeSubjectId;
+    final todayEntryId = _todayEntryId;
+    final effectiveDate = _effectiveDate;
+    final mood = _selected!;
+    final note = _noteController.text.trim();
+    final pickedPhotoFile = _pickedPhotoFile;
+    final removePhoto = _removePhoto;
+    final existingPhotoPath = _existingPhotoPath;
+    final photoAlignX = _photoAlignX;
+    final photoAlignY = _photoAlignY;
+    final photoScale = _photoScale;
+
     setState(() => _saving = true);
 
     try {
-      String? photoPath = _existingPhotoPath;
-      if (_pickedPhotoFile != null) {
-        photoPath = await uploadCheckinPhoto(_pickedPhotoFile!);
-        if (_existingPhotoPath != null) {
-          unawaited(deleteCheckinPhoto(_existingPhotoPath!));
+      String? photoPath = existingPhotoPath;
+      String? oldPhotoPathToDelete;
+      if (pickedPhotoFile != null) {
+        photoPath = await uploadCheckinPhoto(pickedPhotoFile);
+        if (existingPhotoPath != null) {
+          oldPhotoPathToDelete = existingPhotoPath;
         }
-      } else if (_removePhoto) {
-        if (_existingPhotoPath != null) {
-          unawaited(deleteCheckinPhoto(_existingPhotoPath!));
+      } else if (removePhoto) {
+        if (existingPhotoPath != null) {
+          oldPhotoPathToDelete = existingPhotoPath;
         }
         photoPath = null;
       }
 
       final payload = {
-        'mood': _selected!.dbValue,
-        'note': _noteController.text.trim().isEmpty
-            ? null
-            : _noteController.text.trim(),
+        'mood': mood.dbValue,
+        'note': note.isEmpty ? null : note,
         'photo_path': photoPath,
-        'photo_align_x': photoPath == null ? 0 : _photoAlignX,
-        'photo_align_y': photoPath == null ? 0 : _photoAlignY,
-        'photo_scale': photoPath == null ? 1 : _photoScale,
+        'photo_align_x': photoPath == null ? 0 : photoAlignX,
+        'photo_align_y': photoPath == null ? 0 : photoAlignY,
+        'photo_scale': photoPath == null ? 1 : photoScale,
         // 'user_id' у checkins має дефолт auth.uid(), тому передавати не
         // треба — а от subject_id у subject_checkins нема звідки взяти
         // самостійно, вказуємо явно тільки коли ведемо чек-ін сутності.
         // author_id теж лише для сутностей — атрибуція "хто написав", коли
         // щоденник ведуть кілька співавторів разом; для власного checkins
         // це й так завжди "я", підписувати нема сенсу.
-        if (_activeSubjectId != null) 'subject_id': _activeSubjectId,
-        if (_activeSubjectId != null)
+        if (activeSubjectId != null) 'subject_id': activeSubjectId,
+        if (activeSubjectId != null)
           'author_id': _supabase.auth.currentUser!.id,
       };
 
-      if (_todayEntryId != null) {
+      if (todayEntryId != null) {
         final updated = await _supabase
-            .from(_table)
+            .from(table)
             .update(payload)
-            .eq('id', _todayEntryId as Object)
+            .eq('id', todayEntryId)
             .select('id');
         if ((updated as List).isEmpty) {
           throw Exception(
-            'Update affected 0 rows — check RLS UPDATE policy on $_table.',
+            'Update affected 0 rows — check RLS UPDATE policy on $table.',
           );
         }
         // Сам інкремент рахує тригер у БД (checkin-update-count-migration.sql);
         // тут просто відображаємо очікуваний результат одразу, без повторного запиту.
-        _updateCount++;
+        if (_activeSubjectId == activeSubjectId) _updateCount++;
       } else {
         // local_date — лише при СТВОРЕННІ, і лише тут (не в спільному
-        // payload вище, щоб UPDATE його ніколи не чіпав). [_effectiveDate]
+        // payload вище, щоб UPDATE його ніколи не чіпав). [effectiveDate]
         // замість голого DateTime.now() — інакше запис "за вчора"
         // (_editingDate != null) отримав би сьогоднішню local_date, і вся
         // затія з вікном редагування вчора втратила б сенс. Той самий
@@ -2560,31 +2582,48 @@ class _CheckInScreenState extends State<CheckInScreen>
         // (UTC), що для чек-інів, зроблених вночі, могло розходитись з
         // локальною датою на цілий день (checkin-local-date-timezone-fix-migration.sql).
         final localDate = DateTime(
-          _effectiveDate.year,
-          _effectiveDate.month,
-          _effectiveDate.day,
+          effectiveDate.year,
+          effectiveDate.month,
+          effectiveDate.day,
         ).toIso8601String().split('T').first;
         final inserted = await _supabase
-            .from(_table)
+            .from(table)
             .insert({...payload, 'local_date': localDate})
             .select('id, created_at')
             .single();
-        _todayEntryId = inserted['id'];
-        _todayEntrySavedAt = DateTime.parse(
-          inserted['created_at'] as String,
-        ).toLocal();
+        // Лише якщо юзер і досі на тому самому щоденнику, на якому тиснув
+        // Save — інакше ці поля тепер належать ІНШОМУ активному контексту
+        // (щойно перемкнутому), і затирати їх результатом старого запису
+        // не можна.
+        if (_activeSubjectId == activeSubjectId) {
+          _todayEntryId = inserted['id'];
+          _todayEntrySavedAt = DateTime.parse(
+            inserted['created_at'] as String,
+          ).toLocal();
+        }
       }
-      _existingPhotoPath = photoPath;
-      _pickedPhotoFile = null;
-      _removePhoto = false;
-      _editing = false;
+
+      if (oldPhotoPathToDelete != null) {
+        // Видаляємо СТАРЕ фото лише ПІСЛЯ того, як запис з новим photo_path
+        // уже підтверджено збережено — інакше провал запису після успішного
+        // завантаження нового фото залишав би БД з посиланням на щойно
+        // видалений файл (реальний баг, знайдений повторним аудитом).
+        unawaited(deleteCheckinPhoto(oldPhotoPathToDelete));
+      }
+
+      if (_activeSubjectId == activeSubjectId) {
+        _existingPhotoPath = photoPath;
+        _pickedPhotoFile = null;
+        _removePhoto = false;
+        _editing = false;
+      }
       unawaited(_loadWeek());
 
       // Лише власний СЬОГОДНІШНІЙ чек-ін (не чужа сутність, не редагування
       // вчорашнього вікна) вимикає вечірнє нагадування — саме про це воно.
       // Скасовує лише СЬОГОДНІШНІЙ день з вікна, не зачіпаючи заплановані
       // на наступні дні.
-      if (_activeSubjectId == null && _editingDate == null) {
+      if (activeSubjectId == null && _editingDate == null) {
         unawaited(cancelTodayReminder());
       }
 
@@ -2592,9 +2631,7 @@ class _CheckInScreenState extends State<CheckInScreen>
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              AppLocalizations.of(
-                context,
-              ).savedSnackbar(_selected!.label(context)),
+              AppLocalizations.of(context).savedSnackbar(mood.label(context)),
             ),
             behavior: SnackBarBehavior.floating,
             duration: const Duration(seconds: 2),

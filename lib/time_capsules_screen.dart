@@ -128,7 +128,15 @@ DateTime _addMonths(DateTime from, int months) {
   final totalMonths = from.month - 1 + months;
   final year = from.year + totalMonths ~/ 12;
   final month = totalMonths % 12 + 1;
-  return DateTime(year, month, from.day, from.hour, from.minute, from.second);
+  // Затискаємо day до останнього дня цільового місяця — реальний баг,
+  // знайдений повторним аудитом: без цього DateTime сам "перетікав" у
+  // наступний місяць (напр. 31 січня + 1 місяць = 2/3 березня, не 28/29
+  // лютого), тихо даючи дату на кілька днів пізнішу, ніж підказує підпис
+  // пресету ("1 місяць"). `DateTime(year, month + 1, 0)` — стандартний
+  // трюк: "нульовий день" наступного місяця й є останнім днем цього.
+  final lastDayOfMonth = DateTime(year, month + 1, 0).day;
+  final day = from.day > lastDayOfMonth ? lastDayOfMonth : from.day;
+  return DateTime(year, month, day, from.hour, from.minute, from.second);
 }
 
 class TimeCapsulesScreen extends StatefulWidget {
@@ -388,6 +396,28 @@ class _TimeCapsulesScreenState extends State<TimeCapsulesScreen> {
           duration: const Duration(seconds: 2),
         ),
       );
+      return;
+    }
+
+    // Клієнтський unlockAt-чек (state вище) звіряється з ГОДИННИКОМ
+    // ПРИСТРОЮ, а не сервера — якщо він поспішає, letter.body все одно
+    // лишиться null (RLS на future_letter_bodies звіряє СЕРВЕРНИЙ час).
+    // Без цієї перевірки лист позначався б "прочитаним" (і автор
+    // назавжди втрачав право на hard-delete) за порожнім тілом, яке
+    // юзер насправді ще не побачив.
+    if (state == _LetterState.unlockedUnread && letter.body == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              l10n.timeCapsulesStillLocked(
+                _formatDate(letter.unlockAt, context),
+              ),
+            ),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
       return;
     }
 

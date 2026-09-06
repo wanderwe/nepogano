@@ -184,6 +184,7 @@ class _CommentsSectionState extends State<CommentsSection> {
   }
 
   Future<void> _post() async {
+    if (_sending) return;
     final body = _inputController.text.trim();
     if (body.isEmpty) return;
     setState(() => _sending = true);
@@ -406,11 +407,25 @@ class _CommentsSectionState extends State<CommentsSection> {
       .where((c) => !c.isDeleted || _replyFor(c.id) != null)
       .toList();
 
+  // Надаємо перевагу ЖИВІЙ відповіді, навіть якщо вона не перша за
+  // хронологією — реальний баг, знайдений повторним аудитом: власник
+  // відповідав, видаляв відповідь, відповідав знову (БД це прямо
+  // дозволяє, див. коментар вище), і стара версія просто повертала
+  // ПЕРШУ знайдену відповідь без огляду на isDeleted — тобто стару,
+  // видалену. Через це нова жива відповідь ніколи не рендерилась
+  // (`_buildThread` бере `reply` звідси), а `canReply` лишався
+  // хибно `true`, і повторна спроба відповісти впиралась у той самий
+  // унікальний індекс у БД. Якщо живої відповіді немає — повертаємо
+  // видалену (той самий фолбек, що й раніше, потрібен `_topLevel`, щоб
+  // не ховати видалений корінь, під яким усе ж є контекст-відповідь).
   CheckinComment? _replyFor(String topLevelId) {
+    CheckinComment? deletedFallback;
     for (final c in _comments) {
-      if (c.parentId == topLevelId) return c;
+      if (c.parentId != topLevelId) continue;
+      if (!c.isDeleted) return c;
+      deletedFallback ??= c;
     }
-    return null;
+    return deletedFallback;
   }
 
   // Рахуємо лише те, що реально рендериться (корінь + пряма відповідь на

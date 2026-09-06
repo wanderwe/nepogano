@@ -175,34 +175,47 @@ class _HistoryScreenState extends State<HistoryScreen> {
         }
       }
 
-      final entries = (rows as List).map((row) {
-        final authorId = row['author_id'] as String?;
-        // Той самий принцип, що в _loadWeek() на головному екрані:
-        // угруповуємо/показуємо за ЕФЕКТИВНОЮ (local_date) датою, не за
-        // сирим created_at — інакше запис, зроблений близько опівночі,
-        // міг би лягти в календарі не на той день, на який його бачить
-        // тижнева стрічка головного екрана (той самий клас розбіжності,
-        // що вже виправлявся для RLS-перевірки вгадування, правило 26
-        // в ARCHITECTURE.md).
-        final localDateStr = row['local_date'] as String?;
-        final effectiveDate = localDateStr != null
-            ? DateTime.parse(localDateStr)
-            : DateTime.parse(row['created_at'] as String).toLocal();
-        return CheckinEntry(
-          id: row['id'] as String,
-          createdAt: effectiveDate,
-          mood: moodFromDbValue(row['mood'] as String),
-          note: row['note'] as String?,
-          photoPath: row['photo_path'] as String?,
-          photoAlignX: (row['photo_align_x'] as num?)?.toDouble() ?? 0,
-          photoAlignY: (row['photo_align_y'] as num?)?.toDouble() ?? 0,
-          photoScale: (row['photo_scale'] as num?)?.toDouble() ?? 1,
-          updateCount: (row['update_count'] as num?)?.toInt() ?? 0,
-          authorName: (authorId == null || authorId == myId)
-              ? null
-              : authorNameById[authorId],
-        );
-      }).toList();
+      // Кожен рядок парситься окремо, не через .map() — одне зіпсоване
+      // поле (напр. невалідний local_date у легасі-записі, чи mood поза
+      // відомим enum) раніше проваджувало ВЕСЬ .map() у виняток, і замість
+      // місяця з рештою правильних записів юзер бачив повний "не вдалось
+      // завантажити" на весь екран. Тепер зіпсований рядок просто
+      // пропускається, решта місяця лишається робочою.
+      final entries = <CheckinEntry>[];
+      for (final row in rows as List) {
+        try {
+          final authorId = row['author_id'] as String?;
+          // Той самий принцип, що в _loadWeek() на головному екрані:
+          // угруповуємо/показуємо за ЕФЕКТИВНОЮ (local_date) датою, не за
+          // сирим created_at — інакше запис, зроблений близько опівночі,
+          // міг би лягти в календарі не на той день, на який його бачить
+          // тижнева стрічка головного екрана (той самий клас розбіжності,
+          // що вже виправлявся для RLS-перевірки вгадування, правило 26
+          // в ARCHITECTURE.md).
+          final localDateStr = row['local_date'] as String?;
+          final effectiveDate = localDateStr != null
+              ? DateTime.parse(localDateStr)
+              : DateTime.parse(row['created_at'] as String).toLocal();
+          entries.add(
+            CheckinEntry(
+              id: row['id'] as String,
+              createdAt: effectiveDate,
+              mood: moodFromDbValue(row['mood'] as String),
+              note: row['note'] as String?,
+              photoPath: row['photo_path'] as String?,
+              photoAlignX: (row['photo_align_x'] as num?)?.toDouble() ?? 0,
+              photoAlignY: (row['photo_align_y'] as num?)?.toDouble() ?? 0,
+              photoScale: (row['photo_scale'] as num?)?.toDouble() ?? 1,
+              updateCount: (row['update_count'] as num?)?.toInt() ?? 0,
+              authorName: (authorId == null || authorId == myId)
+                  ? null
+                  : authorNameById[authorId],
+            ),
+          );
+        } catch (e) {
+          debugPrint('Skipping malformed history row ${row['id']}: $e');
+        }
+      }
 
       if (mounted) {
         setState(() {
@@ -880,12 +893,22 @@ class _HistoryScreenState extends State<HistoryScreen> {
       );
     }
 
+    // GlobalKey лише для ПЕРШОГО запису конкретного дня в цьому білді —
+    // реальний краш, знайдений повторним аудитом: якщо для спільного
+    // щоденника два співавтори чекінились в один день (можливо на різних
+    // пристроях), тут виходило ДВА записи з однаковим d.day, і
+    // putIfAbsent повертав ТОЙ САМИЙ GlobalKey удруге — Flutter падає на
+    // "Multiple widgets used the same GlobalKey". Скрол-до-дня й так
+    // потребує лише ОДНОГО якоря на день.
+    final daysWithKeyThisBuild = <int>{};
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: entries.map((entry) {
         final d = entry.createdAt;
         final dateLabel = '${d.day}.${d.month}.${d.year}';
-        final key = _entryKeys.putIfAbsent(d.day, () => GlobalKey());
+        final key = daysWithKeyThisBuild.add(d.day)
+            ? _entryKeys.putIfAbsent(d.day, () => GlobalKey())
+            : null;
 
         return Container(
           key: key,

@@ -179,11 +179,18 @@ Future<bool> hasUnseenFriendActivity(SupabaseClient supabase) async {
       .gte('created_at', sinceUtc)
       .order('created_at', ascending: false);
 
+  // Порівнюємо за ЕФЕКТИВНОЮ датою, не беремо просто перший рядок за
+  // created_at desc — той самий фікс, що й у _load() нижче для
+  // латест-крапки конкретного друга, щоб обидва індикатори рахували
+  // "найсвіжіший день" однаково.
   final latestByUser = <String, DateTime>{};
   for (final row in checkinRows as List) {
     final uid = row['user_id'] as String;
-    if (latestByUser.containsKey(uid)) continue;
-    latestByUser[uid] = effectiveCheckinDate(row);
+    final date = effectiveCheckinDate(row);
+    final current = latestByUser[uid];
+    if (current == null || date.isAfter(current)) {
+      latestByUser[uid] = date;
+    }
   }
   if (latestByUser.isEmpty) return false;
 
@@ -624,7 +631,15 @@ class _FriendsScreenState extends State<FriendsScreen> {
           final uid = row['user_id'] as String;
           final date = effectiveCheckinDate(row);
           datesByUser.putIfAbsent(uid, () => []).add(date);
-          if (!latestMoodByUser.containsKey(uid)) {
+          // Порівнюємо за ЕФЕКТИВНОЮ датою, не беремо просто перший рядок
+          // за created_at desc — реальний баг, знайдений повторним
+          // аудитом: для бекфіленого запису (local_date старіший за
+          // created_at) перший-за-created_at рядок міг бути НЕ тим, що
+          // насправді найсвіжіший за фактичною датою, тож крапка й
+          // настрій показували не той день (той самий клас розбіжності,
+          // що вже виправлявся для RLS-перевірки вгадування).
+          final currentLatest = latestDateByUser[uid];
+          if (currentLatest == null || date.isAfter(currentLatest)) {
             latestMoodByUser[uid] = moodFromDbValue(row['mood'] as String);
             latestDateByUser[uid] = date;
           }
@@ -1237,21 +1252,50 @@ class _FriendsScreenState extends State<FriendsScreen> {
                         folder.id,
                         () => {},
                       );
-                      if (value == true) {
-                        selected.add(folder.id);
-                        members.add(friend.userId);
-                        await _supabase.from('friend_folder_members').insert({
-                          'folder_id': folder.id,
-                          'friend_user_id': friend.userId,
-                        });
-                      } else {
-                        selected.remove(folder.id);
-                        members.remove(friend.userId);
-                        await _supabase
-                            .from('friend_folder_members')
-                            .delete()
-                            .eq('folder_id', folder.id)
-                            .eq('friend_user_id', friend.userId);
+                      // Оптимістична мутація ДО await, з відкатом у catch —
+                      // раніше цей запис узагалі не мав try/catch, на
+                      // відміну від усіх інших мутацій у цьому файлі: збій
+                      // мережі чи RLS лишав selected/_folderMembership
+                      // назавжди неузгодженими з сервером, без жодної
+                      // помилки на екрані.
+                      try {
+                        if (value == true) {
+                          selected.add(folder.id);
+                          members.add(friend.userId);
+                          await _supabase
+                              .from('friend_folder_members')
+                              .insert({
+                                'folder_id': folder.id,
+                                'friend_user_id': friend.userId,
+                              });
+                        } else {
+                          selected.remove(folder.id);
+                          members.remove(friend.userId);
+                          await _supabase
+                              .from('friend_folder_members')
+                              .delete()
+                              .eq('folder_id', folder.id)
+                              .eq('friend_user_id', friend.userId);
+                        }
+                      } catch (e) {
+                        if (value == true) {
+                          selected.remove(folder.id);
+                          members.remove(friend.userId);
+                        } else {
+                          selected.add(folder.id);
+                          members.add(friend.userId);
+                        }
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                AppLocalizations.of(
+                                  context,
+                                ).somethingWentWrong,
+                              ),
+                            ),
+                          );
+                        }
                       }
                       setSheetState(() {});
                     },
@@ -1865,9 +1909,15 @@ class _PersonDetailScreenState extends State<PersonDetailScreen> {
     if (!mounted) return;
     setState(() {
       _entries = entries;
-      _myGuesses
-        ..clear()
-        ..addAll(guesses);
+      // addAll, БЕЗ clear() спершу — реальний баг, знайдений повторним
+      // аудитом: якщо цей запит стартував ДО того, як паралельний
+      // _guess() встиг закомітити свій insert, стара, ще без нового
+      // вгадування, карта тут МОГЛА прийти пізніше за оптимістичний
+      // setState у _guess() і повністю перезаписати його — юзер бачив,
+      // що вгадування "відкотилось" назад до кнопок вибору. Вгадування
+      // тут ніколи не видаляються, лише додаються, тож merge замість
+      // replace нічого не втрачає.
+      _myGuesses.addAll(guesses);
       _loading = false;
       _hasMore = hasMore;
     });

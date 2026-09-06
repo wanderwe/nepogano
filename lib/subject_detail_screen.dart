@@ -185,9 +185,13 @@ class _SubjectDetailScreenState extends State<SubjectDetailScreen> {
     if (!mounted) return;
     setState(() {
       _entries = entries;
-      _myGuesses
-        ..clear()
-        ..addAll(guesses);
+      // addAll, БЕЗ clear() спершу — той самий фікс, що в friends_screen.dart:
+      // якщо цей запит стартував ДО того, як паралельний _guess() встиг
+      // закомітити свій insert, стара карта могла прийти пізніше за
+      // оптимістичний setState у _guess() і повністю перезаписати його.
+      // Вгадування тут ніколи не видаляються, лише додаються, тож merge
+      // замість replace нічого не втрачає.
+      _myGuesses.addAll(guesses);
       _loading = false;
       _hasMore = hasMore;
     });

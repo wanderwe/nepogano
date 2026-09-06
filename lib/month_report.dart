@@ -175,8 +175,20 @@ Future<void> shareMonthReport({
     subjectName: subjectName,
     locale: locale,
     moodLabels: moodLabels,
-    interFontBytes: interData.buffer.asUint8List(),
-    loraFontBytes: loraData.buffer.asUint8List(),
+    // offsetInBytes/lengthInBytes обов'язкові тут — ByteData від
+    // rootBundle.load() може бути "вікном" у більший спільний буфер
+    // asset-бандла, а не окремим виділенням лише під цей файл. Без них
+    // .buffer.asUint8List() бере ввесь підкладений буфер цілком —
+    // потенційно чуже сміття з інших asset'ів чи просто зайві байти,
+    // які потім падають усередині ізоляту при парсингу шрифту.
+    interFontBytes: interData.buffer.asUint8List(
+      interData.offsetInBytes,
+      interData.lengthInBytes,
+    ),
+    loraFontBytes: loraData.buffer.asUint8List(
+      loraData.offsetInBytes,
+      loraData.lengthInBytes,
+    ),
     constellationImage: constellationImage,
     daysFilledText: l10n.reportDaysFilled(filled, consideredDays, missed),
     moodDistributionLabel: l10n.reportMoodDistribution,

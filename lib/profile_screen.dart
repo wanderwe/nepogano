@@ -270,7 +270,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     setState(() => _uploadingAvatar = true);
     try {
-      await deleteAvatar();
+      // Спершу прибираємо посилання в БД, тоді видаляємо файл — не
+      // навпаки. Якщо після видалення файлу оновлення БД провалиться
+      // (мережа), avatar_path і далі вказував би на щойно видалений
+      // об'єкт — зламане посилання, а не просто осиротілий файл.
       await _supabase
           .from('profiles')
           .update({
@@ -280,6 +283,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             'avatar_scale': 1,
           })
           .eq('user_id', _supabase.auth.currentUser!.id);
+      await deleteAvatar();
       if (mounted) {
         setState(() {
           _avatarPath = null;
@@ -510,11 +514,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _buildAvatarPicker() {
-    final initial =
-        (_displayName?.trim().isNotEmpty == true
-                ? _displayName!.trim()
-                : (_supabase.auth.currentUser?.email ?? '?'))[0]
-            .toUpperCase();
+    // '' (не лише null) — реальний краш, знайдений повторним аудитом:
+    // email деяких акаунтів (напр. після OAuth-флоу, де Supabase інколи
+    // повертає порожній рядок замість null) не покривався колишнім `??`,
+    // а '' [0] кидає RangeError.
+    final source = _displayName?.trim().isNotEmpty == true
+        ? _displayName!.trim()
+        : (_supabase.auth.currentUser?.email ?? '');
+    final initial = (source.isNotEmpty ? source[0] : '?').toUpperCase();
 
     return GestureDetector(
       onTap: _uploadingAvatar ? null : _changeAvatar,
