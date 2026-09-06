@@ -46,6 +46,12 @@ mood,diary,journal,honest,checkin,reflection,friends,calendar,mood tracker,time 
 
 ### What's New — version log (найновіша зверху, копіювати верхню в App Store Connect)
 
+#### 1.7.2 (заплановано)
+The evening reminder no longer shows up once you've already logged today.
+Cleaner, more compact Google and Apple sign-in buttons on iOS.
+Fixed: a friend's new-activity dot could stay lit even after you'd seen their latest update.
+Small fixes and interface improvements.
+
 #### 1.7.1 (замінює 1.7.0 — той білд review на iOS не пройшов, тож тут об'єднано нотатки обох версій в один список, щоб нічого не загубилось)
 The week strip on the home screen is now tappable: jumps straight to that day in History.
 New view for your month in History: Constellation. Each day becomes a star, the more you shared, the brighter it glows, and now you can share it or add it to the month's PDF report.
@@ -98,6 +104,12 @@ Nepogano будується поступово: спершу особистий 
 настрій,щоденник,чесність,чекін,рефлексія,друзі,календар,трекер настрою,капсула часу *(84 символи)*
 
 ### What's New — журнал версій (найновіша зверху, копіювати верхню в App Store Connect)
+
+#### 1.7.2 (заплановано)
+Вечірнє нагадування більше не приходить, якщо ти вже відмітив сьогоднішній день.
+Оновлений, компактніший вигляд кнопок входу через Google та Apple на iOS.
+Виправлено: індикатор нових статусів друга міг лишатись увімкненим навіть після перегляду найсвіжішого запису.
+Дрібні виправлення й покращення інтерфейсу.
 
 #### 1.7.1 (замінює 1.7.0 — той білд review на iOS не пройшов, тож тут об'єднано нотатки обох версій в один список, щоб нічого не загубилось)
 Тижнева стрічка на головному екрані тепер клікабельна: тап на минулий день відкриває Історію одразу на потрібній даті.
