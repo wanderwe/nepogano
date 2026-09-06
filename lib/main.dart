@@ -373,6 +373,15 @@ class _AuthGateState extends State<AuthGate> {
   /// застосунку того самого дня знову освіжить alarm. Дозвіл повторно НЕ
   /// перепитується — Android/iOS не показують діалог вдруге, якщо він уже
   /// один раз вирішений.
+  ///
+  /// Нагадування тепер одноразове (`scheduleDailyReminder` більше не
+  /// повторюване на рівні ОС) — тому перед плануванням перевіряємо, чи
+  /// сьогоднішній день уже відмічений: якщо так, нагадування сьогодні не
+  /// потрібне взагалі (реальна скарга юзера — нагадування продовжувало
+  /// приходити о 20:00, навіть коли день уже було збережено). Якщо юзер
+  /// відкрив застосунок УДЕНЬ, ще не відмітивши день, нагадування
+  /// планується як завжди — і скасовується одразу, щойно він таки
+  /// збереже сьогоднішній чек-ін (`cancelDailyReminder`, виклик у `_save`).
   Future<void> _setupDailyReminder() async {
     final session = Supabase.instance.client.auth.currentSession;
     if (session == null || !mounted) return;
@@ -380,6 +389,11 @@ class _AuthGateState extends State<AuthGate> {
     final today = DateTime.now().toIso8601String().split('T').first;
     final prefs = await SharedPreferences.getInstance();
     if (prefs.getString(_dailyReminderScheduledDateKey) == today) return;
+
+    if (await hasCheckedInToday()) {
+      await prefs.setString(_dailyReminderScheduledDateKey, today);
+      return;
+    }
 
     if (!mounted) return;
     final l10n = AppLocalizations.of(context);
@@ -2545,6 +2559,12 @@ class _CheckInScreenState extends State<CheckInScreen>
       _removePhoto = false;
       _editing = false;
       unawaited(_loadWeek());
+
+      // Лише власний СЬОГОДНІШНІЙ чек-ін (не чужа сутність, не редагування
+      // вчорашнього вікна) вимикає вечірнє нагадування — саме про це воно.
+      if (_activeSubjectId == null && _editingDate == null) {
+        unawaited(cancelDailyReminder());
+      }
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

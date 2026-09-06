@@ -401,7 +401,14 @@ class _AuthScreenState extends State<AuthScreen> {
                         TextButton(
                           onPressed: _loading
                               ? null
-                              : () => setState(() => _isSignUp = !_isSignUp),
+                              : () => setState(() {
+                                  _isSignUp = !_isSignUp;
+                                  // Помилка попереднього режиму (напр.
+                                  // "Не вдалось увійти через Apple") більше
+                                  // не стосується щойно обраного —
+                                  // реальний баг, знайдено 2026-09-06.
+                                  _errorMessage = null;
+                                }),
                           child: Text.rich(
                             TextSpan(
                               children: [
