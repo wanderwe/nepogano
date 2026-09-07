@@ -292,6 +292,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get couldNotLoadHistory => 'Couldn\'t load history.';
 
   @override
+  String get someHistoryEntriesFailedToLoad =>
+      'Some entries this month couldn\'t be shown.';
+
+  @override
   String get couldNotLoadTodayEntry =>
       'Couldn\'t check today\'s entry. Try again to avoid creating a duplicate.';
 

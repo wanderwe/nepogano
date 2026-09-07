@@ -190,6 +190,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
       // завантажити" на весь екран. Тепер зіпсований рядок просто
       // пропускається, решта місяця лишається робочою.
       final entries = <CheckinEntry>[];
+      var skippedCount = 0;
       for (final row in rows as List) {
         try {
           final authorId = row['author_id'] as String?;
@@ -221,6 +222,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
             ),
           );
         } catch (e) {
+          skippedCount++;
           debugPrint('Skipping malformed history row ${row['id']}: $e');
         }
       }
@@ -230,6 +232,24 @@ class _HistoryScreenState extends State<HistoryScreen> {
           _entries = entries;
           _loading = false;
         });
+        // Пропущений рядок раніше показував ЯВНУ помилку на весь екран
+        // (уся .map() падала) — тепер місяць просто вантажиться без
+        // нього. Це правильно для типового випадку (одна зіпсована
+        // легасі-дата не має ховати решту місяця), але без жодного
+        // сигналу юзер міг би довго не помітити, що запис (з нотаткою,
+        // фото, коментарями) зник з усіх поверхонь застосунку без
+        // видимої причини — тому легкий, не блокуючий SnackBar замість
+        // повної тиші.
+        if (skippedCount > 0) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                AppLocalizations.of(context).someHistoryEntriesFailedToLoad,
+              ),
+              duration: const Duration(seconds: 3),
+            ),
+          );
+        }
         if (widget.initialDate != null) {
           // _entryKeys заповнюється лише під час білда списку записів
           // (_buildEntryList) — чекаємо, поки цей кадр реально

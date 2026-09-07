@@ -104,6 +104,7 @@
   "signInWithApple": "Увійти через Apple",
 
   "couldNotLoadHistory": "Не вдалось завантажити історію.",
+  "someHistoryEntriesFailedToLoad": "Деякі записи цього місяця не вдалось показати.",
   "couldNotLoadTodayEntry": "Не вдалось перевірити сьогоднішній запис. Спробуй ще раз, щоб не створити дублікат.",
   "noEntriesThisMonth": "У цьому місяці ще немає записів.",
   "noEntryForDay": "За цей день запису немає.",

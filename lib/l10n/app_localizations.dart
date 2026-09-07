@@ -626,6 +626,12 @@ abstract class AppLocalizations {
   /// **'Не вдалось завантажити історію.'**
   String get couldNotLoadHistory;
 
+  /// No description provided for @someHistoryEntriesFailedToLoad.
+  ///
+  /// In uk, this message translates to:
+  /// **'Деякі записи цього місяця не вдалось показати.'**
+  String get someHistoryEntriesFailedToLoad;
+
   /// No description provided for @couldNotLoadTodayEntry.
   ///
   /// In uk, this message translates to:

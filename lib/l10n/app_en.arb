@@ -98,6 +98,7 @@
   "signInWithApple": "Sign in with Apple",
 
   "couldNotLoadHistory": "Couldn't load history.",
+  "someHistoryEntriesFailedToLoad": "Some entries this month couldn't be shown.",
   "couldNotLoadTodayEntry": "Couldn't check today's entry. Try again to avoid creating a duplicate.",
   "noEntriesThisMonth": "No entries yet this month.",
   "noEntryForDay": "There's no entry for this day.",
