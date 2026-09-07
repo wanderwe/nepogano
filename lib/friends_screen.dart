@@ -932,7 +932,6 @@ class _FriendsScreenState extends State<FriendsScreen> {
         ),
       ),
     );
-    controller.dispose();
 
     if (code == null || code.isEmpty) return;
 
@@ -983,7 +982,6 @@ class _FriendsScreenState extends State<FriendsScreen> {
         ),
       ),
     );
-    controller.dispose();
 
     if (email == null || email.isEmpty) return;
 
@@ -1048,7 +1046,6 @@ class _FriendsScreenState extends State<FriendsScreen> {
         ),
       ),
     );
-    controller.dispose();
 
     if (name == null || name.isEmpty) return;
 
@@ -1135,7 +1132,6 @@ class _FriendsScreenState extends State<FriendsScreen> {
         ),
       ),
     );
-    controller.dispose();
 
     if (name == null || name.isEmpty || name == folder.name) return;
 

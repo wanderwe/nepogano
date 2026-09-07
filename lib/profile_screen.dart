@@ -336,7 +336,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
       ),
     );
-    controller.dispose();
 
     if (name == null || name.isEmpty) return;
 
