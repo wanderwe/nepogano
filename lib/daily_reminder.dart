@@ -93,6 +93,23 @@ Future<bool> scheduleDailyReminders({
   final granted = await _requestPermission();
   if (!granted) return false;
 
+  // cancelAll() спершу — не лише зручність, а обов'язковий крок:
+  // `_reminderIdForDate` уже двічі мінявся за час розробки цієї фічі
+  // (спершу local-based різниця дат, тепер UTC-based, знайдено повторним
+  // аудитом — local-based давала інший id, ніж UTC-based, для тієї самої
+  // календарної дати, коли поточний зсув літнього/зимового часу
+  // відрізняється від зсуву на момент якоря). Без cancelAll() пристрій,
+  // що вже мав заплановані нагадування під СТАРОЮ формулою id, ніколи не
+  // отримав би їх скасованими новим кодом (`cancelTodayReminder` рахує
+  // ЛИШЕ поточну формулу) — вони або дублювались би з новими, або
+  // `cancelTodayReminder` випадково скасовував би НЕ той день. Це не
+  // разовий патч під конкретну зміну формули, а загальний захист: яка б
+  // формула не була наступного разу, стара її версія завжди зачищається
+  // тут, перш ніж вікно планується заново. У застосунку нема інших
+  // локальних сповіщень (перевірено — це єдиний файл, що використовує
+  // flutter_local_notifications), тож нічого зайвого не зачепить.
+  await _plugin.cancelAll();
+
   final now = DateTime.now();
   final todayMidnight = DateTime(now.year, now.month, now.day);
   final alreadyCheckedInToday = await hasCheckedInToday();

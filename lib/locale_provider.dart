@@ -51,33 +51,48 @@ Future<void> setAppLocale(Locale locale) async {
 
 /// Перемикач мови EN/UK — той самий вигляд на онбордингу, логіні й екрані
 /// примусового оновлення, раніше скопійований у кожному з трьох місць
-/// окремо. Не потребує ValueListenableBuilder сама по собі: кожен з трьох
-/// екранів, де вона використовується, і так перебудовується цілком при
-/// зміні appLocale (кореневий MaterialApp застосунку підписаний на нього).
+/// окремо.
+///
+/// ValueListenableBuilder тут ОБОВ'ЯЗКОВИЙ, не просто підстраховка —
+/// реальний баг, знайдений повторним аудитом: усі три виклики створюють
+/// цей віджет як `const LanguageTogglePill()`. Const-віджети з однаковими
+/// аргументами — той САМИЙ канонічний instance, і Flutter's reconciliation
+/// (`identical(oldWidget, newWidget)`) пропускає повторний build() для
+/// незмінного const-піддерева, НАВІТЬ якщо предок (тут — кореневий
+/// MaterialApp через `ValueListenableBuilder&lt;Locale&gt;` у main.dart)
+/// перебудовується цілком. Без власного прямого підписки на [appLocale]
+/// напис EN/UK застрягав на значенні з першого рендеру — усі інші
+/// локалізовані тексти на екрані міняли мову коректно (вони не const),
+/// а сам перемикач — ні, аж доки екран не перемонтується заново.
 class LanguageTogglePill extends StatelessWidget {
   const LanguageTogglePill({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () {
-        final next = appLocale.value.languageCode == 'uk' ? 'en' : 'uk';
-        setAppLocale(Locale(next));
-      },
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Text(
-          appLocale.value.languageCode == 'uk' ? 'EN' : 'UK',
-          style: const TextStyle(
-            color: AppColors.inkMuted,
-            fontWeight: FontWeight.w600,
+    return ValueListenableBuilder<Locale>(
+      valueListenable: appLocale,
+      builder: (context, locale, _) {
+        return GestureDetector(
+          onTap: () {
+            final next = locale.languageCode == 'uk' ? 'en' : 'uk';
+            setAppLocale(Locale(next));
+          },
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Text(
+              locale.languageCode == 'uk' ? 'EN' : 'UK',
+              style: const TextStyle(
+                color: AppColors.inkMuted,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }

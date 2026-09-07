@@ -42,7 +42,14 @@ void _rememberInCache(String path, Uint8List bytes) {
 
 Future<Uint8List?> downloadCheckinPhoto(String path, {int retries = 3}) async {
   final cached = _photoCache[path];
-  if (cached != null) return cached;
+  if (cached != null) {
+    // Освіжаємо позицію в LRU-порядку й на ПОПАДАННІ в кеш, не лише при
+    // записі — інакше фото, яке юзер активно й повторно переглядає,
+    // могло б витіснитись лише через вік вставки, попри те, що воно
+    // явно ще "гаряче".
+    _rememberInCache(path, cached);
+    return cached;
+  }
 
   // Той самий клас короткочасних мережевих похибок, що й для решти запитів
   // Supabase (SocketException одразу після старту застосунку) — тут теж

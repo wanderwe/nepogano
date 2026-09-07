@@ -79,7 +79,13 @@ void _rememberInMemoryCache(String path, Uint8List bytes) {
 
 Future<Uint8List?> downloadAvatar(String path) async {
   final cached = _avatarCache[path];
-  if (cached != null) return cached;
+  if (cached != null) {
+    // Освіжаємо позицію в LRU-порядку й на ПОПАДАННІ в кеш, не лише при
+    // записі — інакше аватарка, яку юзер бачить постійно (напр. свого
+    // найближчого друга), могла б витіснитись лише через вік вставки.
+    _rememberInMemoryCache(path, cached);
+    return cached;
+  }
 
   try {
     final cacheFile = await _diskCacheFile(path);
