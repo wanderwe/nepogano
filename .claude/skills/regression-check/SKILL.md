@@ -86,9 +86,30 @@ report — don't imply full automated coverage that didn't happen.
      every analyzer line as a finding.
    - `flutter build apk --release` — must succeed before anything else is
      worth checking.
-3. **Install.** `adb devices -l` to confirm a device is attached; if none,
-   stop here and tell the user plainly — don't fabricate results for
-   sections that need the phone. Install with `adb install -r`.
+3. **Install — pick the build mode for what you're actually hunting.**
+   `adb devices -l` to confirm a device is attached; if none, stop here and
+   tell the user plainly — don't fabricate results for sections that need
+   the phone.
+   - **Regular pass** ("does this still work", pre-release sweep): install
+     the `--release` APK — that's what a real user runs, and it's the
+     build normally left on the user's test device (see project memory:
+     they used to have a standing rule to only ever test release builds,
+     lost in a machine migration — default back to it).
+   - **Hidden-crash hunt** (looking for a class of bug like the
+     `comments_section.dart` negative-`Container.margin` crash found
+     2026-09-10): install a fresh `--debug` build instead. Dart `assert()`
+     — including Flutter's own internal framework invariants — is
+     compiled OUT of release builds entirely, so an illegal value the
+     framework would otherwise reject can sit silently tolerated (and
+     visually slightly wrong) in production for weeks, only crashing
+     loudly once someone happens to exercise that code path on a debug
+     build. If you install debug for this reason, say so explicitly and
+     switch back to installing `--release` afterward — don't leave the
+     user's test device on debug by default.
+   Either way, install with `adb install -r`; if switching signing
+   (debug↔release) fails with `INSTALL_FAILED_UPDATE_INCOMPATIBLE`,
+   `adb uninstall` first (ask before doing this — it signs the user out,
+   since the app's session lives in local storage, not just Supabase).
 4. **Walk `docs/regression-checklist.md` section by section.** For each
    **[П]** (primary) item first, then **[Д]** (secondary):
    - If it's automatable per the section above, drive it and report
