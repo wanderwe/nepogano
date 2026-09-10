@@ -30,17 +30,15 @@
     Якщо застосунок ще не встановлений:
   </p>
   <a id="install-link" class="btn-secondary" href="https://play.google.com/store/apps/details?id=com.nepogano.app">Завантажити застосунок</a>
-  <p class="join-note" id="install-note">
-    Після встановлення код запрошення підхопиться сам.
-  </p>
 
   <!-- Останній варіант у ланцюжку (відкрити встановлений застосунок →
-       завантажити, якщо нема → вручну, якщо жодне з двох не спрацювало),
-       тож і в розмітці, і на екрані стоїть останнім. Власний підпис
-       прямо над кодом — самодостатній, не залежить від "вище"/"нижче" в
-       іншому абзаці (це саме там кілька разів плутало). -->
-  <p class="join-note" id="manual-code-note">
-    Якщо код не підхопився сам, встав його вручну:
+       завантажити, якщо нема → вручну в самому застосунку, якщо жодне з
+       двох не спрацювало) — один абзац, не два, і прямо каже "в
+       застосунку", бо сам код тут лише копіюється, вставляти нема куди
+       на цій сторінці. -->
+  <p class="join-note" id="install-note">
+    Після встановлення код підхопиться сам. Якщо ні — встав його вручну в
+    застосунку:
   </p>
   <button type="button" class="join-code" id="join-code-btn" aria-label="Скопіювати код">
     <span id="join-code">— — — — — —</span>
@@ -88,8 +86,8 @@
       copiedLabel: 'Код скопійовано',
       noApp: 'Якщо застосунок ще не встановлений:',
       install: 'Завантажити застосунок',
-      installNote: 'Після встановлення код запрошення підхопиться сам.',
-      manualCode: 'Якщо код не підхопився сам, встав його вручну:',
+      installNote: 'Після встановлення код підхопиться сам. Якщо ні — ' +
+        'встав його вручну в застосунку:',
       home: 'На головну',
       privacy: 'Політика конфіденційності',
       privacyHref: '/uk/privacy/'
@@ -106,8 +104,8 @@
       copiedLabel: 'Code copied',
       noApp: 'If you don’t have the app yet:',
       install: 'Download the app',
-      installNote: 'The invite code fills in on its own once you install.',
-      manualCode: 'If it doesn’t, paste it in manually:',
+      installNote: 'The invite code fills in on its own once you ' +
+        'install. If it doesn’t, paste it into the app manually:',
       home: 'Home',
       privacy: 'Privacy Policy',
       privacyHref: '/privacy/'
@@ -125,7 +123,6 @@
   document.getElementById('no-app-note').textContent = s.noApp;
   document.getElementById('install-link').textContent = s.install;
   document.getElementById('install-note').textContent = s.installNote;
-  document.getElementById('manual-code-note').textContent = s.manualCode;
   document.getElementById('home-link').textContent = s.home;
   document.getElementById('privacy-link').textContent = s.privacy;
   document.getElementById('privacy-link').setAttribute('href', s.privacyHref);
