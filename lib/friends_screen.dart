@@ -82,6 +82,9 @@ class Friend {
   final MoodLevel? latestMood;
   final DateTime? latestDate;
   final bool hasUnguessed;
+  // Новий чужий пост у щоденнику, який цей друг ВІДКРИВ колу на перегляд
+  // (не співавторство) — раніше видно лише зайшовши на сторінку друга.
+  final bool hasUnseenSharedSubject;
   // Скільки разів саме цей друг намагався вгадати мій настрій і скільки з
   // цих спроб — вірно (на відміну від _guessesTotal/_guessesCorrect на рівні
   // екрану, які сумують усіх друзів разом). null, якщо ще жодної спроби.
@@ -100,6 +103,7 @@ class Friend {
     required this.latestMood,
     required this.latestDate,
     required this.hasUnguessed,
+    this.hasUnseenSharedSubject = false,
     this.guessesTotal,
     this.guessesCorrect,
   });
@@ -148,14 +152,81 @@ String _relativeDay(DateTime dateTime, AppLocalizations l10n) {
 Future<bool> hasUnseenFriendActivity(SupabaseClient supabase) async {
   final myId = supabase.auth.currentUser?.id;
   if (myId == null) return false;
+  final myEmail = supabase.auth.currentUser?.email;
+
+  // Найдешевші перевірки першими: вхідне запрошення й непобачене "прийняв
+  // дружбу" — раніше на них не реагувала іконка "Друзі" взагалі, крапка
+  // вмикалась лише через нову чужу активність для вгадування.
+  if (myEmail != null) {
+    final inviteRows = await supabase
+        .from('friendships')
+        .select('id')
+        .eq('addressee_email', myEmail)
+        .eq('status', 'pending')
+        .limit(1);
+    if ((inviteRows as List).isNotEmpty) return true;
+  }
+
+  // Друг сам може не мати нового чек-іну для вгадування, але міг відкрити
+  // СВІЙ щоденник колу на перегляд (subject_folder_shares) — той самий
+  // сигнал, що FriendsScreen._load() уже показує крапкою в списку друзів
+  // (hasUnseenSharedSubject), а ця іконка раніше взагалі не враховувала.
+  final myMembershipRows = await supabase
+      .from('friend_folder_members')
+      .select('folder_id')
+      .eq('friend_user_id', myId);
+  final myFolderIds = (myMembershipRows as List)
+      .map((r) => r['folder_id'] as String)
+      .toList();
+  if (myFolderIds.isNotEmpty) {
+    final myOwnedSubjectRows = await supabase
+        .from('subjects')
+        .select('id')
+        .eq('owner_id', myId);
+    final myCoauthoredSubjectRows = await supabase
+        .from('subject_coauthors')
+        .select('subject_id')
+        .eq('coauthor_user_id', myId);
+    final myOwnSubjectIds = <String>{
+      ...(myOwnedSubjectRows as List).map((r) => r['id'] as String),
+      ...(myCoauthoredSubjectRows as List).map(
+        (r) => r['subject_id'] as String,
+      ),
+    };
+
+    final shareRows = await supabase
+        .from('subject_folder_shares')
+        .select('subject_id')
+        .inFilter('folder_id', myFolderIds);
+    final sharedSubjectIds = (shareRows as List)
+        .map((r) => r['subject_id'] as String)
+        .where((id) => !myOwnSubjectIds.contains(id))
+        .toSet()
+        .toList();
+
+    if (sharedSubjectIds.isNotEmpty) {
+      final unseen = await subjectsWithUnseenUpdates(sharedSubjectIds);
+      if (unseen.isNotEmpty) return true;
+    }
+  }
 
   final rows = await supabase
       .from('friendships')
-      .select('requester_id, addressee_id')
+      .select(
+        'requester_id, addressee_id, requester_seen_confirmed_at, addressee_seen_confirmed_at',
+      )
       .or('requester_id.eq.$myId,addressee_id.eq.$myId')
       .eq('status', 'accepted');
 
-  final friendIds = (rows as List)
+  for (final row in rows as List) {
+    final isRequester = row['requester_id'] == myId;
+    final mySeenAt = isRequester
+        ? row['requester_seen_confirmed_at']
+        : row['addressee_seen_confirmed_at'];
+    if (mySeenAt == null) return true;
+  }
+
+  final friendIds = rows
       .map(
         (r) =>
             r['requester_id'] == myId ? r['addressee_id'] : r['requester_id'],
@@ -409,6 +480,9 @@ class _FriendsScreenState extends State<FriendsScreen> {
   List<Friend> _friends = [];
   Map<String, Uint8List> _friendAvatars = {};
   List<Map<String, dynamic>> _pendingInvites = [];
+  // Дружби, які прийняли, але яких Я ще не бачив зі свого боку — секція
+  // "хто прийняв дружбу" на сторінці друзів, окрема від "Запрошення" вище.
+  List<Map<String, dynamic>> _acceptedNotices = [];
   List<FriendFolder> _folders = [];
   Map<String, Set<String>> _folderMembership = {};
   String? _selectedFolderId;
@@ -459,11 +533,51 @@ class _FriendsScreenState extends State<FriendsScreen> {
       final myId = _supabase.auth.currentUser!.id;
       final myEmail = _supabase.auth.currentUser?.email ?? '';
 
-      final profileRow = await _supabase
-          .from('profiles')
-          .select('friend_code, display_name')
-          .eq('user_id', myId)
-          .maybeSingle();
+      // Вісім запитів нижче одне від одного не залежать (жоден не читає
+      // результат іншого) — раніше йшли послідовними await один за одним,
+      // тож їхня мережева латентність просто складалась. Future.wait
+      // запускає їх одночасно; усе, що йде ДАЛІ (де реально є залежності —
+      // напр. чек-іни друзів потребують спершу список friendIds) лишається
+      // послідовним, як і було.
+      final initialResults = await Future.wait<dynamic>([
+        _supabase
+            .from('profiles')
+            .select('friend_code, display_name')
+            .eq('user_id', myId)
+            .maybeSingle(),
+        _supabase
+            .from('circle_guesses')
+            .select('correct, guesser_id')
+            .eq('target_user_id', myId),
+        _supabase
+            .from('friend_folder_members')
+            .select('folder_id')
+            .eq('friend_user_id', myId),
+        _supabase.from('subjects').select('id').eq('owner_id', myId),
+        _supabase
+            .from('subject_coauthors')
+            .select('subject_id')
+            .eq('coauthor_user_id', myId),
+        _supabase
+            .from('friendships')
+            .select(
+              'id, requester_id, requester_email, addressee_id, addressee_email, '
+              'requester_seen_confirmed_at, addressee_seen_confirmed_at',
+            )
+            .or('requester_id.eq.$myId,addressee_id.eq.$myId')
+            .eq('status', 'accepted'),
+        _supabase
+            .from('friendships')
+            .select('id, requester_email')
+            .eq('addressee_email', myEmail)
+            .eq('status', 'pending'),
+        _supabase
+            .from('friend_folders')
+            .select('id, name')
+            .eq('owner_id', myId)
+            .order('created_at'),
+      ]);
+      final profileRow = initialResults[0] as Map<String, dynamic>?;
 
       // Скільки разів друзі намагались вгадати мій настрій і скільки з цих
       // спроб — вірно. Потребує окремої RLS-політики на select (нижче) —
@@ -471,12 +585,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
       // не ті, що про мене (guess-stats-migration.sql).
       // Підрахунок окремо на кожного друга — щоб порівняти, хто вгадує
       // краще (замість однієї сумарної цифри по всіх друзях одразу).
-      final myGuessRows =
-          await _supabase
-                  .from('circle_guesses')
-                  .select('correct, guesser_id')
-                  .eq('target_user_id', myId)
-              as List;
+      final myGuessRows = initialResults[1] as List;
       final guessesTotalByFriend = <String, int>{};
       final guessesCorrectByFriend = <String, int>{};
       for (final row in myGuessRows) {
@@ -496,27 +605,16 @@ class _FriendsScreenState extends State<FriendsScreen> {
       // настрій щоденника, який я сам можу редагувати, безглуздо — саме цей
       // збіг (власника поділився з колом, де є і мій співавтор) і призводив
       // до "навіщо мені вгадувати, я ж сам це записував".
-      final myMembershipRows = await _supabase
-          .from('friend_folder_members')
-          .select('folder_id')
-          .eq('friend_user_id', myId);
-      final myFolderIds = (myMembershipRows as List)
+      final myMembershipRows = initialResults[2] as List;
+      final myFolderIds = myMembershipRows
           .map((r) => r['folder_id'] as String)
           .toList();
 
-      final myOwnedSubjectRows = await _supabase
-          .from('subjects')
-          .select('id')
-          .eq('owner_id', myId);
-      final myCoauthoredSubjectRows = await _supabase
-          .from('subject_coauthors')
-          .select('subject_id')
-          .eq('coauthor_user_id', myId);
+      final myOwnedSubjectRows = initialResults[3] as List;
+      final myCoauthoredSubjectRows = initialResults[4] as List;
       final myOwnSubjectIds = <String>{
-        ...(myOwnedSubjectRows as List).map((r) => r['id'] as String),
-        ...(myCoauthoredSubjectRows as List).map(
-          (r) => r['subject_id'] as String,
-        ),
+        ...myOwnedSubjectRows.map((r) => r['id'] as String),
+        ...myCoauthoredSubjectRows.map((r) => r['subject_id'] as String),
       };
 
       final sharedSubjects = <SharedSubject>[];
@@ -562,27 +660,25 @@ class _FriendsScreenState extends State<FriendsScreen> {
         }
       }
 
-      final friendshipRows = await _supabase
-          .from('friendships')
-          .select(
-            'id, requester_id, requester_email, addressee_id, addressee_email',
-          )
-          .or('requester_id.eq.$myId,addressee_id.eq.$myId')
-          .eq('status', 'accepted');
+      // Раніше "щось нове" на щоденнику, який друг відкрив колу (не
+      // співавторство, а перегляд), було видно лише ЗАЙШОВШИ до нього на
+      // сторінку — сам рядок у списку друзів про це мовчав, хоча
+      // технічно новий пост уже там був. Один спільний запит по ВСІХ
+      // sharedSubjects одразу тут — той самий subjectsWithUnseenUpdates,
+      // що й PersonDetailScreen рахує локально для своїх чипів.
+      final unseenSharedSubjectIds = await subjectsWithUnseenUpdates(
+        sharedSubjects.map((s) => s.subjectId).toList(),
+      );
+      final ownersWithUnseenSharedSubject = <String>{
+        for (final s in sharedSubjects)
+          if (unseenSharedSubjectIds.contains(s.subjectId)) s.ownerId,
+      };
 
-      final inviteRows = await _supabase
-          .from('friendships')
-          .select('id, requester_email')
-          .eq('addressee_email', myEmail)
-          .eq('status', 'pending');
+      final friendshipRows = initialResults[5] as List;
+      final inviteRows = initialResults[6] as List;
+      final folderRows = initialResults[7] as List;
 
-      final folderRows = await _supabase
-          .from('friend_folders')
-          .select('id, name')
-          .eq('owner_id', myId)
-          .order('created_at');
-
-      final folders = (folderRows as List)
+      final folders = folderRows
           .map((r) => FriendFolder(id: r['id'], name: r['name']))
           .toList();
 
@@ -600,7 +696,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
       }
 
       final friendBasics = <String, String>{}; // userId -> email
-      for (final row in friendshipRows as List) {
+      for (final row in friendshipRows) {
         final isRequester = row['requester_id'] == myId;
         final friendUserId = isRequester
             ? row['addressee_id'] as String?
@@ -703,12 +799,27 @@ class _FriendsScreenState extends State<FriendsScreen> {
         }
 
         final friends = <Friend>[];
+        final acceptedNotices = <Map<String, dynamic>>[];
         for (final row in friendshipRows) {
           final isRequester = row['requester_id'] == myId;
           final friendUserId = isRequester
               ? row['addressee_id'] as String?
               : row['requester_id'] as String;
           if (friendUserId == null) continue;
+          // Мій прапорець "бачив" ще null — інша сторона прийняла дружбу,
+          // а я про це ще не дізнався (my_id тут завжди відповідна сторона
+          // рядка, бо isRequester обчислено саме за requester_id == myId).
+          final mySeenAt = isRequester
+              ? row['requester_seen_confirmed_at']
+              : row['addressee_seen_confirmed_at'];
+          if (mySeenAt == null) {
+            acceptedNotices.add({
+              'friendshipId': row['id'] as String,
+              'friendUserId': friendUserId,
+              'displayName': displayNameByUser[friendUserId],
+              'email': friendBasics[friendUserId] ?? '',
+            });
+          }
           // Лише НАЙСВІЖІШИЙ день, не все вікно kGuessWindowDays —
           // узгоджено з тим самим індикатором на іконці "Друзі"
           // (hasUnseenFriendActivity), який теж дивиться лише на останній
@@ -734,6 +845,9 @@ class _FriendsScreenState extends State<FriendsScreen> {
               latestMood: latestMoodByUser[friendUserId],
               latestDate: latestDateByUser[friendUserId],
               hasUnguessed: hasUnguessed,
+              hasUnseenSharedSubject: ownersWithUnseenSharedSubject.contains(
+                friendUserId,
+              ),
               guessesTotal: guessesTotalByFriend[friendUserId],
               guessesCorrect: guessesCorrectByFriend[friendUserId],
             ),
@@ -756,7 +870,8 @@ class _FriendsScreenState extends State<FriendsScreen> {
           _myDisplayName = profileRow?['display_name'] as String?;
           _friends = friends;
           _friendAvatars = avatars;
-          _pendingInvites = (inviteRows as List).cast<Map<String, dynamic>>();
+          _pendingInvites = inviteRows.cast<Map<String, dynamic>>();
+          _acceptedNotices = acceptedNotices;
           _folders = folders;
           _folderMembership = membership;
           _sharedSubjects = sharedSubjects;
@@ -768,7 +883,8 @@ class _FriendsScreenState extends State<FriendsScreen> {
           _myFriendCode = profileRow?['friend_code'] as String?;
           _myDisplayName = profileRow?['display_name'] as String?;
           _friends = [];
-          _pendingInvites = (inviteRows as List).cast<Map<String, dynamic>>();
+          _pendingInvites = inviteRows.cast<Map<String, dynamic>>();
+          _acceptedNotices = [];
           _folders = folders;
           _folderMembership = membership;
           _sharedSubjects = sharedSubjects;
@@ -785,13 +901,28 @@ class _FriendsScreenState extends State<FriendsScreen> {
     }
   }
 
+  // Прибираємо картку одразу при тапі (не чекаючи мережевої відповіді) —
+  // інакше тап по іконці не давав ЖОДНОГО видимого відгуку до завершення
+  // повного _load(), і незрозуміло, чи дія взагалі спрацювала. При помилці
+  // повертаємо назад через свіжий _load() (self-healing, той самий підхід,
+  // що й у _dismissAcceptedNotice).
   Future<void> _acceptInvite(String friendshipId) async {
+    setState(() {
+      _pendingInvites.removeWhere((i) => i['id'] == friendshipId);
+    });
     try {
       await _supabase
           .from('friendships')
           .update({
             'addressee_id': _supabase.auth.currentUser!.id,
             'status': 'accepted',
+            // Я (адресат) щойно сам підтвердив і бачу результат одразу —
+            // мій прапорець "бачив" ставимо тут же, а не чекаємо окремого
+            // перегляду. Ініціатор (requester) дізнається через нову
+            // секцію "прийняли дружбу" на своїй сторінці друзів.
+            'addressee_seen_confirmed_at': DateTime.now()
+                .toUtc()
+                .toIso8601String(),
           })
           .eq('id', friendshipId);
       _load();
@@ -803,6 +934,81 @@ class _FriendsScreenState extends State<FriendsScreen> {
           ),
         );
       }
+      _load();
+    }
+  }
+
+  // Відхилити вхідне запрошення — просто видаляє pending-рядок. Той самий
+  // шлях (і та сама RLS-політика friendships_delete), що й видалення вже
+  // прийнятого друга: вона не звіряє status, тож підходить і тут без
+  // жодної нової міграції. З діалогом-підтвердженням — на відміну від
+  // "Прийняти" (позитивна, неруйнівна дія), тут випадковий тап назавжди
+  // прибирає запрошення без сповіщення того, хто його надіслав.
+  Future<void> _declineInvite(String friendshipId) async {
+    final l10n = AppLocalizations.of(context);
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AppDialog(
+        title: l10n.declineInviteConfirmTitle,
+        content: Text(
+          l10n.declineInviteConfirmBody,
+          style: const TextStyle(color: AppColors.inkMuted),
+        ),
+        primaryLabel: l10n.cancel,
+        onPrimary: () => Navigator.of(context).pop(false),
+        secondaryLabel: l10n.decline,
+        secondaryColor: Colors.redAccent,
+        onSecondary: () => Navigator.of(context).pop(true),
+      ),
+    );
+    if (confirmed != true) return;
+    if (!mounted) return;
+
+    setState(() {
+      _pendingInvites.removeWhere((i) => i['id'] == friendshipId);
+    });
+    try {
+      await _supabase.from('friendships').delete().eq('id', friendshipId);
+      _load();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(AppLocalizations.of(context).couldNotDeclineInvite),
+          ),
+        );
+      }
+      _load();
+    }
+  }
+
+  // Позначає "я бачив, що дружбу прийняли" для рядка, де я requester чи
+  // addressee — через SECURITY DEFINER RPC (не пряме RLS-оновлення), бо
+  // requester не має права оновлювати вже 'accepted' рядок напряму (див.
+  // docs/friend-accepted-notice-migration.sql). Прибираємо картку з
+  // екрана одразу, не чекаючи повного _load() — так само, як приховування
+  // вже прочитаного пуш-нагадування деінде в додатку.
+  Future<void> _dismissAcceptedNotice(String friendshipId) async {
+    setState(() {
+      _acceptedNotices.removeWhere(
+        (n) => n['friendshipId'] == friendshipId,
+      );
+    });
+    try {
+      await _supabase.rpc(
+        'mark_friendship_confirmed_seen',
+        params: {'friendship_id': friendshipId},
+      );
+      // Без цього виклику конкурентний _load() (запущений будь-якою іншою
+      // дією на екрані, поки цей RPC ще в польоті) міг би повернути щойно
+      // приховану картку назавжди — той самий клас гонки, що вже виправлено
+      // для _acceptInvite/_declineInvite нижче. Оновлений _load() йде вже
+      // ПІСЛЯ await RPC, тож бачить актуальний стан.
+      _load();
+    } catch (e) {
+      // Не критично: якщо позначка не збереглась на сервері, картка просто
+      // з'явиться знову при наступному відкритті сторінки друзів.
+      _load();
     }
   }
 
@@ -830,6 +1036,18 @@ class _FriendsScreenState extends State<FriendsScreen> {
           .from('friendships')
           .delete()
           .eq('id', friend.friendshipId);
+      // Юзер сам щойно підтвердив видалення в діалозі вище — без цього
+      // єдиний видимий наслідок дії був "рядок мовчки зник зі списку",
+      // тоді як усі інші succes-дії на цьому екрані (додав друга, скопіював
+      // код) підтверджують себе снекбаром.
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(l10n.friendRemoved),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
       _load();
     } catch (e) {
       if (mounted) {
@@ -1482,19 +1700,102 @@ class _FriendsScreenState extends State<FriendsScreen> {
                               color: AppColors.surface,
                               borderRadius: BorderRadius.circular(16),
                             ),
+                            // Іконки замість текстових кнопок — два повних
+                            // слова ("Прийняти"/"Відхилити") поруч із
+                            // текстом навіть на своєму рядку роздували
+                            // картку вдвічі. Компактні кнопки-іконки праворуч
+                            // лишають усю ширину під сам email/ім'я.
                             child: Row(
                               children: [
                                 Expanded(
                                   child: Text(
                                     requesterEmail,
                                     style: const TextStyle(fontSize: 15),
+                                    maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
+                                IconButton(
+                                  onPressed: () => _declineInvite(
+                                    invite['id'] as String,
+                                  ),
+                                  icon: const Icon(
+                                    PhosphorIconsLight.x,
+                                    size: 20,
+                                  ),
+                                  tooltip: l10n.decline,
+                                  color: AppColors.inkMuted,
+                                ),
+                                IconButton(
+                                  onPressed: () => _acceptInvite(
+                                    invite['id'] as String,
+                                  ),
+                                  icon: const Icon(
+                                    PhosphorIconsLight.check,
+                                    size: 20,
+                                  ),
+                                  tooltip: l10n.accept,
+                                  color: AppColors.accent,
+                                ),
+                              ],
+                            ),
+                          );
+                        }),
+                        const SizedBox(height: 20),
+                      ],
+                      if (_acceptedNotices.isNotEmpty) ...[
+                        Text(
+                          l10n.friendAcceptedNoticesHeader,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: AppColors.inkMuted,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        ..._acceptedNotices.map((notice) {
+                          final friendshipId = notice['friendshipId'] as String;
+                          // Без display name — лише частина email до "@",
+                          // не повна адреса: той самий фолбек, що вже
+                          // усталений по всьому застосунку (напр.
+                          // _shareMyLink нижче).
+                          final name =
+                              (notice['displayName'] as String?) ??
+                              (notice['email'] as String? ?? '').split('@').first;
+                          return Container(
+                            margin: const EdgeInsets.only(bottom: 10),
+                            padding: const EdgeInsets.all(14),
+                            decoration: BoxDecoration(
+                              color: AppColors.surface,
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            // Без речення навколо імені — заголовок секції
+                            // "Нові друзі" вже дає весь потрібний контекст,
+                            // так само, як "Запрошення" вище пояснює голий
+                            // email + так/ні без жодного додаткового тексту.
+                            // Один рядок, як у запрошенні: ім'я/email
+                            // непередбачуваної довжини лишається єдиною
+                            // змінною, без ризику обрізати сенс речення.
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    name,
+                                    style: const TextStyle(fontSize: 15),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                // На відміну від запрошення вище (дві дії,
+                                // потрібна компактність), тут дія лише
+                                // одна — голий значок виглядав порожньо,
+                                // текстова кнопка тут не тісно.
                                 TextButton(
                                   onPressed: () =>
-                                      _acceptInvite(invite['id'] as String),
-                                  child: Text(l10n.accept),
+                                      _dismissAcceptedNotice(friendshipId),
+                                  style: TextButton.styleFrom(
+                                    foregroundColor: AppColors.accent,
+                                  ),
+                                  child: Text(l10n.gotIt),
                                 ),
                               ],
                             ),
@@ -1601,7 +1902,8 @@ class _FriendsScreenState extends State<FriendsScreen> {
                           fontWeight: FontWeight.w600,
                         ),
                       ),
-                      if (friend.hasUnguessed) ...[
+                      if (friend.hasUnguessed ||
+                          friend.hasUnseenSharedSubject) ...[
                         const SizedBox(width: 6),
                         const DecoratedBox(
                           decoration: BoxDecoration(

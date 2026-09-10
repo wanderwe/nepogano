@@ -2,6 +2,62 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'checkin_date.dart';
 
+/// Дата НАЙСВІЖІШОГО чужого запису в цій сутності, який я ще не бачив в
+/// Історії. Використовується лише для навігаційної підказки одразу після
+/// перемикання чіпа: [markSubjectTabViewed] гасить тільки "сьогоднішню"
+/// частину індикатора — якщо після цього [subjectsWithUnseenUpdates] все
+/// одно повертає цю сутність, новий запис лежить десь у МИНУЛОМУ, і без
+/// цього виклику юзер бачить лише порожній сьогоднішній екран, не знаючи,
+/// що саме й де шукати (реальна скарга: "мені треба здогадатись, що ще
+/// треба зайти в Історію").
+Future<DateTime?> latestUnseenHistoricalEntryDate(String subjectId) async {
+  final supabase = Supabase.instance.client;
+  final myId = supabase.auth.currentUser?.id;
+  if (myId == null) return null;
+
+  final viewRow = await supabase
+      .from('subject_diary_views')
+      .select('last_history_view_at')
+      .eq('subject_id', subjectId)
+      .eq('user_id', myId)
+      .maybeSingle();
+  final cutoffRaw = viewRow?['last_history_view_at'] as String?;
+  final seenAt = cutoffRaw != null ? DateTime.parse(cutoffRaw) : null;
+
+  var query = supabase
+      .from('subject_checkins')
+      .select('created_at, local_date')
+      .eq('subject_id', subjectId)
+      .neq('author_id', myId);
+  // Звужуємо на сервері, коли є з чого — той самий фільтр, що й так
+  // застосовується нижче в Dart, просто раніше передавав на клієнт усю
+  // історію чужих записів навіть для давнього, вже переглянутого щоденника.
+  final checkinRows = seenAt == null
+      ? await query
+      : await query.gt('created_at', seenAt.toUtc().toIso8601String());
+
+  final today = DateTime.now();
+  DateTime? latest;
+  for (final row in checkinRows as List) {
+    final createdAt = DateTime.parse(row['created_at'] as String);
+    if (seenAt != null && !createdAt.isAfter(seenAt)) continue;
+    final entryDate = effectiveCheckinDate(row);
+    // Сьогоднішні записи сюди не належать — їх гасить last_tab_view_at
+    // (markSubjectTabViewed, щойно викликаний перед цим у _switchSubject),
+    // не last_history_view_at. Без цього виключення чужий сьогоднішній
+    // чек-ін міг переважити справді старий непобачений день і підказка
+    // "Переглянути" відкривала б Історію на СЬОГОДНІ замість того дня,
+    // який юзер насправді ще не бачив (реальний баг, знайдений ревью).
+    final isToday =
+        entryDate.year == today.year &&
+        entryDate.month == today.month &&
+        entryDate.day == today.day;
+    if (isToday) continue;
+    if (latest == null || entryDate.isAfter(latest)) latest = entryDate;
+  }
+  return latest;
+}
+
 /// Позначає, що я щойно перемкнув чіп на цю сутність (бачив сьогоднішній
 /// запис на головному екрані) — гасить лише "сьогоднішню" частину
 /// індикатора, не історичну. Див. `docs/subject-diary-views-migration.sql`.

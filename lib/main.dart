@@ -878,6 +878,12 @@ class _CheckInScreenState extends State<CheckInScreen>
   // Сутності, де є запис ЧУЖОГО авторства, ще не бачений мною — крапка на
   // чіпі перемикача. `subject_diary_views.dart`.
   Set<String> _subjectsWithUnseenUpdates = {};
+  // Дата непобаченого чужого запису за МИНУЛИЙ день у щойно активному
+  // щоденнику (null — нема такого) — вмикає крапку на іконці "Історія" в
+  // шапці; тап на неї відкриває саме цей день. Персистентно, доки юзер сам
+  // не відкриє Історію (на відміну від попередньої версії — снекбара, який
+  // зникав сам і відчувався як нав'язаний перехід, не тиха індикація).
+  DateTime? _activeSubjectUnseenHistoricalDate;
 
   String get _table =>
       _activeSubjectId == null ? 'checkins' : 'subject_checkins';
@@ -1126,12 +1132,31 @@ class _CheckInScreenState extends State<CheckInScreen>
   void _switchSubject(String? id) {
     setState(() {
       _activeSubjectId = id;
+      _activeSubjectUnseenHistoricalDate = null;
       _resetEntryFormState();
     });
     _loadEntryForEffectiveDate();
     _loadWeek();
     if (id != null) {
-      markSubjectTabViewed(id).then((_) => _refreshSubjectUnseenUpdates());
+      markSubjectTabViewed(id).then((_) async {
+        await _refreshSubjectUnseenUpdates();
+        // markSubjectTabViewed гасить лише "сьогоднішню" частину
+        // індикатора — якщо крапка все одно лишається на щойно
+        // відкритій сутності, новий запис лежить у МИНУЛОМУ, а сам цей
+        // екран показує лише сьогоднішню (часто порожню) форму. Замість
+        // снекбара (юзер не сподобався: зникає сам, і виглядає як
+        // примусовий перехід, а не тиха індикація) — крапка на іконці
+        // "Історія" в шапці, персистентна, тап на неї — свідома дія
+        // юзера, не нав'язана.
+        if (mounted && _activeSubjectId == id) {
+          final date = _subjectsWithUnseenUpdates.contains(id)
+              ? await latestUnseenHistoricalEntryDate(id)
+              : null;
+          if (mounted && _activeSubjectId == id) {
+            setState(() => _activeSubjectUnseenHistoricalDate = date);
+          }
+        }
+      });
     }
   }
 
@@ -2792,46 +2817,75 @@ class _CheckInScreenState extends State<CheckInScreen>
                   ),
                   Row(
                     children: [
-                      IconButton(
-                        onPressed: () async {
-                          final activeName = _activeSubjectId == null
-                              ? null
-                              : _subjects
-                                    .cast<Subject?>()
-                                    .firstWhere(
-                                      (s) => s?.id == _activeSubjectId,
-                                      orElse: () => null,
-                                    )
-                                    ?.name;
-                          await Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => HistoryScreen(
-                                subjectId: _activeSubjectId,
-                                subjectName: activeName,
+                      Stack(
+                        clipBehavior: Clip.none,
+                        children: [
+                          IconButton(
+                            onPressed: () async {
+                              final activeName = _activeSubjectId == null
+                                  ? null
+                                  : _subjects
+                                        .cast<Subject?>()
+                                        .firstWhere(
+                                          (s) => s?.id == _activeSubjectId,
+                                          orElse: () => null,
+                                        )
+                                        ?.name;
+                              // Крапка горить — юзер тапнув САМ, свідомо
+                              // (не нав'язаний перехід снекбара), тож
+                              // одразу відкриваємо саме той непобачений
+                              // день, а не поточний місяць навмання.
+                              final jumpToDate =
+                                  _activeSubjectUnseenHistoricalDate;
+                              await Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) => HistoryScreen(
+                                    subjectId: _activeSubjectId,
+                                    subjectName: activeName,
+                                    initialDate: jumpToDate,
+                                  ),
+                                ),
+                              );
+                              // На відміну від Друзів/Коментарів/Капсул, цей
+                              // пуш ніколи не оновлював активність коментарів
+                              // після повернення — якщо додав коментар до
+                              // сьогоднішнього запису прямо в Історії, банер
+                              // на головному екрані про це не дізнавався.
+                              if (mounted) {
+                                _checkCommentActivity();
+                                // Той самий фікс, що й для тапу по дню
+                                // тижневої стрічки (_openHistoryOnDay) — без
+                                // цього крапка нових оновлень на чіпі
+                                // сутності не гасла одразу після перегляду
+                                // Історії, лише при наступному холодному
+                                // старті чи перемиканні вкладки.
+                                _refreshSubjectUnseenUpdates();
+                                setState(
+                                  () =>
+                                      _activeSubjectUnseenHistoricalDate =
+                                          null,
+                                );
+                              }
+                            },
+                            icon: const Icon(
+                              PhosphorIconsLight.calendarBlank,
+                              size: 20,
+                            ),
+                            tooltip: l10n.history,
+                          ),
+                          if (_activeSubjectUnseenHistoricalDate != null)
+                            const Positioned(
+                              top: 8,
+                              right: 8,
+                              child: DecoratedBox(
+                                decoration: BoxDecoration(
+                                  color: AppColors.notification,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: SizedBox(width: 8, height: 8),
                               ),
                             ),
-                          );
-                          // На відміну від Друзів/Коментарів/Капсул, цей
-                          // пуш ніколи не оновлював активність коментарів
-                          // після повернення — якщо додав коментар до
-                          // сьогоднішнього запису прямо в Історії, банер
-                          // на головному екрані про це не дізнавався.
-                          if (mounted) {
-                            _checkCommentActivity();
-                            // Той самий фікс, що й для тапу по дню
-                            // тижневої стрічки (_openHistoryOnDay) — без
-                            // цього крапка нових оновлень на чіпі
-                            // сутності не гасла одразу після перегляду
-                            // Історії, лише при наступному холодному
-                            // старті чи перемиканні вкладки.
-                            _refreshSubjectUnseenUpdates();
-                          }
-                        },
-                        icon: const Icon(
-                          PhosphorIconsLight.calendarBlank,
-                          size: 20,
-                        ),
-                        tooltip: l10n.history,
+                        ],
                       ),
                       Stack(
                         clipBehavior: Clip.none,
@@ -3453,7 +3507,7 @@ class _MoreMenuSheet extends StatelessWidget {
             _MenuRow(
               icon: PhosphorIconsLight.globe,
               label:
-                  '${l10n.language}: ${appLocale.value.languageCode == 'uk' ? 'UK' : 'EN'}',
+                  '${l10n.language}: ${appLocale.value.languageCode == 'uk' ? 'UA' : 'EN'}',
               onTap: onLanguage,
             ),
             _MenuRow(

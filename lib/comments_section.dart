@@ -657,8 +657,16 @@ class _CommentsSectionState extends State<CommentsSection> {
     // банер "Відповідаєш X" унизу, а не лише читати ім'я в банері.
     final wrapped = highlighted
         ? Container(
+            // Container.margin ЗАВЖДИ вимагає невід'ємні значення —
+            // assert(margin == null || margin.isNonNegative), сам
+            // framework, не проєктний код. Від'ємний margin тут (був
+            // vertical:-6, horizontal:-8, точно компенсуючи padding нижче,
+            // щоб підсвітка "виступала" за межі рядка без зміни
+            // layout-розміру) гарантовано валив застосунок щоразу, коли
+            // підсвітка вмикалась — саме тап "Reply". Без margin: трохи
+            // збільшує висоту/ширину підсвіченого рядка замість
+            // компенсованого "виступу", але це вже не краш.
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-            margin: const EdgeInsets.symmetric(vertical: -6, horizontal: -8),
             decoration: BoxDecoration(
               color: AppColors.accent.withValues(alpha: 0.08),
               borderRadius: BorderRadius.circular(10),
@@ -695,41 +703,39 @@ class _CommentsSectionState extends State<CommentsSection> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Padding(
-            padding: const EdgeInsets.only(bottom: 6),
-            child: _replyToId == null
-                ? Text(
-                    l10n.addComment,
+          // Лейбл над полем має сенс лише в режимі відповіді ("Відповідаєш
+          // X" + хрестик скинути ціль) — унікальна інформація, якої немає
+          // ніде більше. У звичайному кореневому режимі "Додати коментар"
+          // просто повторював те саме, що й плейсхолдер поля нижче
+          // ("Напиши коментар...") — те саме буквально двічі підряд.
+          if (_replyToId != null)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 6),
+              child: Row(
+                children: [
+                  Text(
+                    l10n.replyingTo(_replyToName ?? ''),
                     style: const TextStyle(
                       fontSize: 12,
                       color: AppColors.inkMuted,
                     ),
-                  )
-                : Row(
-                    children: [
-                      Text(
-                        l10n.replyingTo(_replyToName ?? ''),
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: AppColors.inkMuted,
-                        ),
-                      ),
-                      const SizedBox(width: 6),
-                      GestureDetector(
-                        onTap: _clearReplyTarget,
-                        behavior: HitTestBehavior.opaque,
-                        child: const Padding(
-                          padding: EdgeInsets.all(4),
-                          child: Icon(
-                            PhosphorIconsLight.x,
-                            size: 12,
-                            color: AppColors.inkMuted,
-                          ),
-                        ),
-                      ),
-                    ],
                   ),
-          ),
+                  const SizedBox(width: 6),
+                  GestureDetector(
+                    onTap: _clearReplyTarget,
+                    behavior: HitTestBehavior.opaque,
+                    child: const Padding(
+                      padding: EdgeInsets.all(4),
+                      child: Icon(
+                        PhosphorIconsLight.x,
+                        size: 12,
+                        color: AppColors.inkMuted,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           _buildInputField(),
         ],
       ),

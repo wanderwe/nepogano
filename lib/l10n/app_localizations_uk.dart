@@ -368,6 +368,19 @@ class AppLocalizationsUk extends AppLocalizations {
   String get couldNotAcceptInvite => 'Не вдалось прийняти запрошення.';
 
   @override
+  String get decline => 'Відхилити';
+
+  @override
+  String get couldNotDeclineInvite => 'Не вдалось відхилити запрошення.';
+
+  @override
+  String get declineInviteConfirmTitle => 'Відхилити запрошення?';
+
+  @override
+  String get declineInviteConfirmBody =>
+      'Ви завжди зможете додати одне одного пізніше.';
+
+  @override
   String get invitations => 'Запрошення';
 
   @override
@@ -377,7 +390,7 @@ class AppLocalizationsUk extends AppLocalizations {
   String get accept => 'Прийняти';
 
   @override
-  String get noFriendsYet => 'Ще немає друзів. Додай когось кнопкою вгорі.';
+  String get noFriendsYet => 'Ще немає друзів.\nДодай когось кнопкою вгорі.';
 
   @override
   String get removeFriend => 'Видалити з друзів';
@@ -391,6 +404,9 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get couldNotRemoveFriend => 'Не вдалось видалити з друзів.';
+
+  @override
+  String get friendRemoved => 'Друга видалено.';
 
   @override
   String get invite => 'Запросити';
@@ -442,6 +458,9 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get friendAdded => 'Готово! Тепер ви друзі.';
+
+  @override
+  String get friendAcceptedNoticesHeader => 'Нові друзі';
 
   @override
   String get editDisplayName => 'Ім\'я або нікнейм';

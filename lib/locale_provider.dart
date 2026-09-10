@@ -61,7 +61,7 @@ Future<void> setAppLocale(Locale locale) async {
 /// незмінного const-піддерева, НАВІТЬ якщо предок (тут — кореневий
 /// MaterialApp через `ValueListenableBuilder&lt;Locale&gt;` у main.dart)
 /// перебудовується цілком. Без власного прямого підписки на [appLocale]
-/// напис EN/UK застрягав на значенні з першого рендеру — усі інші
+/// напис EN/UA застрягав на значенні з першого рендеру — усі інші
 /// локалізовані тексти на екрані міняли мову коректно (вони не const),
 /// а сам перемикач — ні, аж доки екран не перемонтується заново.
 class LanguageTogglePill extends StatelessWidget {
@@ -84,7 +84,11 @@ class LanguageTogglePill extends StatelessWidget {
               borderRadius: BorderRadius.circular(20),
             ),
             child: Text(
-              locale.languageCode == 'uk' ? 'EN' : 'UK',
+              // Мітка — не сам ISO-код мови (той лишається 'uk', це
+              // окреме, коректне значення для Locale). "UK" тут читалось
+              // би як Велика Британія, а не як скорочення "українська" —
+              // "UA" однозначне.
+              locale.languageCode == 'uk' ? 'EN' : 'UA',
               style: const TextStyle(
                 color: AppColors.inkMuted,
                 fontWeight: FontWeight.w600,

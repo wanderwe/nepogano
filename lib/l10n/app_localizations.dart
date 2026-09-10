@@ -758,6 +758,30 @@ abstract class AppLocalizations {
   /// **'Не вдалось прийняти запрошення.'**
   String get couldNotAcceptInvite;
 
+  /// No description provided for @decline.
+  ///
+  /// In uk, this message translates to:
+  /// **'Відхилити'**
+  String get decline;
+
+  /// No description provided for @couldNotDeclineInvite.
+  ///
+  /// In uk, this message translates to:
+  /// **'Не вдалось відхилити запрошення.'**
+  String get couldNotDeclineInvite;
+
+  /// No description provided for @declineInviteConfirmTitle.
+  ///
+  /// In uk, this message translates to:
+  /// **'Відхилити запрошення?'**
+  String get declineInviteConfirmTitle;
+
+  /// No description provided for @declineInviteConfirmBody.
+  ///
+  /// In uk, this message translates to:
+  /// **'Ви завжди зможете додати одне одного пізніше.'**
+  String get declineInviteConfirmBody;
+
   /// No description provided for @invitations.
   ///
   /// In uk, this message translates to:
@@ -779,7 +803,7 @@ abstract class AppLocalizations {
   /// No description provided for @noFriendsYet.
   ///
   /// In uk, this message translates to:
-  /// **'Ще немає друзів. Додай когось кнопкою вгорі.'**
+  /// **'Ще немає друзів.\nДодай когось кнопкою вгорі.'**
   String get noFriendsYet;
 
   /// No description provided for @removeFriend.
@@ -805,6 +829,12 @@ abstract class AppLocalizations {
   /// In uk, this message translates to:
   /// **'Не вдалось видалити з друзів.'**
   String get couldNotRemoveFriend;
+
+  /// No description provided for @friendRemoved.
+  ///
+  /// In uk, this message translates to:
+  /// **'Друга видалено.'**
+  String get friendRemoved;
 
   /// No description provided for @invite.
   ///
@@ -895,6 +925,12 @@ abstract class AppLocalizations {
   /// In uk, this message translates to:
   /// **'Готово! Тепер ви друзі.'**
   String get friendAdded;
+
+  /// No description provided for @friendAcceptedNoticesHeader.
+  ///
+  /// In uk, this message translates to:
+  /// **'Нові друзі'**
+  String get friendAcceptedNoticesHeader;
 
   /// No description provided for @editDisplayName.
   ///

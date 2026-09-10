@@ -367,6 +367,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get couldNotAcceptInvite => 'Couldn\'t accept the invite.';
 
   @override
+  String get decline => 'Decline';
+
+  @override
+  String get couldNotDeclineInvite => 'Couldn\'t decline the invite.';
+
+  @override
+  String get declineInviteConfirmTitle => 'Decline the invite?';
+
+  @override
+  String get declineInviteConfirmBody => 'You can always add each other later.';
+
+  @override
   String get invitations => 'Invitations';
 
   @override
@@ -377,7 +389,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get noFriendsYet =>
-      'No friends yet. Add someone with the button above.';
+      'No friends yet.\nAdd someone with the button above.';
 
   @override
   String get removeFriend => 'Remove friend';
@@ -391,6 +403,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get couldNotRemoveFriend => 'Couldn\'t remove the friend.';
+
+  @override
+  String get friendRemoved => 'Friend removed.';
 
   @override
   String get invite => 'Invite';
@@ -442,6 +457,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get friendAdded => 'Done! You\'re friends now.';
+
+  @override
+  String get friendAcceptedNoticesHeader => 'New friends';
 
   @override
   String get editDisplayName => 'Name or nickname';
