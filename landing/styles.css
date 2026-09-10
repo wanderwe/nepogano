@@ -386,19 +386,23 @@ h1 {
    окремої кнопки "Скопіювати код" під ним (був зайвий третій елемент на
    маленькому екрані). inline-flex зберігає центрування батьківського
    text-align:center, у якому раніше центрувався звичайний div. */
+/* Той самий візуальний масштаб, що й .btn-secondary поруч (padding/
+   border-radius/margin) — код тепер запасний варіант (авто-детект через
+   deep link — головний шлях), більше не мав виглядати як головна дія
+   екрана. */
 .join-code {
   display: inline-flex;
   align-items: center;
-  gap: 14px;
+  gap: 10px;
   font-family: "Lora", Georgia, serif;
-  font-size: 32px;
-  font-weight: 700;
-  letter-spacing: 2px;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 1px;
   background: var(--surface);
   border: none;
-  border-radius: 16px;
-  padding: 20px 22px;
-  margin: 24px 0;
+  border-radius: 14px;
+  padding: 10px 20px;
+  margin-bottom: 16px;
   color: var(--nepogano);
   cursor: pointer;
 }
