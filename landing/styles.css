@@ -430,7 +430,10 @@ h1 {
 }
 
 .join-note-small {
-  font-size: 12px;
+  /* Розмір лишається тим самим, що й .join-note — окремий клас лише
+     заради відступів; окремий менший кегль тут раніше додавав ще один
+     розмір шрифту на й так тісній сторінці без жодної on-page причини
+     для цієї відмінності. */
   margin-top: 8px;
   margin-bottom: 20px;
 }
@@ -451,7 +454,7 @@ h1 {
   background: transparent;
   color: var(--ink);
   font-weight: 500;
-  font-size: 14px;
+  font-size: 15px;
   font-family: inherit;
   text-decoration: none;
   cursor: pointer;
