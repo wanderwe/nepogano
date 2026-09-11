@@ -150,15 +150,21 @@ Nepogano ("застосунок", "ми") поважає вашу приватн
 
 Накопичувати тут кожен реліз — щоб було видно, що вже казали користувачам, і не повторюватись/не губити тон між версіями.
 
-## 1.7.2+23 (заплановано)
+## 1.8.0+24 (відправлено на review, 2026-09-11)
 
 ```
 <uk>
+Тепер бачиш, коли друг приймає твоє запрошення в друзі.
+Нова позначка на іконці «Історія» — коли в спільному щоденнику зʼявився запис за минулий день.
+Картка «Сузір'я місяця» для шеру тепер має легенду кольорів настрою.
 Вечірнє нагадування більше не приходить, якщо ти вже відмітив сьогоднішній день.
 Виправлено: індикатор нових статусів друга міг лишатись увімкненим навіть після перегляду найсвіжішого запису.
 Дрібні виправлення й покращення інтерфейсу.
 </uk>
 <en-US>
+Now you'll see when a friend accepts your invite.
+New dot on the History icon shows when a shared diary has an entry for a past day.
+The shareable Month's Constellation card now includes a color legend.
 The evening reminder no longer shows up once you've already logged today.
 Fixed: a friend's new-activity dot could stay lit even after you'd seen their latest update.
 Small fixes and interface improvements.

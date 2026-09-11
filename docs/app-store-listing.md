@@ -46,9 +46,11 @@ mood,diary,journal,honest,checkin,reflection,friends,calendar,mood tracker,time 
 
 ### What's New — version log (найновіша зверху, копіювати верхню в App Store Connect)
 
-#### 1.7.2 (заплановано)
+#### 1.8.0 (відправлено на review, 2026-09-11)
+Now you'll see when a friend accepts your invite.
+New dot on the History icon shows when a shared diary has an entry for a past day.
+The shareable Month's Constellation card now includes a color legend.
 The evening reminder no longer shows up once you've already logged today.
-Cleaner, more compact Google and Apple sign-in buttons on iOS.
 Fixed: a friend's new-activity dot could stay lit even after you'd seen their latest update.
 Small fixes and interface improvements.
 
@@ -105,9 +107,11 @@ Nepogano будується поступово: спершу особистий 
 
 ### What's New — журнал версій (найновіша зверху, копіювати верхню в App Store Connect)
 
-#### 1.7.2 (заплановано)
+#### 1.8.0 (відправлено на review, 2026-09-11)
+Тепер бачиш, коли друг приймає твоє запрошення в друзі.
+Нова позначка на іконці «Історія» — коли в спільному щоденнику зʼявився запис за минулий день.
+Картка «Сузір'я місяця» для шеру тепер має легенду кольорів настрою.
 Вечірнє нагадування більше не приходить, якщо ти вже відмітив сьогоднішній день.
-Оновлений, компактніший вигляд кнопок входу через Google та Apple на iOS.
 Виправлено: індикатор нових статусів друга міг лишатись увімкненим навіть після перегляду найсвіжішого запису.
 Дрібні виправлення й покращення інтерфейсу.
 
