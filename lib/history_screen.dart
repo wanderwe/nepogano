@@ -330,6 +330,18 @@ class _HistoryScreenState extends State<HistoryScreen> {
         _visibleMonth.month + 1,
         0,
       ).day;
+      // Та сама шкала, що вже є в картці "Цього місяця" під самим
+      // календарем/сузір'ям (_buildRetrospective) — тепер і на самій
+      // картці шеру, щоб колір зірки був зрозумілий і тому, хто просто
+      // отримав картинку, без застосунку. Лейбл резолвиться тут (є
+      // context), не всередині render-функції нижче (вона його не має).
+      final counts = _monthMoodCounts;
+      final legend = MoodLevel.values
+          .where((m) => (counts[m] ?? 0) > 0)
+          .map(
+            (m) => (color: m.color, label: m.label(context), count: counts[m]!),
+          )
+          .toList();
       final bytes = await renderConstellationSharePng(
         entriesByDay: _entriesByDay,
         daysInMonth: daysInMonth,
@@ -338,6 +350,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
         monthTitle:
             '${monthName(_visibleMonth.month, locale)} ${_visibleMonth.year}',
         titleLabel: l10n.reportConstellationSection,
+        legend: legend,
       );
       final dir = await getTemporaryDirectory();
       final monthSlug =
@@ -1525,6 +1538,11 @@ Future<Uint8List> renderConstellationSharePng({
   required int month,
   required String monthTitle,
   required String titleLabel,
+  // Крапка кольору настрою + число днів — та сама шкала, що вже є в
+  // картці "Цього місяця" в самому застосунку (History_screen._buildRetrospective),
+  // тепер і на самій картці шеру. Порожній список — просто не малюємо
+  // рядок (місяць без жодного запису).
+  List<({Color color, String label, int count})> legend = const [],
   double pixelRatio = 3.0,
 }) async {
   const cardWidth = 320.0;
@@ -1593,15 +1611,45 @@ Future<Uint8List> renderConstellationSharePng({
     Offset(cardWidth - padding - domainLabel.width, footerY),
   );
 
+  // Легенда — розмір/ширина рахуються заздалегідь (потрібні ДО позиції
+  // сузір'я, щоб центрувати блок "сузір'я + легенда" разом як одне ціле).
+  const legendDotRadius = 3.0;
+  const legendGap = 5.0;
+  const legendItemGap = 14.0;
+  var legendRowHeight = 0.0;
+  var legendRowWidth = 0.0;
+  final legendPainters = <TextPainter>[];
+  for (final item in legend) {
+    final p = TextPainter(
+      text: TextSpan(
+        text: '${item.label} ${item.count}',
+        style: const TextStyle(fontSize: 11, color: mutedWhite),
+      ),
+      textDirection: TextDirection.ltr,
+    )..layout();
+    legendPainters.add(p);
+    if (p.height > legendRowHeight) legendRowHeight = p.height;
+    legendRowWidth += legendDotRadius * 2 + legendGap + p.width;
+    if (item != legend.last) legendRowWidth += legendItemGap;
+  }
+  if (legendDotRadius * 2 > legendRowHeight) {
+    legendRowHeight = legendDotRadius * 2;
+  }
+  final legendGapAboveIt = legend.isEmpty ? 0.0 : 16.0;
+
   // Розмір полотна сузір'я = той самий логічний масштаб, що й
   // [renderConstellationPng] (~330), не довільний — щоб зірки на картці
   // шеру виглядали так само, як в застосунку й у PDF, а не втретє
-  // по-своєму.
+  // по-своєму. Легенда навмисно ВІДРАЗУ під сузір'ям (не прив'язана до
+  // низу картки біля бренду) — це підпис ДО зірок, має читатись як їхня
+  // пара, не як окремий, віддалений елемент. Блок "сузір'я + легенда"
+  // центрується РАЗОМ у просторі між заголовком і брендом внизу.
   final constellationSize = cardWidth - padding * 2;
   final constellationTop = headerOffset.dy + header.height + 24;
+  final blockHeight = constellationSize + legendGapAboveIt + legendRowHeight;
   final availableHeight = footerY - 20 - constellationTop;
-  final constellationY = availableHeight > constellationSize
-      ? constellationTop + (availableHeight - constellationSize) / 2
+  final constellationY = availableHeight > blockHeight
+      ? constellationTop + (availableHeight - blockHeight) / 2
       : constellationTop;
 
   canvas.save();
@@ -1614,6 +1662,27 @@ Future<Uint8List> renderConstellationSharePng({
     drawBackground: false,
   ).paint(canvas, Size(constellationSize, constellationSize));
   canvas.restore();
+
+  if (legend.isNotEmpty) {
+    final legendY = constellationY + constellationSize + legendGapAboveIt;
+    var x = padding + (constellationSize - legendRowWidth) / 2;
+    for (var i = 0; i < legend.length; i++) {
+      final item = legend[i];
+      final p = legendPainters[i];
+      final centerY = legendY + legendRowHeight / 2;
+      canvas.drawCircle(
+        Offset(x + legendDotRadius, centerY),
+        legendDotRadius,
+        Paint()..color = item.color,
+      );
+      final textOffset = Offset(
+        x + legendDotRadius * 2 + legendGap,
+        legendY + (legendRowHeight - p.height) / 2,
+      );
+      p.paint(canvas, textOffset);
+      x = textOffset.dx + p.width + legendItemGap;
+    }
+  }
 
   final picture = recorder.endRecording();
   final width = (cardWidth * pixelRatio).round();
