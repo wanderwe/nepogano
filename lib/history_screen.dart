@@ -1611,45 +1611,56 @@ Future<Uint8List> renderConstellationSharePng({
     Offset(cardWidth - padding - domainLabel.width, footerY),
   );
 
-  // Легенда — розмір/ширина рахуються заздалегідь (потрібні ДО позиції
-  // сузір'я, щоб центрувати блок "сузір'я + легенда" разом як одне ціле).
+  // Компактна легенда — лише крапка+число, без слова настрою (третя
+  // ітерація: спершу окремий рядок над брендом, потім згрупована під
+  // самим сузір'ям — обидві виглядали важче, ніж мали б). Досить
+  // компактна, щоб лишитись на тому самому рядку, що й "nepogano.app",
+  // у нижньому лівому куті — сам canvas ФІКСОВАНОГО розміру (320×569
+  // логічних пікселів) незалежно від екрана пристрою, тож питання лише
+  // в тому, чи влазить ширина, не в тому, який саме телефон.
   const legendDotRadius = 3.0;
-  const legendGap = 5.0;
-  const legendItemGap = 14.0;
-  var legendRowHeight = 0.0;
-  var legendRowWidth = 0.0;
+  const legendGap = 4.0;
+  const legendItemGap = 10.0;
   final legendPainters = <TextPainter>[];
   for (final item in legend) {
     final p = TextPainter(
       text: TextSpan(
-        text: '${item.label} ${item.count}',
+        text: '${item.count}',
         style: const TextStyle(fontSize: 11, color: mutedWhite),
       ),
       textDirection: TextDirection.ltr,
     )..layout();
     legendPainters.add(p);
-    if (p.height > legendRowHeight) legendRowHeight = p.height;
-    legendRowWidth += legendDotRadius * 2 + legendGap + p.width;
-    if (item != legend.last) legendRowWidth += legendItemGap;
   }
-  if (legendDotRadius * 2 > legendRowHeight) {
-    legendRowHeight = legendDotRadius * 2;
+  if (legend.isNotEmpty) {
+    var x = padding;
+    for (var i = 0; i < legend.length; i++) {
+      final item = legend[i];
+      final p = legendPainters[i];
+      final centerY = footerY + domainLabel.height / 2;
+      canvas.drawCircle(
+        Offset(x + legendDotRadius, centerY),
+        legendDotRadius,
+        Paint()..color = item.color,
+      );
+      final textOffset = Offset(
+        x + legendDotRadius * 2 + legendGap,
+        footerY + (domainLabel.height - p.height) / 2,
+      );
+      p.paint(canvas, textOffset);
+      x = textOffset.dx + p.width + legendItemGap;
+    }
   }
-  final legendGapAboveIt = legend.isEmpty ? 0.0 : 16.0;
 
   // Розмір полотна сузір'я = той самий логічний масштаб, що й
   // [renderConstellationPng] (~330), не довільний — щоб зірки на картці
   // шеру виглядали так само, як в застосунку й у PDF, а не втретє
-  // по-своєму. Легенда навмисно ВІДРАЗУ під сузір'ям (не прив'язана до
-  // низу картки біля бренду) — це підпис ДО зірок, має читатись як їхня
-  // пара, не як окремий, віддалений елемент. Блок "сузір'я + легенда"
-  // центрується РАЗОМ у просторі між заголовком і брендом внизу.
+  // по-своєму.
   final constellationSize = cardWidth - padding * 2;
   final constellationTop = headerOffset.dy + header.height + 24;
-  final blockHeight = constellationSize + legendGapAboveIt + legendRowHeight;
   final availableHeight = footerY - 20 - constellationTop;
-  final constellationY = availableHeight > blockHeight
-      ? constellationTop + (availableHeight - blockHeight) / 2
+  final constellationY = availableHeight > constellationSize
+      ? constellationTop + (availableHeight - constellationSize) / 2
       : constellationTop;
 
   canvas.save();
@@ -1662,27 +1673,6 @@ Future<Uint8List> renderConstellationSharePng({
     drawBackground: false,
   ).paint(canvas, Size(constellationSize, constellationSize));
   canvas.restore();
-
-  if (legend.isNotEmpty) {
-    final legendY = constellationY + constellationSize + legendGapAboveIt;
-    var x = padding + (constellationSize - legendRowWidth) / 2;
-    for (var i = 0; i < legend.length; i++) {
-      final item = legend[i];
-      final p = legendPainters[i];
-      final centerY = legendY + legendRowHeight / 2;
-      canvas.drawCircle(
-        Offset(x + legendDotRadius, centerY),
-        legendDotRadius,
-        Paint()..color = item.color,
-      );
-      final textOffset = Offset(
-        x + legendDotRadius * 2 + legendGap,
-        legendY + (legendRowHeight - p.height) / 2,
-      );
-      p.paint(canvas, textOffset);
-      x = textOffset.dx + p.width + legendItemGap;
-    }
-  }
 
   final picture = recorder.endRecording();
   final width = (cardWidth * pixelRatio).round();
